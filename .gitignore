@@ -27,5 +27,5 @@ GoogleService-Info.plist
 *.swo
 .DS_Store
 
-# BigQuery
-bigquery/temp/
+# MCP
+.mcp.json
