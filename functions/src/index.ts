@@ -8,8 +8,10 @@
  */
 
 import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+import * as admin from "firebase-admin";
+
+// Initialize Firebase Admin SDK
+admin.initializeApp();
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -26,7 +28,22 @@ import * as logger from "firebase-functions/logger";
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+// ========================================
+// Auth Functions
+// ========================================
+export * from "./auth";
+
+// ========================================
+// API Functions (将来実装)
+// ========================================
+// export * from "./api";
+
+// ========================================
+// Scheduled Functions (将来実装)
+// ========================================
+// export * from "./scheduled";
+
+// ========================================
+// Webhook Functions (将来実装)
+// ========================================
+// export * from "./webhooks";

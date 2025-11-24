@@ -1,5 +1,10 @@
 {
   "projects": {
-    "default": "ai-fitness-c38f0"
-  }
+    "default": "ai-fitness-c38f0",
+    "dev": "ai-fitness-c38f0",
+    "staging": "ai-fitness-c38f0",
+    "production": "ai-fitness-c38f0"
+  },
+  "targets": {},
+  "etags": {}
 }

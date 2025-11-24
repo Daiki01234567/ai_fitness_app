@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(npm test)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "playwright",
+    "github",
+    "firebase",
+    "gcp",
+    "filesystem",
+    "mcp-server-commands"
+  ]
+}

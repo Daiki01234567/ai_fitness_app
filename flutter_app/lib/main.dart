@@ -1,8 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth を使用するため
+import 'package:cloud_firestore/cloud_firestore.dart'; // FirebaseFirestore を使用するため
+import 'package:cloud_functions/cloud_functions.dart'; // FirebaseFunctions を使用するため
+import 'package:flutter/foundation.dart'; // kDebugMode を使用するため
+import 'package:firebase_core/firebase_core.dart'; // Firebase.initializeApp() を使用するため
+import 'firebase_options.dart'; // 生成された設定ファイルをインポートする
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 👇 Web環境で必要なオプションを渡す！
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // エミュレータ設定コード (デバッグモード時のみ)
+  if (kDebugMode) {
+    await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+    FirebaseFunctions.instanceFor(region: 'asia-northeast1')
+        .useFunctionsEmulator('localhost', 5001);
+  }
+
+  runApp(const MyApp()); // ProviderScope が抜けているかもしれませんが、まずは起動優先
 }
+
+// void main() {
+//   runApp(const MyApp());
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

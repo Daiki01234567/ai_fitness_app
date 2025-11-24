@@ -11,14 +11,27 @@ flutter_app/ios/.symlinks/
 # Firebase
 functions/node_modules/
 functions/lib/
+node_modules/
 .firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+storage-debug.log
+firebase-export-*/
 
 # Secrets
 *.env
 *.env.local
+.env
+.env.development
+.env.staging
+.env.production
 firebase-adminsdk-*.json
 google-services.json
 GoogleService-Info.plist
+service-account-*.json
 
 # IDE
 .idea/

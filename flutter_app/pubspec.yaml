@@ -35,6 +35,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.0
+  cloud_functions: ^5.1.4
+
+  flutter_riverpod: ^2.4.9
+  freezed_annotation: ^2.4.1
+  google_sign_in: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -45,6 +54,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  build_runner: ^2.4.7           # コード生成を実行するツール
+  custom_lint: ^0.5.8            # Freezedを正しく使うためのリンター (推奨)
+  freezed: ^2.4.6                # Freezedのコード生成用ツール
+  riverpod_generator: ^2.3.9     # Riverpodのコード生成用ツール (Providerを定義する場合)
+  riverpod_lint: ^2.3.7          # Riverpod専用のリンター (推奨)
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
