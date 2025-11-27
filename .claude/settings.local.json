@@ -3,22 +3,37 @@
     "allow": [
       "Bash(cat:*)",
       "Bash(tree:*)",
-      "Bash(dir:*)",
       "Bash(npm test)",
       "Bash(npm test:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__list_dir",
+      "Bash(powershell -Command:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(npm run lint:*)",
+      "Bash(flutter pub run build_runner build:*)",
+      "Bash(flutter test:*)"
     ],
     "deny": [
       "Bash(rm:*)",
       "Bash(rm -rf:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "playwright",
     "github",
     "firebase",
     "gcp",
     "filesystem",
-    "mcp-server-commands"
+    "mcp-server-commands",
+    "context7",
+    "serena"
   ]
 }

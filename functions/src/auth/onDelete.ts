@@ -6,12 +6,14 @@
  * - BigQueryへの削除ログ記録
  * - 削除通知
  *
- * @version 1.0.0
- * @date 2025-11-24
+ * @version 2.0.0
+ * @date 2025-11-26
  */
 
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { logger } from "firebase-functions";
+import { auth, pubsub } from "firebase-functions/v1";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // Initialize admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -24,13 +26,12 @@ const db = admin.firestore();
  * ユーザーアカウント削除時のトリガー関数
  * Firebase Authでユーザーが削除されたときに自動実行される
  */
-export const onUserDelete = functions
-  .region("asia-northeast1")  // 東京リージョン
-  .auth.user()
+export const onUserDelete = auth
+  .user()
   .onDelete(async (user) => {
     const { uid, email, phoneNumber } = user;
 
-    functions.logger.info(`Deleting user data for UID: ${uid}`, {
+    logger.info(`Deleting user data for UID: ${uid}`, {
       email,
       phoneNumber,
     });
@@ -85,8 +86,8 @@ export const onUserDelete = functions
       for (const doc of deletionRequestsSnapshot.docs) {
         batch.update(doc.ref, {
           status: "completed",
-          completedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          completedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       }
 
@@ -100,7 +101,7 @@ export const onUserDelete = functions
         userId: uid,
         email: email || null,
         phoneNumber: phoneNumber || null,
-        deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+        deletedAt: FieldValue.serverTimestamp(),
         deletedBy: "system",  // システムによる自動削除
         reason: "user_requested",  // ユーザーリクエストによる削除
         dataCategories: [
@@ -122,23 +123,23 @@ export const onUserDelete = functions
 
         if (files.length > 0) {
           await Promise.all(files.map((file) => file.delete()));
-          functions.logger.info(`Deleted ${files.length} files for user ${uid}`);
+          logger.info(`Deleted ${files.length} files for user ${uid}`);
         }
       } catch (storageError) {
-        functions.logger.error("Failed to delete storage files", storageError);
+        logger.error("Failed to delete storage files", storageError);
         // ストレージエラーは無視して続行
       }
 
       // 9. BigQueryへの削除記録（GDPR監査用）- 将来実装
       // await recordDeletionToBigQuery(uid, email);
 
-      functions.logger.info(`Successfully deleted all data for UID: ${uid}`);
+      logger.info(`Successfully deleted all data for UID: ${uid}`);
 
       // 10. 削除完了通知（管理者向け）- 将来実装
       // await notifyAdminOfDeletion(uid, email);
 
     } catch (error) {
-      functions.logger.error(`Failed to delete user data for UID: ${uid}`, error);
+      logger.error(`Failed to delete user data for UID: ${uid}`, error);
 
       // エラー時は手動介入が必要
       // BigQuerySyncFailuresコレクションに記録
@@ -148,16 +149,13 @@ export const onUserDelete = functions
         error: error instanceof Error ? error.message : String(error),
         retryCount: 0,
         maxRetries: 3,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         lastRetryAt: null,
         status: "pending",
       });
 
       // エラーを再スロー
-      throw new functions.https.HttpsError(
-        "internal",
-        `Failed to delete user data: ${error}`
-      );
+      throw error;
     }
   });
 
@@ -165,15 +163,14 @@ export const onUserDelete = functions
  * 削除猶予期間（30日）経過後の実際の削除処理
  * スケジュール関数から呼び出される
  */
-export const processScheduledDeletions = functions
-  .region("asia-northeast1")
-  .pubsub.schedule("every day 00:00")  // 毎日午前0時に実行
+export const processScheduledDeletions = pubsub
+  .schedule("every day 00:00")  // 毎日午前0時に実行
   .timeZone("Asia/Tokyo")
-  .onRun(async (context) => {
-    functions.logger.info("Processing scheduled deletions");
+  .onRun(async () => {
+    logger.info("Processing scheduled deletions");
 
     try {
-      const now = admin.firestore.Timestamp.now();
+      const now = Timestamp.now();
 
       // 削除予定日を過ぎたユーザーを取得
       const deletionSnapshot = await db
@@ -184,25 +181,24 @@ export const processScheduledDeletions = functions
         .get();
 
       if (deletionSnapshot.empty) {
-        functions.logger.info("No scheduled deletions to process");
+        logger.info("No scheduled deletions to process");
         return;
       }
 
-      functions.logger.info(`Found ${deletionSnapshot.size} users to delete`);
+      logger.info(`Found ${deletionSnapshot.size} users to delete`);
 
       // 各ユーザーを削除
       const deletePromises = deletionSnapshot.docs.map(async (doc) => {
-        const userData = doc.data();
         const uid = doc.id;
 
         try {
           // Firebase Authからユーザーを削除
           await admin.auth().deleteUser(uid);
-          functions.logger.info(`Deleted auth user: ${uid}`);
+          logger.info(`Deleted auth user: ${uid}`);
 
           // onDeleteトリガーが自動的にFirestoreデータをクリーンアップする
         } catch (error) {
-          functions.logger.error(`Failed to delete user ${uid}:`, error);
+          logger.error(`Failed to delete user ${uid}:`, error);
 
           // エラーを記録
           await db.collection("bigquerySyncFailures").add({
@@ -211,7 +207,7 @@ export const processScheduledDeletions = functions
             error: error instanceof Error ? error.message : String(error),
             retryCount: 0,
             maxRetries: 3,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
             lastRetryAt: null,
             status: "pending",
           });
@@ -220,9 +216,9 @@ export const processScheduledDeletions = functions
 
       await Promise.allSettled(deletePromises);
 
-      functions.logger.info("Completed processing scheduled deletions");
+      logger.info("Completed processing scheduled deletions");
     } catch (error) {
-      functions.logger.error("Error processing scheduled deletions:", error);
+      logger.error("Error processing scheduled deletions:", error);
       throw error;
     }
   });

@@ -3,8 +3,8 @@
 /// 認証状態の管理とユーザーセッション処理
 /// Riverpodを使用した状態管理実装
 ///
-/// @version 1.0.0
-/// @date 2025-11-24
+/// @version 1.1.0
+/// @date 2025-11-26
 
 import 'dart:async';
 
@@ -12,6 +12,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+import 'auth_service.dart';
 
 part 'auth_state_notifier.freezed.dart';
 
@@ -49,15 +52,24 @@ class AuthState with _$AuthState {
 class AuthStateNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final GoogleSignIn _googleSignIn;
   StreamSubscription<User?>? _authStateSubscription;
   StreamSubscription<DocumentSnapshot>? _userDataSubscription;
   Timer? _tokenRefreshTimer;
 
+  /// Current Terms of Service version
+  static const String tosVersion = '3.2';
+
+  /// Current Privacy Policy version
+  static const String ppVersion = '3.1';
+
   AuthStateNotifier({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
+    GoogleSignIn? googleSignIn,
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance,
+        _googleSignIn = googleSignIn ?? GoogleSignIn(),
         super(const AuthState()) {
     // 認証状態の監視を開始
     _initAuthStateListener();
@@ -377,12 +389,301 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   /// サインアウト
   Future<void> signOut() async {
     try {
+      // Sign out from Google if signed in
+      await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
       state = state.copyWith(
         error: 'サインアウトエラー: $e',
       );
     }
+  }
+
+  /// Googleアカウントでサインイン
+  ///
+  /// Based on FR-015: Google/Apple認証
+  /// - OAuth 2.0認証フロー
+  /// - 新規ユーザーの場合はFirestoreにユーザードキュメントを作成
+  /// - 同意状態の記録
+  Future<void> signInWithGoogle({
+    bool tosAccepted = true,
+    bool ppAccepted = true,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      // Start Google Sign In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+
+      // Get authentication details
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Create Firebase credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
+
+      if (user == null) {
+        throw Exception('Firebase認証に失敗しました');
+      }
+
+      // Check if this is a new user or existing user
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        // Create user document for new users
+        await _createSocialLoginUserDocument(
+          user: user,
+          provider: 'google',
+          tosAccepted: tosAccepted,
+          ppAccepted: ppAccepted,
+        );
+      } else {
+        // Update last login for existing users
+        await _updateLastLogin(user.uid);
+      }
+
+      // Note: The auth state listener will handle the rest of the sign-in flow
+
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          errorMessage = 'このメールアドレスは別の方法で登録されています';
+          break;
+        case 'invalid-credential':
+          errorMessage = '認証情報が無効です';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Google認証が無効になっています';
+          break;
+        case 'user-disabled':
+          errorMessage = 'このアカウントは無効化されています';
+          break;
+        default:
+          errorMessage = 'Googleログインに失敗しました: ${e.message}';
+      }
+
+      state = state.copyWith(
+        error: errorMessage,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Googleログインエラー: $e',
+        isLoading: false,
+      );
+    }
+  }
+
+  /// Apple IDでサインイン
+  ///
+  /// Based on FR-015: Google/Apple認証
+  /// - Apple Sign In使用
+  /// - 新規ユーザーの場合はFirestoreにユーザードキュメントを作成
+  Future<void> signInWithApple({
+    bool tosAccepted = true,
+    bool ppAccepted = true,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      // Create Apple auth provider
+      final appleProvider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+
+      // Sign in with Apple
+      final userCredential = await _auth.signInWithProvider(appleProvider);
+      final user = userCredential.user;
+
+      if (user == null) {
+        throw Exception('Apple認証に失敗しました');
+      }
+
+      // Check if this is a new user
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        // Create user document for new users
+        await _createSocialLoginUserDocument(
+          user: user,
+          provider: 'apple',
+          tosAccepted: tosAccepted,
+          ppAccepted: ppAccepted,
+        );
+      } else {
+        // Update last login for existing users
+        await _updateLastLogin(user.uid);
+      }
+
+      // Note: The auth state listener will handle the rest of the sign-in flow
+
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          errorMessage = 'このメールアドレスは別の方法で登録されています';
+          break;
+        case 'invalid-credential':
+          errorMessage = '認証情報が無効です';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Apple認証が無効になっています';
+          break;
+        case 'user-disabled':
+          errorMessage = 'このアカウントは無効化されています';
+          break;
+        case 'user-not-found':
+          errorMessage = 'ユーザーが見つかりません';
+          break;
+        default:
+          errorMessage = 'Apple ログインに失敗しました: ${e.message}';
+      }
+
+      state = state.copyWith(
+        error: errorMessage,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Appleログインエラー: $e',
+        isLoading: false,
+      );
+    }
+  }
+
+  /// ソーシャルログイン用のユーザードキュメントを作成
+  ///
+  /// Based on Firestoreデータベース設計書 Section 4 (Users コレクション)
+  Future<void> _createSocialLoginUserDocument({
+    required User user,
+    required String provider,
+    required bool tosAccepted,
+    required bool ppAccepted,
+  }) async {
+    final now = FieldValue.serverTimestamp();
+
+    final userData = {
+      // Basic info (from Firebase Auth)
+      'userId': user.uid,
+      'email': user.email ?? '',
+      'displayName': user.displayName,
+      'photoURL': user.photoURL,
+
+      // Profile (empty for social login - user can fill in later)
+      'profile': {
+        'height': null,
+        'weight': null,
+        'birthday': null,
+        'gender': null,
+        'fitnessLevel': null,
+        'goals': <String>[],
+      },
+
+      // Consent management (GDPR compliance)
+      'tosAccepted': tosAccepted,
+      'tosAcceptedAt': tosAccepted ? now : null,
+      'tosVersion': tosAccepted ? tosVersion : null,
+      'ppAccepted': ppAccepted,
+      'ppAcceptedAt': ppAccepted ? now : null,
+      'ppVersion': ppAccepted ? ppVersion : null,
+
+      // Account status
+      'isActive': true,
+      'deletionScheduled': false,
+      'deletionScheduledAt': null,
+      'scheduledDeletionDate': null,
+
+      // Force logout
+      'forceLogout': false,
+      'forceLogoutAt': null,
+
+      // Daily usage (Phase 3)
+      'dailyUsageCount': 0,
+      'lastUsageResetDate': null,
+
+      // Subscription
+      'subscriptionStatus': 'free',
+      'subscriptionPlan': null,
+      'subscriptionStartDate': null,
+      'subscriptionEndDate': null,
+
+      // System
+      'createdAt': now,
+      'updatedAt': now,
+      'lastLoginAt': now,
+
+      // Data retention
+      'dataRetentionDate': null,
+
+      // Auth provider info
+      'authProvider': provider,
+    };
+
+    // Create user document
+    await _firestore.collection('users').doc(user.uid).set(userData);
+
+    // Create consent records for audit trail
+    await _createConsentRecord(
+      userId: user.uid,
+      documentType: 'tos',
+      documentVersion: tosVersion,
+      action: tosAccepted ? 'accept' : 'decline',
+    );
+
+    await _createConsentRecord(
+      userId: user.uid,
+      documentType: 'pp',
+      documentVersion: ppVersion,
+      action: ppAccepted ? 'accept' : 'decline',
+    );
+  }
+
+  /// 同意記録を作成（監査ログ用）
+  Future<void> _createConsentRecord({
+    required String userId,
+    required String documentType,
+    required String documentVersion,
+    required String action,
+  }) async {
+    await _firestore.collection('consents').add({
+      'userId': userId,
+      'documentType': documentType,
+      'documentVersion': documentVersion,
+      'action': action,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// 最終ログイン日時を更新
+  Future<void> _updateLastLogin(String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'lastLoginAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // User document might not exist (legacy user), ignore error
+      print('Failed to update last login: $e');
+    }
+  }
+
+  /// エラーをクリア
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 
   /// アカウント削除リクエスト
@@ -508,4 +809,9 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 /// メール確認済みチェックプロバイダー
 final isEmailVerifiedProvider = Provider<bool>((ref) {
   return ref.watch(authStateProvider).isEmailVerified;
+});
+
+/// 認証サービスプロバイダー
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
 });

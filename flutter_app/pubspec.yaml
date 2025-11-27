@@ -30,10 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  intl: ^0.20.2
 
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
@@ -43,6 +46,7 @@ dependencies:
   flutter_riverpod: ^2.4.9
   freezed_annotation: ^2.4.1
   google_sign_in: ^6.2.1
+  go_router: ^14.6.2
 
 dev_dependencies:
   flutter_test:
@@ -56,10 +60,14 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
   build_runner: ^2.4.7           # コード生成を実行するツール
-  custom_lint: ^0.5.8            # Freezedを正しく使うためのリンター (推奨)
+  custom_lint: ^0.7.3            # Freezedを正しく使うためのリンター (推奨)
   freezed: ^2.4.6                # Freezedのコード生成用ツール
   riverpod_generator: ^2.3.9     # Riverpodのコード生成用ツール (Providerを定義する場合)
   riverpod_lint: ^2.3.7          # Riverpod専用のリンター (推奨)
+
+  # Testing dependencies
+  mockito: ^5.4.4                # モックライブラリ
+  fake_cloud_firestore: ^3.1.0   # Firestore用フェイク実装
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,5 +1,5 @@
 {
-  "name": "ai-fitness-app",
+  "name": "ai_fitness_app",
   "version": "1.0.0",
   "description": "AIを活用したフィットネスアプリ - MediaPipeによるリアルタイム姿勢検出",
   "main": "index.js",
@@ -11,16 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Daiki01234567/ai-fitness.git"
+    "url": "git+https://github.com/Daiki01234567/ai_fitness_app.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Daiki01234567/ai-fitness/issues"
+    "url": "https://github.com/Daiki01234567/ai_fitness_app/issues"
   },
-  "homepage": "https://github.com/Daiki01234567/ai-fitness#readme",
+  "homepage": "https://github.com/Daiki01234567/ai_fitness_app#readme",
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",
     "@types/jest": "^30.0.0",

@@ -24,8 +24,8 @@
     "singleProjectMode": true
   },
   "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+    "rules": "firebase\\firestore.rules",
+    "indexes": "firebase\\firestore.indexes.json"
   },
   "functions": [
     {
@@ -33,11 +33,11 @@
       "codebase": "default",
       "disallowLegacyRuntimeConfig": true,
       "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
+        "firebase\\node_modules",
+        "firebase\\.git",
+        "firebase\\firebase-debug.log",
+        "firebase\\firebase-debug.*.log",
+        "firebase\\*.local"
       ],
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run lint",
@@ -46,6 +46,6 @@
     }
   ],
   "storage": {
-    "rules": "storage.rules"
+    "rules": "firebase\\storage.rules"
   }
 }

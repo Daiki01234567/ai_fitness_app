@@ -434,4 +434,49 @@ class AuthService {
       throw Exception(errorMessage);
     }
   }
+
+  /// ユーザープロフィールを更新（Cloud Functions呼び出し）
+  ///
+  /// Step 2の登録情報やプロフィール設定画面からFirestoreに保存
+  ///
+  /// [profileData] には以下のフィールドを含めることができる:
+  /// - displayName: 表示名
+  /// - dateOfBirth: 生年月日（ISO 8601形式: YYYY-MM-DD）
+  /// - gender: 性別（male, female, other, prefer_not_to_say）
+  /// - height: 身長（cm）
+  /// - weight: 体重（kg）
+  /// - fitnessGoal: フィットネス目標
+  /// - fitnessLevel: フィットネスレベル（beginner, intermediate, advanced）
+  Future<Map<String, dynamic>> updateProfile({
+    required Map<String, dynamic> profileData,
+  }) async {
+    try {
+      final callable = _functions.httpsCallable('updateProfile');
+      final result = await callable.call(profileData);
+
+      return Map<String, dynamic>.from(result.data as Map);
+    } on FirebaseFunctionsException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'unauthenticated':
+          errorMessage = '認証が必要です';
+          break;
+        case 'not-found':
+          errorMessage = 'ユーザーが見つかりません';
+          break;
+        case 'invalid-argument':
+          // Cloud Functionからの詳細エラーメッセージを使用
+          errorMessage = e.message ?? '入力内容に誤りがあります';
+          break;
+        case 'failed-precondition':
+          errorMessage = e.message ?? 'プロフィールを更新できません';
+          break;
+        default:
+          errorMessage = 'プロフィール更新エラー: ${e.message}';
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('プロフィール更新エラー: $e');
+    }
+  }
 }

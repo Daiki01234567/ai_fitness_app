@@ -5,13 +5,32 @@
     "moduleResolution": "nodenext",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
     "outDir": "lib",
+    "rootDir": "src",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017"
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true
   },
   "compileOnSave": true,
   "include": [
-    "src"
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib"
   ]
 }

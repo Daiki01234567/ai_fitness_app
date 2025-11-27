@@ -6,12 +6,15 @@
  * - デフォルト値の設定
  * - 同意管理の初期化
  *
- * @version 1.0.0
- * @date 2025-11-24
+ * @version 2.0.0
+ * @date 2025-11-26
  */
 
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { logger } from "firebase-functions";
+import { auth } from "firebase-functions/v1";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 // Initialize admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -24,13 +27,14 @@ const db = admin.firestore();
  * 新規ユーザー作成時のトリガー関数
  * Firebase Authでユーザーが作成されたときに自動実行される
  */
-export const onUserCreate = functions
-  .region("asia-northeast1")  // 東京リージョン
-  .auth.user()
+export const onUserCreate = auth
+  .user()
   .onCreate(async (user) => {
     const { uid, email, phoneNumber, displayName, photoURL } = user;
 
-    functions.logger.info(`Creating user document for UID: ${uid}`, {
+    // DEBUG: Log function start
+    console.log("onCreate triggered for user:", uid);
+    logger.info(`Creating user document for UID: ${uid}`, {
       email,
       phoneNumber,
     });
@@ -43,7 +47,7 @@ export const onUserCreate = functions
 
         // すでに存在する場合はスキップ（重複実行対策）
         if (userDoc.exists) {
-          functions.logger.warn(`User document already exists for UID: ${uid}`);
+          logger.warn(`User document already exists for UID: ${uid}`);
           return;
         }
 
@@ -85,7 +89,7 @@ export const onUserCreate = functions
             birthday: null,
             gender: null,
             fitnessLevel: null,
-            goals: []
+            goals: [],
           },
 
           // 統計情報
@@ -94,28 +98,30 @@ export const onUserCreate = functions
             totalExerciseTime: 0,
             lastSessionDate: null,
             streakDays: 0,
-            bestStreak: 0
+            bestStreak: 0,
           },
 
           // プラン情報（デフォルト: 無料プラン）
           subscription: {
             plan: "free",
             status: "active",
-            startDate: admin.firestore.FieldValue.serverTimestamp(),
+            startDate: FieldValue.serverTimestamp(),
             endDate: null,
-            autoRenew: false
+            autoRenew: false,
           },
 
           // 使用量制限（無料プラン）
           dailyUsageCount: 0,
-          lastUsageResetDate: admin.firestore.FieldValue.serverTimestamp(),
+          lastUsageResetDate: FieldValue.serverTimestamp(),
 
           // メタデータ
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          lastLoginAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          lastLoginAt: FieldValue.serverTimestamp(),
         };
 
+        // DEBUG: Log before document creation
+        console.log("Creating user document...");
         transaction.set(userRef, userData);
 
         // 初期設定ドキュメントの作成（settings サブコレクション）
@@ -127,13 +133,13 @@ export const onUserCreate = functions
               enabled: false,
               dailyReminder: false,
               weeklyReport: false,
-              achievements: false
+              achievements: false,
             },
             push: {
               enabled: false,
               dailyReminder: false,
-              achievements: false
-            }
+              achievements: false,
+            },
           },
 
           // アプリ設定
@@ -141,7 +147,7 @@ export const onUserCreate = functions
             theme: "system",  // light, dark, system
             language: "ja",
             soundEnabled: true,
-            hapticEnabled: true
+            hapticEnabled: true,
           },
 
           // エクササイズ設定
@@ -149,11 +155,11 @@ export const onUserCreate = functions
             restTimeBetweenSets: 60,  // 秒
             countdownBeforeStart: 3,  // 秒
             autoNextExercise: false,
-            showFormTips: true
+            showFormTips: true,
           },
 
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         };
 
         transaction.set(settingsRef, settingsData);
@@ -168,7 +174,7 @@ export const onUserCreate = functions
           version: "1.0.0",
           ipAddress: null,  // Cloud Functions からは取得できない
           userAgent: null,
-          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          timestamp: FieldValue.serverTimestamp(),
         };
 
         transaction.set(consentRef, consentData);
@@ -177,15 +183,16 @@ export const onUserCreate = functions
       // ウェルカムメール送信の準備（将来実装）
       // await sendWelcomeEmail(email);
 
-      functions.logger.info(`Successfully created user document for UID: ${uid}`);
+      // DEBUG: Log success
+      console.log("User document created successfully");
+      logger.info(`Successfully created user document for UID: ${uid}`);
     } catch (error) {
-      functions.logger.error(`Failed to create user document for UID: ${uid}`, error);
+      // DEBUG: Log error
+      console.error("Error creating user document:", error);
+      logger.error(`Failed to create user document for UID: ${uid}`, error);
 
       // エラーを再スロー（リトライのため）
-      throw new functions.https.HttpsError(
-        "internal",
-        `Failed to create user document: ${error}`
-      );
+      throw error;
     }
   });
 
@@ -193,18 +200,24 @@ export const onUserCreate = functions
  * メールアドレス確認完了時の処理
  * カスタムクレームは設定しない（メール確認はデフォルト動作）
  */
-export const onEmailVerified = functions
-  .region("asia-northeast1")
-  .firestore
-  .document("users/{userId}")
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after = change.after.data();
-    const { userId } = context.params;
+export const onEmailVerified = onDocumentUpdated(
+  {
+    region: "asia-northeast1",
+    document: "users/{userId}",
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+
+    if (!before || !after) {
+      return;
+    }
+
+    const userId = event.params.userId;
 
     // メール確認状態の変更を検知
     if (!before.emailVerified && after.emailVerified) {
-      functions.logger.info(`Email verified for user: ${userId}`);
+      logger.info(`Email verified for user: ${userId}`);
 
       try {
         // FirebaseユーザーのemailVerifiedフラグを更新
@@ -215,7 +228,8 @@ export const onEmailVerified = functions
           });
         }
       } catch (error) {
-        functions.logger.error(`Failed to update email verification status`, error);
+        logger.error("Failed to update email verification status", error);
       }
     }
-  });
+  },
+);

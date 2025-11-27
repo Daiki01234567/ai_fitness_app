@@ -317,6 +317,8 @@ interface UserDocument {
     weight: number | null;           // 体重（kg、オプション）
     birthday: Timestamp | null;      // 生年月日（オプション）
     gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null;  // 性別（オプション）
+    fitnessLevel: 'beginner' | 'intermediate' | 'advanced' | null;  // フィットネスレベル（オプション）
+    goals: string[];                 // 目標リスト（オプション、空配列可）
   };
   
   // === 同意管理（GDPR対応） ===
@@ -381,12 +383,16 @@ interface UserDocument {
 | `profile.weight` | number \| null | ❌ | 体重（kg） | 30 ≤ weight ≤ 300 |
 | `profile.birthday` | Timestamp \| null | ❌ | 生年月日 | 13歳以上 |
 | `profile.gender` | string \| null | ❌ | 性別 | 'male', 'female', 'other', 'prefer_not_to_say' |
+| `profile.fitnessLevel` | string \| null | ❌ | フィットネスレベル | 'beginner', 'intermediate', 'advanced' |
+| `profile.goals` | string[] | ❌ | 目標リスト | 各要素最大100文字、最大5件 |
 
 **実装上の注意点**:
 - 全てのプロフィール情報は**オプション**（将来の拡張用）
 - 身長・体重は**フォーム確認補助の精度向上**に使用可能（Phase 3以降）
 - 生年月日は**13歳未満の利用を防ぐ**ために使用
 - 性別情報は**統計分析用**（仮名化後にBigQueryへ）
+- フィットネスレベルは**推奨エクササイズ強度の調整**に使用
+- 目標は**モチベーション管理とパーソナライズ**に使用
 
 #### 4.3.3 同意管理（GDPR対応）
 

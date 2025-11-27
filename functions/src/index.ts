@@ -1,49 +1,84 @@
 /**
- * Import function triggers from their respective submodules:
+ * AI Fitness App - Cloud Functions Entry Point
  *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
+ * This module exports all Cloud Functions for the AI Fitness App.
+ * Functions are organized by domain:
+ * - auth: Authentication and user lifecycle
+ * - api: HTTP callable functions
+ * - triggers: Firestore triggers
+ * - scheduled: Scheduled maintenance tasks
  *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * @see https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions";
 import * as admin from "firebase-admin";
+import { setGlobalOptions } from "firebase-functions/v2";
 
 // Initialize Firebase Admin SDK
-admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+/**
+ * Global Function Configuration
+ *
+ * These settings apply to all functions unless overridden:
+ * - region: asia-northeast1 (Tokyo) for Japan market
+ * - maxInstances: 10 for cost control
+ * - memory: 256MB default
+ * - timeoutSeconds: 60 seconds
+ * - minInstances: 0 for cost optimization (cold start acceptable)
+ *
+ * Critical functions (auth) may override with minInstances: 1
+ */
+setGlobalOptions({
+  region: "asia-northeast1",
+  maxInstances: 10,
+  memory: "256MiB",
+  timeoutSeconds: 60,
+  minInstances: 0,
+});
 
 // ========================================
-// Auth Functions
+// Auth Functions (User Lifecycle)
 // ========================================
+// - auth_onCreate: Create user document on signup
+// - auth_onDelete: Cleanup on account deletion
+// - auth_setCustomClaims: Set custom claims (admin only)
 export * from "./auth";
 
 // ========================================
-// API Functions (将来実装)
+// API Functions (HTTP Callable)
 // ========================================
-// export * from "./api";
+// - user_updateProfile: Update user profile
+// TODO: Implement remaining:
+// - user_getProfile
+// - training_createSession, training_getSessions
+// - gdpr_requestDataExport, gdpr_requestAccountDeletion
+// - settings_get, settings_update
+// - subscription_getStatus, subscription_verifyPurchase
+export * from "./api";
 
 // ========================================
-// Scheduled Functions (将来実装)
+// Firestore Triggers
 // ========================================
+// Uncomment when implementing:
+// - triggers_onSessionComplete: Sync to BigQuery
+// - triggers_onConsentChange: Handle consent updates
+// export * from "./triggers";
+
+// ========================================
+// Scheduled Functions
+// ========================================
+// Uncomment when implementing:
+// - scheduled_processDeletedUsers: 30-day deletion cleanup
+// - scheduled_cleanupRateLimits: Remove expired rate limit records
+// - scheduled_processDLQ: Retry failed BigQuery syncs
 // export * from "./scheduled";
 
 // ========================================
-// Webhook Functions (将来実装)
+// Webhook Handlers
 // ========================================
+// Uncomment when implementing:
+// - webhook_revenueCat: Handle subscription events
 // export * from "./webhooks";

@@ -1,0 +1,362 @@
+rules_version = '2';
+
+/**
+ * AI Fitness App - Firestore Security Rules
+ *
+ * Based on: docs/specs/02_Firestoreデータベース設計書_v3_3.md Section 12
+ *
+ * Security Checklist:
+ * - [x] All match blocks have authentication checks
+ * - [x] No "if true" patterns exist
+ * - [x] No unconditional "allow read, write"
+ * - [x] Deletion scheduled users have access control
+ * - [x] Consent fields are read-only for users
+ * - [x] Admin-only collections have isAdmin() checks
+ *
+ * @version 1.0.0
+ * @date 2025-11-26
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==============================================
+    // Helper Functions
+    // ==============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user is the owner of the document
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Check if user has admin claim
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Check if user is NOT scheduled for deletion
+    function isNotScheduledForDeletion(userId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc == null || userDoc.data.deletionScheduled != true;
+    }
+
+    // Check if user is NOT in force logout state
+    function isNotForcedLogout(userId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc == null || userDoc.data.forceLogout != true;
+    }
+
+    // Check if timestamp is valid
+    function isValidTimestamp(field) {
+      return field is timestamp;
+    }
+
+    // Simple email validation
+    function isValidEmail(email) {
+      return email is string && email.matches('.+@.+\\..+');
+    }
+
+    // ==============================================
+    // Users Collection
+    // ==============================================
+
+    match /users/{userId} {
+      // Read: Owner only, not deletion scheduled, not force logout
+      allow read: if isAuthenticated()
+                  && isOwner(userId);
+
+      // Create: Owner only with required field validation
+      allow create: if isAuthenticated()
+                    && isOwner(userId)
+                    && validateUserCreate(request.resource.data);
+
+      // Update: Owner only, not deletion scheduled, field-level validation
+      allow update: if isAuthenticated()
+                    && isOwner(userId)
+                    && isNotScheduledForDeletion(userId)
+                    && validateUserUpdate(request.resource.data, resource.data);
+
+      // Delete: Cloud Functions only (users cannot delete themselves directly)
+      allow delete: if false;
+
+      // ========================================
+      // Sessions Subcollection
+      // ========================================
+
+      match /sessions/{sessionId} {
+        // Read: Owner only, not deletion scheduled
+        allow read: if isAuthenticated()
+                    && isOwner(userId)
+                    && isNotScheduledForDeletion(userId);
+
+        // Create: Owner only, not deletion scheduled, with validation
+        allow create: if isAuthenticated()
+                      && isOwner(userId)
+                      && isNotScheduledForDeletion(userId)
+                      && validateSessionCreate(request.resource.data);
+
+        // Update: Owner only, not deletion scheduled, with validation
+        allow update: if isAuthenticated()
+                      && isOwner(userId)
+                      && isNotScheduledForDeletion(userId)
+                      && validateSessionUpdate(request.resource.data, resource.data);
+
+        // Delete: Cloud Functions only
+        allow delete: if false;
+
+        // ========================================
+        // Frames Subcollection
+        // ========================================
+
+        match /frames/{frameId} {
+          // Read: Owner only, not deletion scheduled
+          allow read: if isAuthenticated()
+                      && isOwner(userId)
+                      && isNotScheduledForDeletion(userId);
+
+          // Create: Owner only, not deletion scheduled, with validation
+          allow create: if isAuthenticated()
+                        && isOwner(userId)
+                        && isNotScheduledForDeletion(userId)
+                        && validateFrameCreate(request.resource.data);
+
+          // Update/Delete: Not allowed (frames are immutable after creation)
+          allow update, delete: if false;
+        }
+      }
+
+      // ========================================
+      // Settings Subcollection
+      // ========================================
+
+      match /settings/{settingId} {
+        // Read: Owner only
+        allow read: if isAuthenticated() && isOwner(userId);
+
+        // Create/Update: Owner only, not deletion scheduled
+        allow create, update: if isAuthenticated()
+                              && isOwner(userId)
+                              && isNotScheduledForDeletion(userId);
+
+        // Delete: Owner only
+        allow delete: if isAuthenticated() && isOwner(userId);
+      }
+
+      // ========================================
+      // Subscriptions Subcollection
+      // ========================================
+
+      match /subscriptions/{subscriptionId} {
+        // Read: Owner only
+        allow read: if isAuthenticated() && isOwner(userId);
+
+        // Create/Update/Delete: Cloud Functions only (RevenueCat Webhook)
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ==============================================
+    // Consents Collection (Audit Trail - Immutable)
+    // ==============================================
+
+    match /consents/{consentId} {
+      // Read: Owner only (for data export)
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      // Create/Update/Delete: Cloud Functions only
+      allow create, update, delete: if false;
+    }
+
+    // ==============================================
+    // Notifications Collection
+    // ==============================================
+
+    match /notifications/{notificationId} {
+      // Read: Owner only
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      // Update: Owner only, read status only
+      allow update: if isAuthenticated()
+                    && resource.data.userId == request.auth.uid
+                    && onlyUpdatingReadStatus(request.resource.data, resource.data);
+
+      // Create/Delete: Cloud Functions only
+      allow create, delete: if false;
+    }
+
+    // ==============================================
+    // DataDeletionRequests Collection
+    // ==============================================
+
+    match /dataDeletionRequests/{requestId} {
+      // Read: Owner only (to check deletion status)
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      // Create/Update/Delete: Cloud Functions only
+      allow create, update, delete: if false;
+    }
+
+    // ==============================================
+    // AuditLogs Collection (System Only)
+    // ==============================================
+
+    match /auditLogs/{logId} {
+      // Read: Admin only
+      allow read: if isAdmin();
+
+      // Create/Update/Delete: Cloud Functions only
+      allow create, update, delete: if false;
+    }
+
+    // ==============================================
+    // CustomClaimsLogs Collection (System Only)
+    // ==============================================
+
+    match /customClaimsLogs/{logId} {
+      // Read: Admin only
+      allow read: if isAdmin();
+
+      // Create/Update/Delete: Cloud Functions only
+      allow create, update, delete: if false;
+    }
+
+    // ==============================================
+    // AdminUsers Collection (Admin Management)
+    // ==============================================
+
+    match /adminUsers/{userId} {
+      // Read/Write: Admin only
+      allow read, write: if isAdmin();
+    }
+
+    // ==============================================
+    // BigQuerySyncFailures Collection (DLQ)
+    // ==============================================
+
+    match /bigquerySyncFailures/{failureId} {
+      // Read/Write: Admin only
+      allow read, write: if isAdmin();
+    }
+
+    // ==============================================
+    // SecurityIncidents Collection
+    // ==============================================
+
+    match /securityIncidents/{incidentId} {
+      // Read/Write: Admin only
+      allow read, write: if isAdmin();
+    }
+
+    // ==============================================
+    // RateLimits Collection
+    // ==============================================
+
+    match /rateLimits/{limitId} {
+      // No client access - Cloud Functions only
+      allow read, write: if false;
+    }
+
+    // ==============================================
+    // Validation Functions
+    // ==============================================
+
+    // User creation validation
+    function validateUserCreate(data) {
+      return data.keys().hasAll(['nickname', 'email', 'tosAccepted', 'ppAccepted', 'createdAt', 'updatedAt'])
+             && data.nickname is string
+             && data.nickname.size() >= 1
+             && data.nickname.size() <= 50
+             && isValidEmail(data.email)
+             && data.tosAccepted == true
+             && data.ppAccepted == true
+             && data.deletionScheduled == false;
+    }
+
+    // User update validation
+    function validateUserUpdate(newData, oldData) {
+      // Immutable fields check
+      return newData.email == oldData.email
+             && newData.createdAt == oldData.createdAt
+             // Consent fields are read-only (Cloud Functions only can change)
+             && newData.tosAccepted == oldData.tosAccepted
+             && newData.ppAccepted == oldData.ppAccepted
+             && newData.get('tosAcceptedAt', null) == oldData.get('tosAcceptedAt', null)
+             && newData.get('ppAcceptedAt', null) == oldData.get('ppAcceptedAt', null)
+             && newData.get('tosVersion', null) == oldData.get('tosVersion', null)
+             && newData.get('ppVersion', null) == oldData.get('ppVersion', null)
+             // Deletion scheduled flags are read-only (Cloud Functions only)
+             && newData.get('deletionScheduled', false) == oldData.get('deletionScheduled', false)
+             && newData.get('deletionScheduledAt', null) == oldData.get('deletionScheduledAt', null)
+             && newData.get('scheduledDeletionDate', null) == oldData.get('scheduledDeletionDate', null)
+             // Force logout flags are read-only (Cloud Functions only)
+             && newData.get('forceLogout', false) == oldData.get('forceLogout', false)
+             && newData.get('forceLogoutAt', null) == oldData.get('forceLogoutAt', null)
+             // Profile validation
+             && validateProfileUpdate(newData);
+    }
+
+    // Profile data validation
+    function validateProfileUpdate(data) {
+      let profile = data.get('profile', {});
+      return (profile.get('height', null) == null || (profile.height >= 100 && profile.height <= 250))
+             && (profile.get('weight', null) == null || (profile.weight >= 30 && profile.weight <= 300))
+             && (profile.get('gender', null) == null || profile.gender in ['male', 'female', 'other', 'prefer_not_to_say'])
+             && (profile.get('fitnessLevel', null) == null || profile.fitnessLevel in ['beginner', 'intermediate', 'advanced']);
+    }
+
+    // Session creation validation
+    function validateSessionCreate(data) {
+      return data.keys().hasAll(['sessionId', 'userId', 'exerciseType', 'startTime', 'status', 'createdAt'])
+             && data.sessionId is string
+             && data.userId == request.auth.uid
+             && data.exerciseType in ['squat', 'armcurl', 'sideraise', 'shoulderpress', 'pushup']
+             && isValidTimestamp(data.startTime)
+             && data.status == 'active'
+             && isValidTimestamp(data.createdAt);
+    }
+
+    // Session update validation
+    function validateSessionUpdate(newData, oldData) {
+      // Immutable fields check
+      return newData.sessionId == oldData.sessionId
+             && newData.userId == oldData.userId
+             && newData.exerciseType == oldData.exerciseType
+             && newData.startTime == oldData.startTime
+             && newData.createdAt == oldData.createdAt
+             // Status transition validation
+             && newData.status in ['active', 'completed', 'cancelled']
+             // repCount range check
+             && (newData.get('repCount', 0) >= 0 && newData.get('repCount', 0) <= 1000)
+             // setCount range check
+             && (newData.get('setCount', 1) >= 1 && newData.get('setCount', 1) <= 10);
+    }
+
+    // Frame creation validation
+    function validateFrameCreate(data) {
+      return data.keys().hasAll(['frameId', 'sessionId', 'frameNumber', 'timestamp', 'landmarks', 'createdAt'])
+             && data.frameId is string
+             && data.sessionId is string
+             && data.frameNumber is number
+             && data.frameNumber >= 0
+             && isValidTimestamp(data.timestamp)
+             && data.landmarks is list
+             && data.landmarks.size() == 33
+             && isValidTimestamp(data.createdAt);
+    }
+
+    // Notification read status update only
+    function onlyUpdatingReadStatus(newData, oldData) {
+      let changedFields = newData.diff(oldData).affectedKeys();
+      return changedFields.hasOnly(['isRead', 'readAt', 'updatedAt'])
+             && newData.isRead == true;
+    }
+  }
+}

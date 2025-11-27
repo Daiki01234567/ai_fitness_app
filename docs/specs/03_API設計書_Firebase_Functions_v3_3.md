@@ -434,7 +434,10 @@ const updateProfileSchema = z.object({
   nickname: z.string().min(1).max(50).optional(),
   height: z.number().min(100).max(250).nullable().optional(),
   weight: z.number().min(30).max(200).nullable().optional(),
-  goal: z.string().max(500).nullable().optional()
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),  // YYYY-MM-DD
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).nullable().optional(),
+  fitnessLevel: z.enum(['beginner', 'intermediate', 'advanced']).nullable().optional(),
+  goal: z.string().max(100).nullable().optional()
 });
 
 export const user_updateProfile = onCall(async (request) => {
@@ -1129,7 +1132,10 @@ interface UpdateProfileRequest {
   nickname?: string;     // 1-50文字
   height?: number;       // 100-250 cm
   weight?: number;       // 30-200 kg
-  goal?: string;         // 最大500文字
+  dateOfBirth?: string;  // ISO 8601形式: YYYY-MM-DD（13歳以上）
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';  // 性別
+  fitnessLevel?: 'beginner' | 'intermediate' | 'advanced';     // フィットネスレベル
+  goal?: string;         // 最大100文字
 }
 ```
 
@@ -1144,6 +1150,9 @@ interface UpdateProfileRequest {
     "nickname": "山田太郎",
     "height": 175,
     "weight": 70,
+    "dateOfBirth": "1990-01-15",
+    "gender": "male",
+    "fitnessLevel": "intermediate",
     "goal": "体重を65kgまで減らす"
   },
   "message": "プロフィールを更新しました"
@@ -1157,7 +1166,10 @@ const updateProfileSchema = z.object({
   nickname: z.string().min(1).max(50).optional(),
   height: z.number().min(100).max(250).nullable().optional(),
   weight: z.number().min(30).max(200).nullable().optional(),
-  goal: z.string().max(500).nullable().optional()
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),  // YYYY-MM-DD
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).nullable().optional(),
+  fitnessLevel: z.enum(['beginner', 'intermediate', 'advanced']).nullable().optional(),
+  goal: z.string().max(100).nullable().optional()
 });
 
 export const user_updateProfile = onCall({
