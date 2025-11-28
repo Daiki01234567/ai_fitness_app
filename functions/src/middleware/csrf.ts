@@ -18,8 +18,8 @@
  * @date 2025-11-26
  */
 
-import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
 import { Request } from "express";
+import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
 
 import { logger } from "../utils/logger";
 
@@ -109,7 +109,7 @@ function getOrigin(request: CallableRequest | Request): string | undefined {
 
   // Express Request
   if ("headers" in request) {
-    const req = request as Request;
+    const req = request;
     return req.headers.origin || req.get("Origin");
   }
 
@@ -129,7 +129,7 @@ function getReferer(request: CallableRequest | Request): string | undefined {
 
   // Express Request
   if ("headers" in request) {
-    const req = request as Request;
+    const req = request;
     return req.headers.referer || req.get("Referer");
   }
 

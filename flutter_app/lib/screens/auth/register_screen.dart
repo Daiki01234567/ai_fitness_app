@@ -5,9 +5,10 @@
 /// @date 2025-11-26
 
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/auth/auth_state_notifier.dart';
 import '../../core/router/app_router.dart';
@@ -70,8 +71,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
   final _nameController = TextEditingController();
-  bool _tosAccepted = false;
-  bool _ppAccepted = false;
 
   // Step 2: Profile fields
   final _heightController = TextEditingController();
@@ -98,12 +97,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _nextStep() {
     if (_formKey.currentState!.validate()) {
-      if (!_tosAccepted || !_ppAccepted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('利用規約とプライバシーポリシーに同意してください')),
-        );
-        return;
-      }
       setState(() {
         _currentStep = RegisterStep.profile;
       });
@@ -190,7 +183,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           displayName: _nameController.text.trim(),
         );
 
-    // Step 2: Save profile data to Firestore via Cloud Function
+    // Step 2: Wait for user document to be created by onCreate trigger
+    // This prevents race condition where updateProfile is called before document exists
+    await _waitForUserDocument();
+
+    // Step 3: Save profile data to Firestore via Cloud Function
     // Note: This runs even if widget is disposed - that's intentional
     try {
       await authService.updateProfile(profileData: profileData);
@@ -204,6 +201,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
       );
     }
+  }
+
+  /// Wait for user document to be created by onCreate trigger
+  /// Retries up to 10 times with 500ms delay between retries
+  Future<void> _waitForUserDocument() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final firestore = FirebaseFirestore.instance;
+    const maxRetries = 10;
+    const retryDelay = Duration(milliseconds: 500);
+
+    for (int i = 0; i < maxRetries; i++) {
+      final doc = await firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        return; // Document found, proceed
+      }
+      await Future.delayed(retryDelay);
+    }
+
+    // Document not found after all retries - log warning but continue
+    // The updateProfile call will handle the error if document truly doesn't exist
+    debugPrint('Warning: User document not found after $maxRetries retries');
   }
 
   Future<void> _selectBirthDate() async {
@@ -230,13 +252,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    if (!_tosAccepted || !_ppAccepted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('利用規約とプライバシーポリシーに同意してください')),
-      );
-      return;
-    }
-
     setState(() => _isGoogleLoading = true);
 
     try {
@@ -254,13 +269,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _handleAppleSignIn() async {
-    if (!_tosAccepted || !_ppAccepted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('利用規約とプライバシーポリシーに同意してください')),
-      );
-      return;
-    }
-
     setState(() => _isAppleLoading = true);
 
     try {
@@ -275,44 +283,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         setState(() => _isAppleLoading = false);
       }
     }
-  }
-
-  void _showTermsOfService() {
-    // TODO: Navigate to terms of service page or show dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('利用規約'),
-        content: const SingleChildScrollView(
-          child: Text('利用規約の内容がここに表示されます。'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('閉じる'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPrivacyPolicy() {
-    // TODO: Navigate to privacy policy page or show dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('プライバシーポリシー'),
-        content: const SingleChildScrollView(
-          child: Text('プライバシーポリシーの内容がここに表示されます。'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('閉じる'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -519,25 +489,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // Terms and Privacy checkboxes
-        _buildConsentCheckbox(
-          value: _tosAccepted,
-          onChanged: (value) => setState(() => _tosAccepted = value ?? false),
-          label: '利用規約',
-          onTap: _showTermsOfService,
-          enabled: !authState.isLoading,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-
-        _buildConsentCheckbox(
-          value: _ppAccepted,
-          onChanged: (value) => setState(() => _ppAccepted = value ?? false),
-          label: 'プライバシーポリシー',
-          onTap: _showPrivacyPolicy,
-          enabled: !authState.isLoading,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-
         // Next button
         LoadingButton(
           onPressed: _nextStep,
@@ -590,45 +541,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: const Text('ログイン'),
             ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConsentCheckbox({
-    required bool value,
-    required ValueChanged<bool?> onChanged,
-    required String label,
-    required VoidCallback onTap,
-    required bool enabled,
-  }) {
-    return Row(
-      children: [
-        SizedBox(
-          width: AppSpacing.minTapTarget,
-          height: AppSpacing.minTapTarget,
-          child: Checkbox(
-            value: value,
-            onChanged: enabled ? onChanged : null,
-          ),
-        ),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: Theme.of(context).textTheme.bodyMedium,
-              children: [
-                TextSpan(
-                  text: label,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                  recognizer: TapGestureRecognizer()..onTap = onTap,
-                ),
-                const TextSpan(text: 'に同意します'),
-              ],
-            ),
-          ),
         ),
       ],
     );

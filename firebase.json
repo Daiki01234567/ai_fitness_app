@@ -25,7 +25,8 @@
   },
   "firestore": {
     "rules": "firebase\\firestore.rules",
-    "indexes": "firebase\\firestore.indexes.json"
+    "indexes": "firebase\\firestore.indexes.json",
+    "debug": "firebase\\firestore-debug.log"
   },
   "functions": [
     {
@@ -33,14 +34,13 @@
       "codebase": "default",
       "disallowLegacyRuntimeConfig": true,
       "ignore": [
-        "firebase\\node_modules",
-        "firebase\\.git",
-        "firebase\\firebase-debug.log",
-        "firebase\\firebase-debug.*.log",
-        "firebase\\*.local"
+        "functions\\node_modules",
+        "functions\\.git",
+        "functions\\firebase-debug.log",
+        "functions\\firebase-debug.*.log",
+        "functions\\*.local"
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }

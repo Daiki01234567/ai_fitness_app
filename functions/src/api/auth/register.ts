@@ -271,6 +271,7 @@ export const auth_signUp = onCall(
     region: "asia-northeast1",
     memory: "256MiB",
     timeoutSeconds: 60,
+    cors: true, // Enable CORS for web clients
     // Note: minInstances will be set to 1 in production (Phase 3+)
     // Currently 0 for cost optimization
   },

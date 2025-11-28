@@ -1,19 +1,52 @@
+// LoginScreen Widget Tests
+//
+// Tests for the login screen UI and validation
+// Uses mocked providers to avoid Firebase initialization
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 
+import 'package:flutter_app/core/auth/auth_state_notifier.dart';
 import 'package:flutter_app/screens/auth/login_screen.dart';
 
+import '../../core/auth/mocks/mock_firebase_auth.dart';
+
 void main() {
-  group('LoginScreen', () {
-    testWidgets('displays login form elements', (tester) async {
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: LoginScreen(),
+  late MockFirebaseAuth mockAuth;
+  late FakeFirebaseFirestore fakeFirestore;
+
+  setUp(() {
+    mockAuth = MockFirebaseAuth();
+    fakeFirestore = FakeFirebaseFirestore();
+  });
+
+  tearDown(() {
+    mockAuth.dispose();
+  });
+
+  /// Creates a testable widget with mocked providers
+  Widget createTestWidget() {
+    return ProviderScope(
+      overrides: [
+        authStateProvider.overrideWith(
+          (ref) => AuthStateNotifier(
+            auth: mockAuth,
+            firestore: fakeFirestore,
           ),
         ),
-      );
+      ],
+      child: const MaterialApp(
+        home: LoginScreen(),
+      ),
+    );
+  }
+
+  group('LoginScreen', () {
+    testWidgets('displays login form elements', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
 
       // Verify UI elements are present
       expect(find.text('AI Fitness'), findsOneWidget);
@@ -28,13 +61,8 @@ void main() {
     });
 
     testWidgets('shows validation errors for empty fields', (tester) async {
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: LoginScreen(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
 
       // Tap login button without entering data
       await tester.tap(find.text('ログイン'));
@@ -46,13 +74,8 @@ void main() {
     });
 
     testWidgets('shows validation error for invalid email', (tester) async {
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: LoginScreen(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
 
       // Enter invalid email
       await tester.enterText(find.byType(TextFormField).first, 'invalid-email');
@@ -67,13 +90,8 @@ void main() {
     });
 
     testWidgets('has minimum tap target size for accessibility', (tester) async {
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: LoginScreen(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
 
       // Find the login button
       final loginButton = find.widgetWithText(FilledButton, 'ログイン');

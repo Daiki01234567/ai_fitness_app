@@ -9,7 +9,7 @@
 // export * from "./sessions";
 
 // Consent change triggers
-// export * from "./consents";
+export * from "./consents";
 
 // User deletion triggers
 // export * from "./users";

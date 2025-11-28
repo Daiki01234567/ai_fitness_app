@@ -12,15 +12,33 @@ jest.mock("firebase-admin", () => {
 
   const mockFieldValue = {
     serverTimestamp: jest.fn(() => mockTimestamp),
-    increment: jest.fn((n) => n),
+    increment: jest.fn((n: number) => n),
     delete: jest.fn(() => null),
-    arrayUnion: jest.fn((...args) => args),
-    arrayRemove: jest.fn((...args) => args),
+    arrayUnion: jest.fn((...args: unknown[]) => args),
+    arrayRemove: jest.fn((...args: unknown[]) => args),
   };
 
-  const mockFirestore = {
-    collection: jest.fn(() => mockFirestore),
-    doc: jest.fn(() => mockFirestore),
+  // Define mock type to avoid circular reference issues
+  type MockFirestoreType = {
+    collection: jest.Mock;
+    doc: jest.Mock;
+    get: jest.Mock;
+    set: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+    add: jest.Mock;
+    where: jest.Mock;
+    orderBy: jest.Mock;
+    limit: jest.Mock;
+    startAfter: jest.Mock;
+    batch: jest.Mock;
+    runTransaction: jest.Mock;
+    FieldValue: typeof mockFieldValue;
+  };
+
+  const mockFirestore: MockFirestoreType = {
+    collection: jest.fn(),
+    doc: jest.fn(),
     get: jest.fn(() =>
       Promise.resolve({
         exists: true,
@@ -33,18 +51,27 @@ jest.mock("firebase-admin", () => {
     update: jest.fn(() => Promise.resolve()),
     delete: jest.fn(() => Promise.resolve()),
     add: jest.fn(() => Promise.resolve({ id: "new-id" })),
-    where: jest.fn(() => mockFirestore),
-    orderBy: jest.fn(() => mockFirestore),
-    limit: jest.fn(() => mockFirestore),
-    startAfter: jest.fn(() => mockFirestore),
+    where: jest.fn(),
+    orderBy: jest.fn(),
+    limit: jest.fn(),
+    startAfter: jest.fn(),
     batch: jest.fn(() => ({
       set: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       commit: jest.fn(() => Promise.resolve()),
     })),
-    runTransaction: jest.fn((fn) => fn(mockFirestore)),
+    runTransaction: jest.fn((fn: (t: MockFirestoreType) => unknown) => fn(mockFirestore)),
+    FieldValue: mockFieldValue,
   };
+
+  // Setup chaining
+  mockFirestore.collection.mockReturnValue(mockFirestore);
+  mockFirestore.doc.mockReturnValue(mockFirestore);
+  mockFirestore.where.mockReturnValue(mockFirestore);
+  mockFirestore.orderBy.mockReturnValue(mockFirestore);
+  mockFirestore.limit.mockReturnValue(mockFirestore);
+  mockFirestore.startAfter.mockReturnValue(mockFirestore);
 
   const mockAuth = {
     verifyIdToken: jest.fn(() =>

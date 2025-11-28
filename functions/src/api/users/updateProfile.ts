@@ -9,8 +9,8 @@
  */
 
 import * as admin from "firebase-admin";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import { requireCsrfProtection } from "../../middleware/csrf";
 import { logProfileUpdate } from "../../services/auditLog";
@@ -152,6 +152,7 @@ export const updateProfile = onCall(
     region: "asia-northeast1",
     memory: "256MiB",
     timeoutSeconds: 30,
+    cors: true, // Enable CORS for web clients
   },
   async (request) => {
     // CSRF Protection
@@ -259,7 +260,7 @@ export const updateProfile = onCall(
       if (previousData?.deletionScheduled) {
         throw new HttpsError(
           "failed-precondition",
-          "アカウント削除が予定されているため、プロフィールを更新できません"
+          "アカウント削除が予定されているため、プロフィールを更新できません",
         );
       }
 
@@ -309,8 +310,8 @@ export const updateProfile = onCall(
       logger.error("Failed to update profile", error as Error, { userId });
       throw new HttpsError(
         "internal",
-        "プロフィールの更新に失敗しました"
+        "プロフィールの更新に失敗しました",
       );
     }
-  }
+  },
 );

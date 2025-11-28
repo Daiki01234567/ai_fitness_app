@@ -17,6 +17,9 @@ export * from "./auth";
 // User Management
 export * from "./users";
 
+// Consent Management
+export * from "./consent";
+
 // Training Sessions
 // export * from "./training";
 

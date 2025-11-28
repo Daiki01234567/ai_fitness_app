@@ -12,7 +12,8 @@ part of 'auth_state_notifier.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$AuthState {
@@ -40,7 +41,9 @@ mixin _$AuthState {
   /// カスタムクレーム
   Map<String, dynamic>? get customClaims => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of AuthState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $AuthStateCopyWith<AuthState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -50,15 +53,16 @@ abstract class $AuthStateCopyWith<$Res> {
   factory $AuthStateCopyWith(AuthState value, $Res Function(AuthState) then) =
       _$AuthStateCopyWithImpl<$Res, AuthState>;
   @useResult
-  $Res call(
-      {User? user,
-      Map<String, dynamic>? userData,
-      bool isLoading,
-      String? error,
-      bool isEmailVerified,
-      bool isForceLogout,
-      bool isDeletionScheduled,
-      Map<String, dynamic>? customClaims});
+  $Res call({
+    User? user,
+    Map<String, dynamic>? userData,
+    bool isLoading,
+    String? error,
+    bool isEmailVerified,
+    bool isForceLogout,
+    bool isDeletionScheduled,
+    Map<String, dynamic>? customClaims,
+  });
 }
 
 /// @nodoc
@@ -71,6 +75,8 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of AuthState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -83,40 +89,43 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
     Object? isDeletionScheduled = null,
     Object? customClaims = freezed,
   }) {
-    return _then(_value.copyWith(
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as User?,
-      userData: freezed == userData
-          ? _value.userData
-          : userData // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isEmailVerified: null == isEmailVerified
-          ? _value.isEmailVerified
-          : isEmailVerified // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isForceLogout: null == isForceLogout
-          ? _value.isForceLogout
-          : isForceLogout // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isDeletionScheduled: null == isDeletionScheduled
-          ? _value.isDeletionScheduled
-          : isDeletionScheduled // ignore: cast_nullable_to_non_nullable
-              as bool,
-      customClaims: freezed == customClaims
-          ? _value.customClaims
-          : customClaims // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            user: freezed == user
+                ? _value.user
+                : user // ignore: cast_nullable_to_non_nullable
+                      as User?,
+            userData: freezed == userData
+                ? _value.userData
+                : userData // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>?,
+            isLoading: null == isLoading
+                ? _value.isLoading
+                : isLoading // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            error: freezed == error
+                ? _value.error
+                : error // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            isEmailVerified: null == isEmailVerified
+                ? _value.isEmailVerified
+                : isEmailVerified // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isForceLogout: null == isForceLogout
+                ? _value.isForceLogout
+                : isForceLogout // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isDeletionScheduled: null == isDeletionScheduled
+                ? _value.isDeletionScheduled
+                : isDeletionScheduled // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            customClaims: freezed == customClaims
+                ? _value.customClaims
+                : customClaims // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -124,19 +133,21 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
 abstract class _$$AuthStateImplCopyWith<$Res>
     implements $AuthStateCopyWith<$Res> {
   factory _$$AuthStateImplCopyWith(
-          _$AuthStateImpl value, $Res Function(_$AuthStateImpl) then) =
-      __$$AuthStateImplCopyWithImpl<$Res>;
+    _$AuthStateImpl value,
+    $Res Function(_$AuthStateImpl) then,
+  ) = __$$AuthStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {User? user,
-      Map<String, dynamic>? userData,
-      bool isLoading,
-      String? error,
-      bool isEmailVerified,
-      bool isForceLogout,
-      bool isDeletionScheduled,
-      Map<String, dynamic>? customClaims});
+  $Res call({
+    User? user,
+    Map<String, dynamic>? userData,
+    bool isLoading,
+    String? error,
+    bool isEmailVerified,
+    bool isForceLogout,
+    bool isDeletionScheduled,
+    Map<String, dynamic>? customClaims,
+  });
 }
 
 /// @nodoc
@@ -144,9 +155,12 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     extends _$AuthStateCopyWithImpl<$Res, _$AuthStateImpl>
     implements _$$AuthStateImplCopyWith<$Res> {
   __$$AuthStateImplCopyWithImpl(
-      _$AuthStateImpl _value, $Res Function(_$AuthStateImpl) _then)
-      : super(_value, _then);
+    _$AuthStateImpl _value,
+    $Res Function(_$AuthStateImpl) _then,
+  ) : super(_value, _then);
 
+  /// Create a copy of AuthState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -159,57 +173,59 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     Object? isDeletionScheduled = null,
     Object? customClaims = freezed,
   }) {
-    return _then(_$AuthStateImpl(
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as User?,
-      userData: freezed == userData
-          ? _value._userData
-          : userData // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isEmailVerified: null == isEmailVerified
-          ? _value.isEmailVerified
-          : isEmailVerified // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isForceLogout: null == isForceLogout
-          ? _value.isForceLogout
-          : isForceLogout // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isDeletionScheduled: null == isDeletionScheduled
-          ? _value.isDeletionScheduled
-          : isDeletionScheduled // ignore: cast_nullable_to_non_nullable
-              as bool,
-      customClaims: freezed == customClaims
-          ? _value._customClaims
-          : customClaims // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
-    ));
+    return _then(
+      _$AuthStateImpl(
+        user: freezed == user
+            ? _value.user
+            : user // ignore: cast_nullable_to_non_nullable
+                  as User?,
+        userData: freezed == userData
+            ? _value._userData
+            : userData // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>?,
+        isLoading: null == isLoading
+            ? _value.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        error: freezed == error
+            ? _value.error
+            : error // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        isEmailVerified: null == isEmailVerified
+            ? _value.isEmailVerified
+            : isEmailVerified // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isForceLogout: null == isForceLogout
+            ? _value.isForceLogout
+            : isForceLogout // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isDeletionScheduled: null == isDeletionScheduled
+            ? _value.isDeletionScheduled
+            : isDeletionScheduled // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        customClaims: freezed == customClaims
+            ? _value._customClaims
+            : customClaims // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 
 class _$AuthStateImpl implements _AuthState {
-  const _$AuthStateImpl(
-      {this.user,
-      final Map<String, dynamic>? userData,
-      this.isLoading = false,
-      this.error,
-      this.isEmailVerified = false,
-      this.isForceLogout = false,
-      this.isDeletionScheduled = false,
-      final Map<String, dynamic>? customClaims})
-      : _userData = userData,
-        _customClaims = customClaims;
+  const _$AuthStateImpl({
+    this.user,
+    final Map<String, dynamic>? userData,
+    this.isLoading = false,
+    this.error,
+    this.isEmailVerified = false,
+    this.isForceLogout = false,
+    this.isDeletionScheduled = false,
+    final Map<String, dynamic>? customClaims,
+  }) : _userData = userData,
+       _customClaims = customClaims;
 
   /// 現在のユーザー
   @override
@@ -286,23 +302,28 @@ class _$AuthStateImpl implements _AuthState {
                 other.isForceLogout == isForceLogout) &&
             (identical(other.isDeletionScheduled, isDeletionScheduled) ||
                 other.isDeletionScheduled == isDeletionScheduled) &&
-            const DeepCollectionEquality()
-                .equals(other._customClaims, _customClaims));
+            const DeepCollectionEquality().equals(
+              other._customClaims,
+              _customClaims,
+            ));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      user,
-      const DeepCollectionEquality().hash(_userData),
-      isLoading,
-      error,
-      isEmailVerified,
-      isForceLogout,
-      isDeletionScheduled,
-      const DeepCollectionEquality().hash(_customClaims));
+    runtimeType,
+    user,
+    const DeepCollectionEquality().hash(_userData),
+    isLoading,
+    error,
+    isEmailVerified,
+    isForceLogout,
+    isDeletionScheduled,
+    const DeepCollectionEquality().hash(_customClaims),
+  );
 
-  @JsonKey(ignore: true)
+  /// Create a copy of AuthState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$AuthStateImplCopyWith<_$AuthStateImpl> get copyWith =>
@@ -310,50 +331,53 @@ class _$AuthStateImpl implements _AuthState {
 }
 
 abstract class _AuthState implements AuthState {
-  const factory _AuthState(
-      {final User? user,
-      final Map<String, dynamic>? userData,
-      final bool isLoading,
-      final String? error,
-      final bool isEmailVerified,
-      final bool isForceLogout,
-      final bool isDeletionScheduled,
-      final Map<String, dynamic>? customClaims}) = _$AuthStateImpl;
-
-  @override
+  const factory _AuthState({
+    final User? user,
+    final Map<String, dynamic>? userData,
+    final bool isLoading,
+    final String? error,
+    final bool isEmailVerified,
+    final bool isForceLogout,
+    final bool isDeletionScheduled,
+    final Map<String, dynamic>? customClaims,
+  }) = _$AuthStateImpl;
 
   /// 現在のユーザー
-  User? get user;
   @override
+  User? get user;
 
   /// ユーザーデータ（Firestoreから取得）
-  Map<String, dynamic>? get userData;
   @override
+  Map<String, dynamic>? get userData;
 
   /// ローディング状態
-  bool get isLoading;
   @override
+  bool get isLoading;
 
   /// エラーメッセージ
-  String? get error;
   @override
+  String? get error;
 
   /// メール確認済みフラグ
-  bool get isEmailVerified;
   @override
+  bool get isEmailVerified;
 
   /// 強制ログアウトフラグ
-  bool get isForceLogout;
   @override
+  bool get isForceLogout;
 
   /// 削除予定フラグ
-  bool get isDeletionScheduled;
   @override
+  bool get isDeletionScheduled;
 
   /// カスタムクレーム
-  Map<String, dynamic>? get customClaims;
   @override
-  @JsonKey(ignore: true)
+  Map<String, dynamic>? get customClaims;
+
+  /// Create a copy of AuthState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$AuthStateImplCopyWith<_$AuthStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

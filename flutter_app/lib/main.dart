@@ -26,7 +26,7 @@ void main() async {
 
   // Configure emulators for debug mode
   if (kDebugMode) {
-    await _configureEmulators();
+    _configureEmulators(useEmulators: true);
   }
 
   runApp(
@@ -37,18 +37,38 @@ void main() async {
 }
 
 /// Configure Firebase emulators for local development
-Future<void> _configureEmulators() async {
-  const host = 'localhost';
+/// Set [useEmulators] to false to connect to production Firebase in debug mode
+void _configureEmulators({bool useEmulators = false}) {
+  if (!useEmulators) {
+    debugPrint('Emulators disabled, using production Firebase');
+    return;
+  }
+
+  // Determine the correct host based on platform
+  // - Web: use '127.0.0.1' (must match firebase.json host setting)
+  // - Android emulator: use '10.0.2.2' (special alias for host machine)
+  // - iOS simulator/Desktop: use '127.0.0.1'
+  String host;
+  if (kIsWeb) {
+    host = '127.0.0.1';
+  } else if (defaultTargetPlatform == TargetPlatform.android) {
+    host = '10.0.2.2';
+  } else {
+    host = '127.0.0.1';
+  }
 
   try {
-    await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+    // For Web, useAuthEmulator should NOT be awaited as it causes issues
+    // The method is synchronous for web platform
+    FirebaseAuth.instance.useAuthEmulator(host, 9099);
     FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
     FirebaseFunctions.instanceFor(region: 'asia-northeast1')
         .useFunctionsEmulator(host, 5001);
 
-    debugPrint('Firebase emulators configured successfully');
+    debugPrint('Firebase emulators configured successfully (host: $host, platform: ${kIsWeb ? "web" : defaultTargetPlatform.name})');
   } catch (e) {
     debugPrint('Error configuring Firebase emulators: $e');
+    // Continue without emulators - will use production Firebase
   }
 }
 

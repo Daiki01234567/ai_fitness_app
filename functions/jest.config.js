@@ -4,11 +4,20 @@ module.exports = {
   testEnvironment: "node",
   roots: ["<rootDir>/src", "<rootDir>/tests"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],
+  // Exclude integration tests from default test run (require emulators)
+  testPathIgnorePatterns: [
+    "<rootDir>/node_modules/",
+    "<rootDir>/tests/integration/",
+  ],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",
       {
         tsconfig: "tsconfig.json",
+        isolatedModules: true,
+        diagnostics: {
+          ignoreCodes: [151002],
+        },
       },
     ],
   },
@@ -35,4 +44,15 @@ module.exports = {
   clearMocks: true,
   verbose: true,
   testTimeout: 10000,
+  // Projects for different test types
+  projects: [
+    {
+      displayName: "unit",
+      testMatch: [
+        "<rootDir>/tests/**/*.test.ts",
+        "!<rootDir>/tests/integration/**",
+      ],
+      setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
+    },
+  ],
 };

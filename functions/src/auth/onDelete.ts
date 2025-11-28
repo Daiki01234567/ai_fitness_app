@@ -11,9 +11,9 @@
  */
 
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { auth, pubsub } from "firebase-functions/v1";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // Initialize admin SDK if not already initialized
 if (!admin.apps.length) {

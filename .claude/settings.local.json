@@ -18,7 +18,13 @@
       "Bash(flutter analyze:*)",
       "Bash(npm run lint:*)",
       "Bash(flutter pub run build_runner build:*)",
-      "Bash(flutter test:*)"
+      "Bash(flutter test:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(npm run test:integration:*)",
+      "Bash(flutter pub:*)",
+      "Bash(Select-String -Pattern \"^\\d{2}:\\d{2}|All tests|Some tests|^$\")",
+      "Bash(Out-String -Width 500)",
+      "Bash(findstr:*)"
     ],
     "deny": [
       "Bash(rm:*)",

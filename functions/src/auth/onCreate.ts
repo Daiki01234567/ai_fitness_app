@@ -11,10 +11,10 @@
  */
 
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { auth } from "firebase-functions/v1";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
-import { FieldValue } from "firebase-admin/firestore";
 
 // Initialize admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -58,6 +58,7 @@ export const onUserCreate = auth
           email: email || null,
           phoneNumber: phoneNumber || null,
           displayName: displayName || null,
+          nickname: displayName || null, // Firestore security rules require this field
           photoUrl: photoURL || null,
 
           // アカウント状態

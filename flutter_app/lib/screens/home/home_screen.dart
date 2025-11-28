@@ -6,8 +6,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_state_notifier.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -23,6 +25,13 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('AI Fitness'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () {
+              context.go(AppRoutes.profile);
+            },
+            tooltip: 'プロフィール',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {

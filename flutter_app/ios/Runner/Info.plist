@@ -45,5 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera permission for pose detection (Ticket #009) -->
+	<key>NSCameraUsageDescription</key>
+	<string>このアプリはトレーニング中のフォームをリアルタイムで分析するためにカメラを使用します。映像はデバイス内でのみ処理され、サーバーには送信されません。</string>
 </dict>
 </plist>

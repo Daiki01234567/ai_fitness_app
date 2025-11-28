@@ -62,10 +62,9 @@ export * from "./api";
 // ========================================
 // Firestore Triggers
 // ========================================
-// Uncomment when implementing:
-// - triggers_onSessionComplete: Sync to BigQuery
-// - triggers_onConsentChange: Handle consent updates
-// export * from "./triggers";
+// - triggers_onConsentCreated: Handle consent creation/revocation
+// - triggers_onUserConsentWithdrawn: Monitor full consent withdrawal
+export * from "./triggers";
 
 // ========================================
 // Scheduled Functions

@@ -47,6 +47,19 @@ dependencies:
   freezed_annotation: ^2.4.1
   google_sign_in: ^6.2.1
   go_router: ^14.6.2
+  url_launcher: ^6.2.6
+
+  # MediaPipe Pose Detection (Ticket #009)
+  google_mlkit_pose_detection: ^0.11.0+1
+
+  # Camera for real-time video capture
+  camera: ^0.10.5+9
+
+  # Image processing
+  image: ^4.2.0
+
+  # Permission management
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

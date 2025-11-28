@@ -44,7 +44,7 @@ interface GetClaimsRequest {
  * 管理者のみ呼び出し可能
  */
 export const setCustomClaims = onCall(
-  { region: "asia-northeast1" },
+  { region: "asia-northeast1", cors: true },
   async (request: CallableRequest<SetClaimsRequest>) => {
     // CSRF Protection (Strict mode for sensitive operation)
     requireStrictCsrfProtection(request);
@@ -152,7 +152,7 @@ export const setCustomClaims = onCall(
  * 管理者のみ呼び出し可能
  */
 export const removeCustomClaims = onCall(
-  { region: "asia-northeast1" },
+  { region: "asia-northeast1", cors: true },
   async (request: CallableRequest<RemoveClaimsRequest>) => {
     // CSRF Protection (Strict mode for sensitive operation)
     requireStrictCsrfProtection(request);
@@ -259,7 +259,7 @@ export const removeCustomClaims = onCall(
  * 本人または管理者が呼び出し可能
  */
 export const getCustomClaims = onCall(
-  { region: "asia-northeast1" },
+  { region: "asia-northeast1", cors: true },
   async (request: CallableRequest<GetClaimsRequest>) => {
     // CSRF Protection
     requireStrictCsrfProtection(request);
