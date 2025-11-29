@@ -6,8 +6,12 @@
  * - デフォルト値の設定
  * - 同意管理の初期化
  *
- * @version 2.0.0
- * @date 2025-11-26
+ * 注意: v1のauth.user().onCreate()はリージョン指定不可（us-central1で実行）
+ * v2のIdentity Platform triggerはブロッキング関数のみ（beforeUserCreated）
+ * そのため、Flutter側でリトライ設定を強化して対応
+ *
+ * @version 2.0.1
+ * @date 2025-11-29
  */
 
 import * as admin from "firebase-admin";

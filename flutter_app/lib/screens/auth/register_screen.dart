@@ -176,27 +176,40 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     // Capture ScaffoldMessenger before async operation
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // Step 1: Create Firebase Auth account
-    await authNotifier.signUpWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          displayName: _nameController.text.trim(),
-        );
-
-    // Step 2: Wait for user document to be created by onCreate trigger
-    // This prevents race condition where updateProfile is called before document exists
-    await _waitForUserDocument();
-
-    // Step 3: Save profile data to Firestore via Cloud Function
-    // Note: This runs even if widget is disposed - that's intentional
     try {
-      await authService.updateProfile(profileData: profileData);
+      // Step 1: Create Firebase Auth account
+      await authNotifier.signUpWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            displayName: _nameController.text.trim(),
+          );
+
+      // Step 2: Wait for user document to be created by onCreate trigger
+      // This prevents race condition where updateProfile is called before document exists
+      // Note: onCreate trigger runs in us-central1 (Firebase v1 API limitation)
+      // which may cause delays when accessed from Japan
+      await _waitForUserDocument();
+
+      // Step 3: Save profile data to Firestore via Cloud Function
+      // Note: This runs even if widget is disposed - that's intentional
+      try {
+        await authService.updateProfile(profileData: profileData);
+      } catch (e) {
+        // Profile save failed but account was created
+        // Show warning but don't block - profile can be updated later
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('アカウントは作成されましたが、プロフィールの保存に失敗しました: $e'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } catch (e) {
-      // Profile save failed but account was created
-      // Show warning but don't block - profile can be updated later
+      // Handle errors from auth or document wait
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text('アカウントは作成されましたが、プロフィールの保存に失敗しました: $e'),
+          content: Text('登録エラー: $e'),
+          backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -204,7 +217,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   /// Wait for user document to be created by onCreate trigger
-  /// Retries up to 10 times with 500ms delay between retries
+  ///
+  /// Note: Firebase Auth onCreate trigger runs in us-central1 (v1 API limitation)
+  /// which causes latency when accessed from Japan. Retry settings are set
+  /// generously to handle this cross-region delay.
+  ///
+  /// Retries up to 30 times with 1 second delay (total: 30 seconds max wait)
   Future<void> _waitForUserDocument() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -212,20 +230,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     final firestore = FirebaseFirestore.instance;
-    const maxRetries = 10;
-    const retryDelay = Duration(milliseconds: 500);
+    const maxRetries = 30;  // Increased for cross-region latency (us-central1 → Japan)
+    const retryDelay = Duration(seconds: 1);
 
     for (int i = 0; i < maxRetries; i++) {
+      debugPrint('Waiting for user document... attempt ${i + 1}/$maxRetries');
       final doc = await firestore.collection('users').doc(userId).get();
       if (doc.exists) {
+        debugPrint('User document found after ${i + 1} attempts');
         return; // Document found, proceed
       }
       await Future.delayed(retryDelay);
     }
 
-    // Document not found after all retries - log warning but continue
-    // The updateProfile call will handle the error if document truly doesn't exist
-    debugPrint('Warning: User document not found after $maxRetries retries');
+    // Document not found after all retries - throw exception to trigger error handling
+    debugPrint('Error: User document not found after $maxRetries retries');
+    throw Exception('ユーザードキュメントの作成がタイムアウトしました。再度お試しください。');
   }
 
   Future<void> _selectBirthDate() async {
