@@ -69,5 +69,20 @@ module.exports = {
     "require-jsdoc": "off",
     "valid-jsdoc": "off",
     "new-cap": "off",
+    // Allow snake_case for Firebase function exports (e.g., auth_onCreate, gdpr_requestDataExport)
+    "camelcase": ["error", {
+      "allow": [
+        "^auth_",
+        "^gdpr_",
+        "^user_",
+        "^training_",
+        "^consent_",
+        "^settings_",
+        "^subscription_",
+        "^triggers_",
+        "^scheduled_",
+        "^webhook_",
+      ],
+    }],
   },
 };
