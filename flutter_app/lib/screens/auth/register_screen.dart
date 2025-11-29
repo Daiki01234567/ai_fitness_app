@@ -204,7 +204,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   /// Wait for user document to be created by onCreate trigger
-  /// Retries up to 10 times with 500ms delay between retries
+  /// Retries up to 20 times with 1 second delay between retries
+  /// Total wait time: up to 20 seconds (increased for emulator environments)
   Future<void> _waitForUserDocument() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -212,20 +213,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     final firestore = FirebaseFirestore.instance;
-    const maxRetries = 10;
-    const retryDelay = Duration(milliseconds: 500);
+    const maxRetries = 20;  // Increased from 10
+    const retryDelay = Duration(seconds: 1);  // Increased from 500ms
 
     for (int i = 0; i < maxRetries; i++) {
+      debugPrint('Waiting for user document... attempt ${i + 1}/$maxRetries');
       final doc = await firestore.collection('users').doc(userId).get();
       if (doc.exists) {
+        debugPrint('User document found after ${i + 1} attempts');
         return; // Document found, proceed
       }
       await Future.delayed(retryDelay);
     }
 
-    // Document not found after all retries - log warning but continue
-    // The updateProfile call will handle the error if document truly doesn't exist
-    debugPrint('Warning: User document not found after $maxRetries retries');
+    // Document not found after all retries - throw exception to trigger error handling
+    debugPrint('Error: User document not found after $maxRetries retries (${maxRetries}s)');
+    throw Exception('ユーザードキュメントの作成がタイムアウトしました。再度お試しください。');
   }
 
   Future<void> _selectBirthDate() async {
