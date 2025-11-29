@@ -1,0 +1,384 @@
+{
+  "displayName": "AI Fitness App - System Overview",
+  "mosaicLayout": {
+    "columns": 12,
+    "tiles": [
+      {
+        "width": 12,
+        "height": 1,
+        "widget": {
+          "title": "Cloud Functions Overview",
+          "text": {
+            "content": "## Cloud Functions Performance & Health\nMonitoring execution count, latency, memory usage, and errors for all Cloud Functions.",
+            "format": "MARKDOWN"
+          }
+        }
+      },
+      {
+        "yPos": 1,
+        "width": 4,
+        "height": 4,
+        "widget": {
+          "title": "Function Execution Count",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/execution_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["metric.labels.status"]
+                    }
+                  }
+                },
+                "plotType": "STACKED_AREA"
+              }
+            ],
+            "yAxis": {
+              "label": "Executions/sec",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 4,
+        "yPos": 1,
+        "width": 4,
+        "height": 4,
+        "widget": {
+          "title": "Function Execution Time (P50, P95, P99)",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/execution_times\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_50"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "P50"
+              },
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/execution_times\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_95"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "P95"
+              },
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/execution_times\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_PERCENTILE_99"
+                    }
+                  }
+                },
+                "plotType": "LINE",
+                "legendTemplate": "P99"
+              }
+            ],
+            "yAxis": {
+              "label": "Latency (ns)",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 8,
+        "yPos": 1,
+        "width": 4,
+        "height": 4,
+        "widget": {
+          "title": "Function Memory Usage",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/user_memory_bytes\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_MEAN",
+                      "crossSeriesReducer": "REDUCE_MEAN",
+                      "groupByFields": ["resource.labels.function_name"]
+                    }
+                  }
+                },
+                "plotType": "LINE"
+              }
+            ],
+            "yAxis": {
+              "label": "Memory (bytes)",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "yPos": 5,
+        "width": 12,
+        "height": 1,
+        "widget": {
+          "title": "Firestore Overview",
+          "text": {
+            "content": "## Firestore Database Metrics\nMonitoring document operations, latency, and error rates.",
+            "format": "MARKDOWN"
+          }
+        }
+      },
+      {
+        "yPos": 6,
+        "width": 4,
+        "height": 4,
+        "widget": {
+          "title": "Firestore Document Reads",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"firestore_database\" metric.type=\"firestore.googleapis.com/document/read_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE"
+                    }
+                  }
+                },
+                "plotType": "LINE"
+              }
+            ],
+            "yAxis": {
+              "label": "Reads/sec",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 4,
+        "yPos": 6,
+        "width": 4,
+        "height": 4,
+        "widget": {
+          "title": "Firestore Document Writes",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"firestore_database\" metric.type=\"firestore.googleapis.com/document/write_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE"
+                    }
+                  }
+                },
+                "plotType": "LINE"
+              }
+            ],
+            "yAxis": {
+              "label": "Writes/sec",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 8,
+        "yPos": 6,
+        "width": 4,
+        "height": 4,
+        "widget": {
+          "title": "Firestore Delete Operations",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"firestore_database\" metric.type=\"firestore.googleapis.com/document/delete_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE"
+                    }
+                  }
+                },
+                "plotType": "LINE"
+              }
+            ],
+            "yAxis": {
+              "label": "Deletes/sec",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "yPos": 10,
+        "width": 12,
+        "height": 1,
+        "widget": {
+          "title": "Error Tracking",
+          "text": {
+            "content": "## Error & Exception Monitoring\nTracking errors, exceptions, and failed operations across all services.",
+            "format": "MARKDOWN"
+          }
+        }
+      },
+      {
+        "yPos": 11,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "Function Errors by Status",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/execution_count\" metric.labels.status!=\"ok\"",
+                    "aggregation": {
+                      "alignmentPeriod": "300s",
+                      "perSeriesAligner": "ALIGN_SUM",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["metric.labels.status"]
+                    }
+                  }
+                },
+                "plotType": "STACKED_BAR"
+              }
+            ],
+            "yAxis": {
+              "label": "Error Count",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 11,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "Function Active Instances",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/active_instances\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_MAX",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["resource.labels.function_name"]
+                    }
+                  }
+                },
+                "plotType": "STACKED_AREA"
+              }
+            ],
+            "yAxis": {
+              "label": "Instances",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "yPos": 15,
+        "width": 12,
+        "height": 1,
+        "widget": {
+          "title": "Network & API",
+          "text": {
+            "content": "## Network & API Metrics\nMonitoring network egress and API call patterns.",
+            "format": "MARKDOWN"
+          }
+        }
+      },
+      {
+        "yPos": 16,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "Network Egress",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"cloudfunctions.googleapis.com/function/network_egress\"",
+                    "aggregation": {
+                      "alignmentPeriod": "60s",
+                      "perSeriesAligner": "ALIGN_RATE",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["resource.labels.function_name"]
+                    }
+                  }
+                },
+                "plotType": "STACKED_AREA"
+              }
+            ],
+            "yAxis": {
+              "label": "Bytes/sec",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      },
+      {
+        "xPos": 6,
+        "yPos": 16,
+        "width": 6,
+        "height": 4,
+        "widget": {
+          "title": "Log Entries Count",
+          "xyChart": {
+            "dataSets": [
+              {
+                "timeSeriesQuery": {
+                  "timeSeriesFilter": {
+                    "filter": "resource.type=\"cloud_function\" metric.type=\"logging.googleapis.com/log_entry_count\"",
+                    "aggregation": {
+                      "alignmentPeriod": "300s",
+                      "perSeriesAligner": "ALIGN_SUM",
+                      "crossSeriesReducer": "REDUCE_SUM",
+                      "groupByFields": ["metric.labels.severity"]
+                    }
+                  }
+                },
+                "plotType": "STACKED_BAR"
+              }
+            ],
+            "yAxis": {
+              "label": "Log Entries",
+              "scale": "LINEAR"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "labels": {
+    "environment": "production",
+    "app": "ai-fitness"
+  }
+}
