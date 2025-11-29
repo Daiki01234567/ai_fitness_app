@@ -1,0 +1,292 @@
+# =============================================================================
+# Cloud Monitoring Alert Policies
+# AI Fitness App - tokyo-list-478804-e5
+#
+# Reference: docs/specs/01_system_architecture_v3_2.md Section 13
+# Reference: docs/MONITORING_DESIGN.md
+#
+# Usage:
+#   gcloud alpha monitoring policies create \
+#     --policy-from-file=monitoring/alert-policies.yaml \
+#     --project=tokyo-list-478804-e5
+#
+# Date: 2025-11-29
+# Version: 1.0.0
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# API Error Rate High
+# Severity: High
+# Response Time: 1 hour
+# -----------------------------------------------------------------------------
+- displayName: "API Error Rate High"
+  documentation:
+    content: |
+      ## Alert: API Error Rate High
+
+      The API error rate has exceeded 1% of total requests.
+
+      ### Investigation Steps:
+      1. Check Cloud Logging for recent errors
+      2. Review error patterns in Error Reporting
+      3. Check Cloud Functions execution logs
+      4. Verify Firestore connectivity
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#api-error-rate-high
+    mimeType: text/markdown
+  conditions:
+    - displayName: "Error rate exceeds 1%"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_function"
+          metric.type="cloudfunctions.googleapis.com/function/execution_count"
+          metric.labels.status!="ok"
+        aggregations:
+          - alignmentPeriod: 300s
+            perSeriesAligner: ALIGN_RATE
+            crossSeriesReducer: REDUCE_SUM
+        comparison: COMPARISON_GT
+        thresholdValue: 0.01
+        duration: 300s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 604800s
+
+# -----------------------------------------------------------------------------
+# API Latency High
+# Severity: Medium
+# Response Time: 4 hours
+# -----------------------------------------------------------------------------
+- displayName: "API Latency High"
+  documentation:
+    content: |
+      ## Alert: API Latency High
+
+      API response times have exceeded acceptable thresholds (P99 > 5s).
+
+      ### Investigation Steps:
+      1. Check Cloud Trace for slow requests
+      2. Review Firestore query performance
+      3. Check Cloud Functions cold start frequency
+      4. Analyze memory and CPU usage
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#api-latency-high
+    mimeType: text/markdown
+  conditions:
+    - displayName: "P99 latency exceeds 5 seconds"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_function"
+          metric.type="cloudfunctions.googleapis.com/function/execution_times"
+        aggregations:
+          - alignmentPeriod: 300s
+            perSeriesAligner: ALIGN_PERCENTILE_99
+        comparison: COMPARISON_GT
+        thresholdValue: 5000000000
+        duration: 600s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 604800s
+
+# -----------------------------------------------------------------------------
+# Authentication Failures Spike
+# Severity: High
+# Response Time: 1 hour
+# -----------------------------------------------------------------------------
+- displayName: "Authentication Failures Spike"
+  documentation:
+    content: |
+      ## Alert: Authentication Failures Spike
+
+      Unusual number of authentication failures detected.
+      This could indicate a brute force attack.
+
+      ### Investigation Steps:
+      1. Check source IPs in security logs
+      2. Review failed login patterns
+      3. Check for compromised credentials
+      4. Consider temporary IP blocking
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#auth-failures-spike
+    mimeType: text/markdown
+  conditions:
+    - displayName: "Auth failures > 10 in 5 minutes"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_function"
+          logName="projects/tokyo-list-478804-e5/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+          jsonPayload.logType="security"
+          jsonPayload.message=~"authentication.*failed"
+        aggregations:
+          - alignmentPeriod: 300s
+            perSeriesAligner: ALIGN_COUNT
+        comparison: COMPARISON_GT
+        thresholdValue: 10
+        duration: 0s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 604800s
+
+# -----------------------------------------------------------------------------
+# Cloud Function Execution Errors
+# Severity: High
+# Response Time: 1 hour
+# -----------------------------------------------------------------------------
+- displayName: "Cloud Function Execution Errors"
+  documentation:
+    content: |
+      ## Alert: Cloud Function Execution Errors
+
+      Cloud Functions are experiencing execution errors.
+
+      ### Investigation Steps:
+      1. Check Cloud Functions logs for error details
+      2. Review recent deployments
+      3. Check dependency status (Firestore, external APIs)
+      4. Verify environment variables and secrets
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#function-errors
+    mimeType: text/markdown
+  conditions:
+    - displayName: "Function execution errors"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_function"
+          metric.type="cloudfunctions.googleapis.com/function/execution_count"
+          metric.labels.status="error"
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_RATE
+            crossSeriesReducer: REDUCE_SUM
+        comparison: COMPARISON_GT
+        thresholdValue: 5
+        duration: 300s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 604800s
+
+# -----------------------------------------------------------------------------
+# Firestore High Read/Write Operations
+# Severity: Medium
+# Response Time: 4 hours
+# -----------------------------------------------------------------------------
+- displayName: "Firestore High Operations"
+  documentation:
+    content: |
+      ## Alert: Firestore High Operations
+
+      Firestore read/write operations are unusually high.
+      This could impact costs and performance.
+
+      ### Investigation Steps:
+      1. Check for inefficient queries
+      2. Review recent code changes
+      3. Check for data export/import operations
+      4. Review caching strategy
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#firestore-high-ops
+    mimeType: text/markdown
+  conditions:
+    - displayName: "High document reads"
+      conditionThreshold:
+        filter: |
+          resource.type="firestore_database"
+          metric.type="firestore.googleapis.com/document/read_count"
+        aggregations:
+          - alignmentPeriod: 3600s
+            perSeriesAligner: ALIGN_SUM
+        comparison: COMPARISON_GT
+        thresholdValue: 100000
+        duration: 0s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 604800s
+
+# -----------------------------------------------------------------------------
+# Memory Usage High
+# Severity: Medium
+# Response Time: 4 hours
+# -----------------------------------------------------------------------------
+- displayName: "Cloud Function Memory Usage High"
+  documentation:
+    content: |
+      ## Alert: Memory Usage High
+
+      Cloud Function memory usage is approaching limits.
+
+      ### Investigation Steps:
+      1. Profile memory usage in functions
+      2. Check for memory leaks
+      3. Consider increasing memory allocation
+      4. Optimize data processing
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#memory-high
+    mimeType: text/markdown
+  conditions:
+    - displayName: "Memory usage > 200MB"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_function"
+          metric.type="cloudfunctions.googleapis.com/function/user_memory_bytes"
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_PERCENTILE_95
+        comparison: COMPARISON_GT
+        thresholdValue: 209715200
+        duration: 600s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 604800s
+
+# -----------------------------------------------------------------------------
+# Security Event Detected
+# Severity: Critical
+# Response Time: 15 minutes
+# -----------------------------------------------------------------------------
+- displayName: "Security Event Detected"
+  documentation:
+    content: |
+      ## Alert: Security Event Detected
+
+      A security-related event has been detected.
+      Immediate investigation required.
+
+      ### Investigation Steps:
+      1. Check securityEvents collection in Firestore
+      2. Review source IPs and patterns
+      3. Check for unauthorized access attempts
+      4. Consider incident response procedures
+
+      ### Runbook: docs/ALERT_RUNBOOK.md#security-event
+    mimeType: text/markdown
+  conditions:
+    - displayName: "Security event logged"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_function"
+          logName="projects/tokyo-list-478804-e5/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+          jsonPayload.logType="security"
+          jsonPayload.severity="high" OR jsonPayload.severity="critical"
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_COUNT
+        comparison: COMPARISON_GT
+        thresholdValue: 0
+        duration: 0s
+  combiner: OR
+  enabled: true
+  notificationChannels: []
+  alertStrategy:
+    autoClose: 86400s
