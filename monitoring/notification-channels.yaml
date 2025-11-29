@@ -1,0 +1,140 @@
+# =============================================================================
+# Cloud Monitoring Notification Channels
+# AI Fitness App - tokyo-list-478804-e5
+#
+# Reference: docs/specs/01_system_architecture_v3_2.md Section 13
+# Reference: docs/MONITORING_DESIGN.md
+#
+# Usage:
+#   # Create email notification channel
+#   gcloud alpha monitoring channels create \
+#     --channel-content-from-file=monitoring/notification-channels.yaml \
+#     --project=tokyo-list-478804-e5
+#
+# Note: For Slack and PagerDuty, additional configuration is required
+#       via Cloud Console or API.
+#
+# Date: 2025-11-29
+# Version: 1.0.0
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Notification Channel Definitions
+# -----------------------------------------------------------------------------
+
+channels:
+  # ---------------------------------------------------------------------------
+  # Email Channels
+  # ---------------------------------------------------------------------------
+  - displayName: "AI Fitness - Primary Admin Email"
+    type: email
+    description: "Primary administrator email for critical alerts"
+    labels:
+      email_address: "admin@example.com"  # TODO: Update with actual email
+    enabled: true
+    # Severity: All levels
+
+  - displayName: "AI Fitness - Development Team Email"
+    type: email
+    description: "Development team email for non-critical alerts"
+    labels:
+      email_address: "dev-team@example.com"  # TODO: Update with actual email
+    enabled: true
+    # Severity: High, Medium, Low
+
+  # ---------------------------------------------------------------------------
+  # Slack Channels (Requires Slack Integration)
+  # ---------------------------------------------------------------------------
+  # To configure Slack:
+  # 1. Go to Cloud Console > Monitoring > Alerting > Edit notification channels
+  # 2. Add Slack configuration
+  # 3. Update the channel name below
+  #
+  # - displayName: "AI Fitness - Slack Alerts"
+  #   type: slack
+  #   description: "Slack channel for monitoring alerts"
+  #   labels:
+  #     channel_name: "#ai-fitness-alerts"
+  #     auth_token: ""  # Configured via Cloud Console
+  #   enabled: true
+
+  # ---------------------------------------------------------------------------
+  # PagerDuty Integration (For Critical Alerts)
+  # ---------------------------------------------------------------------------
+  # To configure PagerDuty:
+  # 1. Create a service in PagerDuty
+  # 2. Get the integration key
+  # 3. Configure via Cloud Console or API
+  #
+  # - displayName: "AI Fitness - PagerDuty"
+  #   type: pagerduty
+  #   description: "PagerDuty for critical on-call alerts"
+  #   labels:
+  #     service_key: ""  # PagerDuty integration key
+  #   enabled: true
+  #   # Severity: Critical only
+
+# -----------------------------------------------------------------------------
+# Notification Routing Guide
+# -----------------------------------------------------------------------------
+#
+# | Severity | Response Time | Channels                    |
+# |----------|---------------|------------------------------|
+# | Critical | 15 minutes    | PagerDuty + Slack + Email   |
+# | High     | 1 hour        | Slack + Email               |
+# | Medium   | 4 hours       | Slack                       |
+# | Low      | 24 hours      | Email                       |
+#
+# -----------------------------------------------------------------------------
+# Alert Categories
+# -----------------------------------------------------------------------------
+#
+# Critical Alerts (15-minute response):
+#   - Service downtime
+#   - Security incidents
+#   - Data integrity issues
+#   - Uptime check failures
+#
+# High Severity Alerts (1-hour response):
+#   - API error rate > 1%
+#   - Authentication failure spikes
+#   - Cloud Function execution errors
+#
+# Medium Severity Alerts (4-hour response):
+#   - API latency degradation
+#   - High Firestore operations
+#   - Memory usage warnings
+#   - Budget warnings (80%)
+#
+# Low Severity Alerts (24-hour response):
+#   - Budget notifications (50%)
+#   - Performance trend alerts
+#   - Non-critical warnings
+#
+# -----------------------------------------------------------------------------
+# Setup Instructions
+# -----------------------------------------------------------------------------
+#
+# 1. Email Channels:
+#    gcloud alpha monitoring channels create \
+#      --display-name="AI Fitness - Primary Admin Email" \
+#      --type=email \
+#      --channel-labels=email_address=admin@example.com \
+#      --project=tokyo-list-478804-e5
+#
+# 2. Slack Integration:
+#    - Go to https://console.cloud.google.com/monitoring/alerting/notifications
+#    - Click "Add New" under Slack
+#    - Follow OAuth flow to authorize
+#
+# 3. PagerDuty Integration:
+#    - Create a service in PagerDuty dashboard
+#    - Copy the integration key
+#    - Add in Cloud Console > Monitoring > Alerting > Notification channels
+#
+# 4. Link channels to alert policies:
+#    - Get channel IDs: gcloud alpha monitoring channels list
+#    - Update alert-policies.yaml with channel IDs
+#    - Reapply alert policies
+#
+# -----------------------------------------------------------------------------
