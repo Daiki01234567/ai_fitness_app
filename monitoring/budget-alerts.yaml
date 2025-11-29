@@ -20,7 +20,7 @@ budgets:
     description: "月間支出の全体監視"
     budgetFilter:
       projects:
-        - "projects/ai-fitness-c38f0"
+        - "projects/tokyo-list-478804-e5"
       # すべてのサービスを含む
     amount:
       specifiedAmount:
@@ -43,7 +43,7 @@ budgets:
       - thresholdPercent: 1.2
         spendBasis: CURRENT_SPEND
     notificationsRule:
-      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      pubsubTopic: "projects/tokyo-list-478804-e5/topics/budget-alerts"
       schemaVersion: "1.0"
       monitoringNotificationChannels: []  # 通知チャネルIDを追加
       disableDefaultIamRecipients: false
@@ -53,7 +53,7 @@ budgets:
     description: "Cloud Functions 実行コスト監視"
     budgetFilter:
       projects:
-        - "projects/ai-fitness-c38f0"
+        - "projects/tokyo-list-478804-e5"
       services:
         - "services/cloudfunctions.googleapis.com"
     amount:
@@ -68,7 +68,7 @@ budgets:
       - thresholdPercent: 1.0
         spendBasis: CURRENT_SPEND
     notificationsRule:
-      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      pubsubTopic: "projects/tokyo-list-478804-e5/topics/budget-alerts"
       schemaVersion: "1.0"
 
   # Firestore 予算
@@ -76,7 +76,7 @@ budgets:
     description: "Firestore 読み書きコスト監視"
     budgetFilter:
       projects:
-        - "projects/ai-fitness-c38f0"
+        - "projects/tokyo-list-478804-e5"
       services:
         - "services/firestore.googleapis.com"
     amount:
@@ -91,7 +91,7 @@ budgets:
       - thresholdPercent: 1.0
         spendBasis: CURRENT_SPEND
     notificationsRule:
-      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      pubsubTopic: "projects/tokyo-list-478804-e5/topics/budget-alerts"
       schemaVersion: "1.0"
 
   # BigQuery 予算
@@ -99,7 +99,7 @@ budgets:
     description: "BigQuery 分析コスト監視"
     budgetFilter:
       projects:
-        - "projects/ai-fitness-c38f0"
+        - "projects/tokyo-list-478804-e5"
       services:
         - "services/bigquery.googleapis.com"
     amount:
@@ -114,7 +114,7 @@ budgets:
       - thresholdPercent: 1.0
         spendBasis: CURRENT_SPEND
     notificationsRule:
-      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      pubsubTopic: "projects/tokyo-list-478804-e5/topics/budget-alerts"
       schemaVersion: "1.0"
 
   # Cloud Storage 予算
@@ -122,7 +122,7 @@ budgets:
     description: "Cloud Storage ストレージ・転送コスト監視"
     budgetFilter:
       projects:
-        - "projects/ai-fitness-c38f0"
+        - "projects/tokyo-list-478804-e5"
       services:
         - "services/storage.googleapis.com"
     amount:
@@ -137,7 +137,7 @@ budgets:
       - thresholdPercent: 1.0
         spendBasis: CURRENT_SPEND
     notificationsRule:
-      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      pubsubTopic: "projects/tokyo-list-478804-e5/topics/budget-alerts"
       schemaVersion: "1.0"
 
 # -----------------------------------------------------------------------------
