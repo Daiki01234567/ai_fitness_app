@@ -1,8 +1,8 @@
-/// Pose Lifecycle Observer
+/// 姿勢ライフサイクルオブザーバー
 ///
-/// Manages pose session lifecycle based on app state.
-/// Handles background/foreground transitions for battery optimization.
-/// Reference: docs/specs/00_要件定義書_v3_3.md (NFR-035)
+/// アプリ状態に基づいて姿勢セッションのライフサイクルを管理します。
+/// バッテリー最適化のためのバックグラウンド/フォアグラウンド遷移を処理します。
+/// 参照: docs/specs/00_要件定義書_v3_3.md (NFR-035)
 library;
 
 import 'package:flutter/widgets.dart';
@@ -11,28 +11,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../camera/camera_config.dart';
 import 'pose_session_controller.dart';
 
-/// Lifecycle observer provider
+/// ライフサイクルオブザーバープロバイダー
 final poseLifecycleObserverProvider = Provider<PoseLifecycleObserver>((ref) {
   final sessionController = ref.watch(poseSessionControllerProvider.notifier);
   return PoseLifecycleObserver(sessionController);
 });
 
-/// Power save mode state provider
+/// 省電力モード状態プロバイダー
 final powerSaveModeProvider = StateProvider<bool>((ref) => false);
 
-/// Pose lifecycle observer that handles app lifecycle events
+/// アプリライフサイクルイベントを処理する姿勢ライフサイクルオブザーバー
 class PoseLifecycleObserver with WidgetsBindingObserver {
   PoseLifecycleObserver(this._sessionController);
 
   final PoseSessionController _sessionController;
 
-  /// Whether session was active before going to background
+  /// バックグラウンドに移行する前にセッションがアクティブだったか
   bool _wasActiveBeforeBackground = false;
 
-  /// Whether the observer is registered
+  /// オブザーバーが登録されているか
   bool _isRegistered = false;
 
-  /// Register the observer with WidgetsBinding
+  /// WidgetsBindingにオブザーバーを登録
   void register() {
     if (_isRegistered) return;
     WidgetsBinding.instance.addObserver(this);
@@ -40,7 +40,7 @@ class PoseLifecycleObserver with WidgetsBindingObserver {
     debugPrint('PoseLifecycleObserver: Registered');
   }
 
-  /// Unregister the observer
+  /// オブザーバーの登録を解除
   void unregister() {
     if (!_isRegistered) return;
     WidgetsBinding.instance.removeObserver(this);
@@ -48,12 +48,12 @@ class PoseLifecycleObserver with WidgetsBindingObserver {
     debugPrint('PoseLifecycleObserver: Unregistered');
   }
 
-  /// Enable or disable power save mode
+  /// 省電力モードを有効化または無効化
   void setPowerSaveMode(bool enabled) {
     debugPrint('PoseLifecycleObserver: Power save mode: $enabled');
 
     if (enabled) {
-      // If session is active, apply power saving measures
+      // セッションがアクティブな場合、省電力対策を適用
       _applyPowerSaveMode();
     }
   }
@@ -74,13 +74,13 @@ class PoseLifecycleObserver with WidgetsBindingObserver {
 
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
-        // App is being terminated or hidden, stop session completely
+        // アプリが終了または非表示になっている、セッションを完全に停止
         _handleAppDetached();
         break;
     }
   }
 
-  /// Handle app going to background
+  /// アプリがバックグラウンドに移行する処理
   void _handleGoingToBackground() {
     if (_sessionController.isSessionActive) {
       _wasActiveBeforeBackground = true;
@@ -91,7 +91,7 @@ class PoseLifecycleObserver with WidgetsBindingObserver {
     }
   }
 
-  /// Handle app returning to foreground
+  /// アプリがフォアグラウンドに戻る処理
   void _handleReturningToForeground() {
     if (_wasActiveBeforeBackground) {
       _sessionController.resumeSession();
@@ -100,27 +100,27 @@ class PoseLifecycleObserver with WidgetsBindingObserver {
     }
   }
 
-  /// Handle app being detached
+  /// アプリが切り離される処理
   void _handleAppDetached() {
     _wasActiveBeforeBackground = false;
     _sessionController.stopSession();
     debugPrint('PoseLifecycleObserver: Session stopped due to app detach');
   }
 
-  /// Apply power save mode optimizations
+  /// 省電力モード最適化を適用
   void _applyPowerSaveMode() {
-    // Power save mode can reduce processing by:
-    // 1. Skipping more frames
-    // 2. Using lower resolution
-    // 3. Reducing detection frequency
+    // 省電力モードは以下で処理を削減できる:
+    // 1. より多くのフレームをスキップ
+    // 2. より低い解像度を使用
+    // 3. 検出頻度を下げる
 
-    // This is handled through the fallback mechanism
-    // by treating power save as a performance issue
+    // これはフォールバックメカニズムを通じて処理される
+    // 省電力をパフォーマンス問題として扱う
     debugPrint('PoseLifecycleObserver: Applying power save optimizations');
   }
 }
 
-/// Widget that automatically manages pose lifecycle
+/// 姿勢ライフサイクルを自動管理するWidget
 class PoseLifecycleWidget extends ConsumerStatefulWidget {
   const PoseLifecycleWidget({
     required this.child,
@@ -137,7 +137,7 @@ class _PoseLifecycleWidgetState extends ConsumerState<PoseLifecycleWidget> {
   @override
   void initState() {
     super.initState();
-    // Register lifecycle observer after build
+    // ビルド後にライフサイクルオブザーバーを登録
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(poseLifecycleObserverProvider).register();
     });
@@ -151,7 +151,7 @@ class _PoseLifecycleWidgetState extends ConsumerState<PoseLifecycleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch power save mode and apply it
+    // 省電力モードを監視して適用
     final powerSaveMode = ref.watch(powerSaveModeProvider);
     ref.read(poseLifecycleObserverProvider).setPowerSaveMode(powerSaveMode);
 
@@ -159,13 +159,13 @@ class _PoseLifecycleWidgetState extends ConsumerState<PoseLifecycleWidget> {
   }
 }
 
-/// Extension for battery-aware session control
+/// バッテリーを考慮したセッション制御用の拡張
 extension BatteryAwareSessionExtension on PoseSessionController {
-  /// Start session with battery awareness
+  /// バッテリーを考慮してセッションを開始
   Future<bool> startSessionBatteryAware({
     required bool isPowerSaveMode,
   }) async {
-    // If power save mode is on, start with lower quality
+    // 省電力モードがオンの場合、低品質で開始
     if (isPowerSaveMode) {
       return startSession(config: CameraConfig.lowQuality);
     }

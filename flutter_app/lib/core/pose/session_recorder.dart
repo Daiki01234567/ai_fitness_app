@@ -1,8 +1,8 @@
-/// Session Recorder
+/// セッションレコーダー
 ///
-/// Records pose detection data during training sessions.
-/// Handles frame data, metadata, and batch preparation for upload.
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
+/// トレーニングセッション中の姿勢検出データを記録します。
+/// フレームデータ、メタデータ、およびアップロード用バッチ準備を処理します。
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
 library;
 
 import 'dart:collection';
@@ -13,25 +13,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'pose_data.dart';
 import 'pose_landmark_type.dart';
 
-/// Maximum number of frames to keep in memory
-const int kMaxFramesInMemory = 1800; // ~60 seconds at 30fps
+/// メモリに保持する最大フレーム数
+const int kMaxFramesInMemory = 1800; // 30fpsで約60秒
 
-/// Session recording state
+/// セッション記録状態
 enum RecordingState {
-  /// Not recording
+  /// 記録していない
   idle,
 
-  /// Currently recording
+  /// 現在記録中
   recording,
 
-  /// Recording paused
+  /// 記録一時停止
   paused,
 
-  /// Recording completed, ready for export
+  /// 記録完了、エクスポート準備完了
   completed,
 }
 
-/// Recorded frame data
+/// 記録されたフレームデータ
 class RecordedFrame {
   const RecordedFrame({
     required this.frameIndex,
@@ -41,22 +41,22 @@ class RecordedFrame {
     required this.overallConfidence,
   });
 
-  /// Frame index in the session
+  /// セッション内のフレームインデックス
   final int frameIndex;
 
-  /// Timestamp in milliseconds since session start
+  /// セッション開始からのタイムスタンプ（ミリ秒）
   final int timestamp;
 
-  /// Landmark data (only reliable landmarks are stored)
+  /// ランドマークデータ（信頼できるランドマークのみ保存）
   final Map<PoseLandmarkType, RecordedLandmark> landmarks;
 
-  /// Processing time for this frame in milliseconds
+  /// このフレームの処理時間（ミリ秒）
   final int processingTimeMs;
 
-  /// Overall confidence score for this frame
+  /// このフレームの全体信頼度スコア
   final double overallConfidence;
 
-  /// Convert to JSON for storage/upload
+  /// 保存/アップロード用にJSONに変換
   Map<String, dynamic> toJson() {
     return {
       'frameIndex': frameIndex,
@@ -69,7 +69,7 @@ class RecordedFrame {
     };
   }
 
-  /// Create from JSON
+  /// JSONから作成
   factory RecordedFrame.fromJson(Map<String, dynamic> json) {
     final landmarksJson = json['landmarks'] as Map<String, dynamic>;
     final landmarks = <PoseLandmarkType, RecordedLandmark>{};
@@ -92,7 +92,7 @@ class RecordedFrame {
   }
 }
 
-/// Recorded landmark data (compact format)
+/// 記録されたランドマークデータ（コンパクト形式）
 class RecordedLandmark {
   const RecordedLandmark({
     required this.x,
@@ -101,19 +101,19 @@ class RecordedLandmark {
     required this.likelihood,
   });
 
-  /// X coordinate (normalized 0-1)
+  /// X座標（正規化 0-1）
   final double x;
 
-  /// Y coordinate (normalized 0-1)
+  /// Y座標（正規化 0-1）
   final double y;
 
-  /// Z coordinate (depth)
+  /// Z座標（深度）
   final double z;
 
-  /// Confidence score
+  /// 信頼度スコア
   final double likelihood;
 
-  /// Convert to JSON
+  /// JSONに変換
   Map<String, dynamic> toJson() {
     return {
       'x': x,
@@ -123,7 +123,7 @@ class RecordedLandmark {
     };
   }
 
-  /// Create from JSON
+  /// JSONから作成
   factory RecordedLandmark.fromJson(Map<String, dynamic> json) {
     return RecordedLandmark(
       x: (json['x'] as num).toDouble(),
@@ -133,7 +133,7 @@ class RecordedLandmark {
     );
   }
 
-  /// Create from PoseLandmark
+  /// PoseLandmarkから作成
   factory RecordedLandmark.fromPoseLandmark(PoseLandmark landmark) {
     return RecordedLandmark(
       x: landmark.x,
@@ -144,7 +144,7 @@ class RecordedLandmark {
   }
 }
 
-/// Session metadata
+/// セッションメタデータ
 class SessionMetadata {
   const SessionMetadata({
     required this.sessionId,
@@ -159,43 +159,43 @@ class SessionMetadata {
     this.droppedFrames,
   });
 
-  /// Unique session identifier
+  /// 一意のセッション識別子
   final String sessionId;
 
-  /// User identifier
+  /// ユーザー識別子
   final String userId;
 
-  /// Type of exercise being performed
+  /// 実行中のエクササイズの種類
   final String exerciseType;
 
-  /// Session start time
+  /// セッション開始時刻
   final DateTime startTime;
 
-  /// Session end time
+  /// セッション終了時刻
   final DateTime? endTime;
 
-  /// Device information
+  /// デバイス情報
   final DeviceInfo? deviceInfo;
 
-  /// Camera configuration used
+  /// 使用されたカメラ設定
   final CameraConfigInfo? cameraConfig;
 
-  /// Average FPS during session
+  /// セッション中の平均FPS
   final double? averageFps;
 
-  /// Total frames recorded
+  /// 記録された総フレーム数
   final int? totalFrames;
 
-  /// Number of dropped frames
+  /// ドロップされたフレーム数
   final int? droppedFrames;
 
-  /// Session duration in milliseconds
+  /// セッション継続時間（ミリ秒）
   int? get durationMs {
     if (endTime == null) return null;
     return endTime!.difference(startTime).inMilliseconds;
   }
 
-  /// Convert to JSON
+  /// JSONに変換
   Map<String, dynamic> toJson() {
     return {
       'sessionId': sessionId,
@@ -211,7 +211,7 @@ class SessionMetadata {
     };
   }
 
-  /// Create updated copy
+  /// 更新されたコピーを作成
   SessionMetadata copyWith({
     DateTime? endTime,
     double? averageFps,
@@ -233,7 +233,7 @@ class SessionMetadata {
   }
 }
 
-/// Device information
+/// デバイス情報
 class DeviceInfo {
   const DeviceInfo({
     required this.platform,
@@ -254,7 +254,7 @@ class DeviceInfo {
   }
 }
 
-/// Camera configuration information
+/// カメラ設定情報
 class CameraConfigInfo {
   const CameraConfigInfo({
     required this.resolution,
@@ -272,7 +272,7 @@ class CameraConfigInfo {
   }
 }
 
-/// Session recorder state
+/// セッションレコーダー状態
 class SessionRecorderState {
   const SessionRecorderState({
     this.recordingState = RecordingState.idle,
@@ -309,29 +309,29 @@ class SessionRecorderState {
   }
 }
 
-/// Session recorder provider
+/// セッションレコーダープロバイダー
 final sessionRecorderProvider =
     StateNotifierProvider<SessionRecorderNotifier, SessionRecorderState>((ref) {
   return SessionRecorderNotifier();
 });
 
-/// Session recorder notifier
+/// セッションレコーダーNotifier
 class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
   SessionRecorderNotifier() : super(const SessionRecorderState());
 
-  /// Recorded frames (circular buffer)
+  /// 記録されたフレーム（循環バッファ）
   final Queue<RecordedFrame> _frames = Queue<RecordedFrame>();
 
-  /// Session start timestamp
+  /// セッション開始タイムスタンプ
   int? _sessionStartTimestamp;
 
-  /// Frame index counter
+  /// フレームインデックスカウンター
   int _frameIndex = 0;
 
-  /// Get all recorded frames
+  /// 記録されたすべてのフレームを取得
   List<RecordedFrame> get frames => _frames.toList();
 
-  /// Start recording a new session
+  /// 新しいセッションの記録を開始
   void startRecording({
     required String sessionId,
     required String userId,
@@ -367,14 +367,14 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     debugPrint('SessionRecorder: Started recording session $sessionId');
   }
 
-  /// Record a pose frame
+  /// 姿勢フレームを記録
   void recordFrame(PoseFrame pose) {
     if (!state.isRecording) return;
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final timestamp = now - (_sessionStartTimestamp ?? now);
 
-    // Convert landmarks (only store reliable ones)
+    // ランドマークを変換（信頼できるものだけを保存）
     final landmarks = <PoseLandmarkType, RecordedLandmark>{};
     for (final entry in pose.landmarks.entries) {
       if (entry.value.meetsMinimumThreshold) {
@@ -390,7 +390,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
       overallConfidence: pose.overallConfidence,
     );
 
-    // Add to buffer, remove oldest if full
+    // バッファに追加、満杯の場合は最古を削除
     _frames.addLast(frame);
     if (_frames.length > kMaxFramesInMemory) {
       _frames.removeFirst();
@@ -402,7 +402,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     );
   }
 
-  /// Record a dropped frame
+  /// ドロップされたフレームを記録
   void recordDroppedFrame() {
     if (!state.isRecording) return;
 
@@ -411,7 +411,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     );
   }
 
-  /// Pause recording
+  /// 記録を一時停止
   void pauseRecording() {
     if (!state.isRecording) return;
 
@@ -422,7 +422,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     debugPrint('SessionRecorder: Recording paused');
   }
 
-  /// Resume recording
+  /// 記録を再開
   void resumeRecording() {
     if (!state.isPaused) return;
 
@@ -433,7 +433,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     debugPrint('SessionRecorder: Recording resumed');
   }
 
-  /// Stop recording and finalize session
+  /// 記録を停止しセッションを終了
   void stopRecording({double? averageFps}) {
     if (state.recordingState == RecordingState.idle) return;
 
@@ -455,7 +455,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     );
   }
 
-  /// Clear all recorded data
+  /// すべての記録データをクリア
   void clear() {
     _frames.clear();
     _frameIndex = 0;
@@ -466,7 +466,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     debugPrint('SessionRecorder: Cleared');
   }
 
-  /// Export session data for upload
+  /// アップロード用にセッションデータをエクスポート
   Map<String, dynamic> exportSession() {
     if (state.metadata == null) {
       throw StateError('No session metadata available');
@@ -478,14 +478,14 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
     };
   }
 
-  /// Get frames within a time range
+  /// 時間範囲内のフレームを取得
   List<RecordedFrame> getFramesInRange(int startMs, int endMs) {
     return _frames
         .where((f) => f.timestamp >= startMs && f.timestamp <= endMs)
         .toList();
   }
 
-  /// Get the latest N frames
+  /// 最新のNフレームを取得
   List<RecordedFrame> getLatestFrames(int count) {
     final frameList = _frames.toList();
     if (frameList.length <= count) return frameList;

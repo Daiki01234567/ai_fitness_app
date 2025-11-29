@@ -3,6 +3,7 @@
 **Phase**: Phase 2 (機能実装)
 **期間**: Week 9-10
 **優先度**: 中
+**ステータス**: なし
 **関連仕様書**:
 - `docs/specs/04_BigQuery設計書_v3_3.md`
 - `docs/specs/00_要件定義書_v3_3.md` (NFR-018～NFR-020)

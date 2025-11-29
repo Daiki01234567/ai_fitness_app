@@ -1,11 +1,11 @@
 /**
- * Revoke Consent API
+ * 同意撤回 API
  *
- * Revokes user consent for Terms of Service or Privacy Policy.
- * Triggers force logout and optionally initiates data deletion.
+ * 利用規約またはプライバシーポリシーに対するユーザーの同意を撤回
+ * 強制ログアウトをトリガーし、オプションでデータ削除を開始
  *
- * Legal basis: GDPR Article 7(3), EDPB Guidelines 05/2020
- * Reference: docs/specs/00_要件定義書_v3_3.md (FR-002-1)
+ * 法的根拠: GDPR 第7条(3)、EDPB ガイドライン 05/2020
+ * 参照: docs/specs/00_要件定義書_v3_3.md (FR-002-1)
  *
  * @version 1.0.0
  * @date 2025-11-27
@@ -19,7 +19,7 @@ import { requireStrictCsrfProtection } from "../../middleware/csrf";
 import { logConsentAction, logSecurityEvent } from "../../services/auditLog";
 import { logger } from "../../utils/logger";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -28,12 +28,12 @@ const db = admin.firestore();
 const auth = admin.auth();
 
 /**
- * Consent type
+ * 同意タイプ
  */
 type ConsentType = "tos" | "privacy_policy" | "all";
 
 /**
- * Revoke consent request data
+ * 同意撤回リクエストデータ
  */
 interface RevokeConsentRequest {
   consentType: ConsentType;
@@ -42,7 +42,7 @@ interface RevokeConsentRequest {
 }
 
 /**
- * Extract client IP from request
+ * リクエストからクライアント IP を抽出
  */
 function getClientIp(rawRequest: unknown): string {
   if (!rawRequest || typeof rawRequest !== "object") {
@@ -66,7 +66,7 @@ function getClientIp(rawRequest: unknown): string {
 }
 
 /**
- * Extract user agent from request
+ * リクエストからユーザーエージェントを抽出
  */
 function getUserAgent(rawRequest: unknown): string {
   if (!rawRequest || typeof rawRequest !== "object") {
@@ -80,7 +80,7 @@ function getUserAgent(rawRequest: unknown): string {
 }
 
 /**
- * Detect device type from user agent
+ * ユーザーエージェントからデバイスタイプを検出
  */
 function detectDeviceType(userAgent: string): "mobile" | "tablet" | "desktop" {
   const ua = userAgent.toLowerCase();
@@ -94,7 +94,7 @@ function detectDeviceType(userAgent: string): "mobile" | "tablet" | "desktop" {
 }
 
 /**
- * Detect platform from user agent
+ * ユーザーエージェントからプラットフォームを検出
  */
 function detectPlatform(userAgent: string): "iOS" | "Android" | "Web" {
   const ua = userAgent.toLowerCase();
@@ -108,7 +108,7 @@ function detectPlatform(userAgent: string): "iOS" | "Android" | "Web" {
 }
 
 /**
- * Hash IP address for privacy
+ * プライバシーのために IP アドレスをハッシュ化
  */
 function hashIpAddress(ip: string): string {
   const crypto = require("crypto");
@@ -121,7 +121,7 @@ function hashIpAddress(ip: string): string {
 }
 
 /**
- * Validate consent type for revocation
+ * 撤回用の同意タイプをバリデート
  */
 function validateConsentType(type: unknown): ConsentType {
   if (type !== "tos" && type !== "privacy_policy" && type !== "all") {
@@ -134,23 +134,23 @@ function validateConsentType(type: unknown): ConsentType {
 }
 
 /**
- * Revoke consent callable function
+ * 同意撤回 callable 関数
  *
- * Revokes user consent and triggers force logout.
- * Optionally creates a data deletion request.
+ * ユーザーの同意を撤回し、強制ログアウトをトリガー
+ * オプションでデータ削除リクエストを作成
  */
 export const revokeConsent = onCall(
   {
     region: "asia-northeast1",
     memory: "256MiB",
     timeoutSeconds: 60,
-    cors: true, // Enable CORS for web clients
+    cors: true, // Web クライアント用に CORS を有効化
   },
   async (request: CallableRequest<RevokeConsentRequest>) => {
-    // Strict CSRF Protection for sensitive operation
+    // センシティブな操作のための厳格な CSRF 保護
     requireStrictCsrfProtection(request);
 
-    // Check authentication
+    // 認証をチェック
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "認証が必要です");
     }
@@ -162,7 +162,7 @@ export const revokeConsent = onCall(
     const requestDataDeletion = data.requestDataDeletion === true;
     const reason = typeof data.reason === "string" ? data.reason.substring(0, 500) : undefined;
 
-    // Extract request metadata
+    // リクエストメタデータを抽出
     const clientIp = getClientIp(request.rawRequest);
     const userAgent = getUserAgent(request.rawRequest);
     const deviceType = detectDeviceType(userAgent);
@@ -175,7 +175,7 @@ export const revokeConsent = onCall(
     });
 
     try {
-      // Check if user exists
+      // ユーザーの存在をチェック
       const userRef = db.collection("users").doc(userId);
       const userDoc = await userRef.get();
 
@@ -185,7 +185,7 @@ export const revokeConsent = onCall(
 
       const userData = userDoc.data();
 
-      // Check if already deleted
+      // 既に削除済みかチェック
       if (userData?.deletionScheduled) {
         throw new HttpsError(
           "failed-precondition",
@@ -193,11 +193,11 @@ export const revokeConsent = onCall(
         );
       }
 
-      // Calculate data retention date (7 years from now)
+      // データ保存期限を計算（現在から7年後）
       const dataRetentionDate = new Date();
       dataRetentionDate.setFullYear(dataRetentionDate.getFullYear() + 7);
 
-      // Consent details for revocation record
+      // 撤回レコード用の同意詳細
       const consentDetails = {
         ipAddress: hashIpAddress(clientIp),
         userAgent,
@@ -205,13 +205,16 @@ export const revokeConsent = onCall(
         platform,
       };
 
-      // Prepare user update
+      // ユーザー更新を準備
+      // クライアント側のログアウトをトリガーするために forceLogout を true に設定
+      // これにより、カスタムクレームが失敗しても次の読み取り時にクライアントがログアウトすることを保証
       const userUpdate: Record<string, unknown> = {
         updatedAt: FieldValue.serverTimestamp(),
+        forceLogout: true,
         forceLogoutAt: FieldValue.serverTimestamp(),
       };
 
-      // Consent records to create
+      // 作成する同意レコード
       const consentRecords: Record<string, unknown>[] = [];
 
       if (consentType === "tos" || consentType === "all") {
@@ -246,7 +249,7 @@ export const revokeConsent = onCall(
         });
       }
 
-      // If data deletion requested, create deletion request
+      // データ削除がリクエストされた場合、削除リクエストを作成
       let deletionRequestId: string | undefined;
       if (requestDataDeletion) {
         const scheduledDeletionDate = new Date();
@@ -256,15 +259,15 @@ export const revokeConsent = onCall(
         userUpdate.scheduledDeletionDate = Timestamp.fromDate(scheduledDeletionDate);
       }
 
-      // Execute transaction
+      // トランザクションを実行
       await db.runTransaction(async (transaction) => {
-        // Create consent revocation records
+        // 同意撤回レコードを作成
         for (const record of consentRecords) {
           const consentRef = db.collection("consents").doc();
           transaction.set(consentRef, record);
         }
 
-        // Create data deletion request if requested
+        // リクエストされた場合はデータ削除リクエストを作成
         if (requestDataDeletion) {
           const scheduledDeletionDate = new Date();
           scheduledDeletionDate.setDate(scheduledDeletionDate.getDate() + 30);
@@ -284,11 +287,11 @@ export const revokeConsent = onCall(
           });
         }
 
-        // Update user document
+        // ユーザードキュメントを更新
         transaction.update(userRef, userUpdate);
       });
 
-      // Set force logout custom claim
+      // 強制ログアウトのカスタムクレームを設定
       try {
         await auth.setCustomUserClaims(userId, {
           ...(request.auth.token || {}),
@@ -297,10 +300,10 @@ export const revokeConsent = onCall(
         });
       } catch (claimError) {
         logger.error("Failed to set force logout claim", claimError as Error, { userId });
-        // Continue - the forceLogoutAt field in Firestore will also trigger logout
+        // 続行 - Firestore の forceLogoutAt フィールドもログアウトをトリガーする
       }
 
-      // Log consent withdrawal (async)
+      // 同意撤回をログ出力（非同期）
       const auditPromises: Promise<string>[] = [];
 
       if (consentType === "tos" || consentType === "all") {
@@ -329,7 +332,7 @@ export const revokeConsent = onCall(
         );
       }
 
-      // Log security event for consent revocation
+      // 同意撤回のセキュリティイベントをログ出力
       auditPromises.push(
         logSecurityEvent({
           userId,
@@ -365,7 +368,7 @@ export const revokeConsent = onCall(
         deletionRequestId,
       };
     } catch (error) {
-      // Re-throw HttpsError as-is
+      // HttpsError はそのまま再スロー
       if (error instanceof HttpsError) {
         throw error;
       }

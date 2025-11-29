@@ -8,6 +8,7 @@
 - `docs/specs/00_要件定義書_v3_3.md` (NFR-024, NFR-025, NFR-035)
 - `docs/specs/08_README_form_validation_logic_v3_3.md`
 - `docs/specs/01_システムアーキテクチャ設計書_v3_2.md`
+- `docs/specs/06_データ処理記録_ROPA_v1_0.md` (750 - 854)
 
 ## 概要
 MediaPipe Pose を Flutter アプリに統合し、リアルタイム姿勢検出機能を実装する。
@@ -46,6 +47,9 @@ flutter_app/test/core/pose/
 ├── pose_error_handler_test.dart     # エラーハンドリングテスト
 ├── session_recorder_test.dart       # セッション記録テスト
 └── performance_monitor_test.dart    # パフォーマンス監視テスト
+
+flutter_app/test/integration/
+└── pose_session_integration_test.dart # 統合テスト（31テスト）
 
 flutter_app/android/app/
 ├── build.gradle.kts             # minSdk=21設定
@@ -310,10 +314,40 @@ flutter_app/ios/Runner/
   - [x] システムメトリクス更新
   - [x] サマリー取得
 
-#### 統合テスト
-- [ ] カメラ→MediaPipe連携
-- [ ] データ記録フロー
-- [ ] パフォーマンス計測
+#### 統合テスト (`test/integration/pose_session_integration_test.dart`) ✅ 完了
+- [x] カメラ→MediaPipe連携
+  - [x] PoseFrame正しくランドマークデータを保存
+  - [x] 信頼度計算
+  - [x] 信頼度閾値フィルタリング
+  - [x] areAllReliableメソッド
+  - [x] 空フレーム検出
+- [x] データ記録フロー
+  - [x] セッションライフサイクル（start→record→stop）
+  - [x] 信頼度によるランドマークフィルタリング
+  - [x] ドロップフレーム追跡
+  - [x] JSONエクスポート構造
+  - [x] 一時停止/再開機能
+  - [x] クリア機能
+- [x] パフォーマンス計測
+  - [x] フレームレート計算（30fps）
+  - [x] 低FPSでのフォールバック検知
+  - [x] ドロップフレームカウント
+  - [x] リセット機能
+  - [x] パフォーマンスサマリー生成
+- [x] カメラ設定フォールバック
+  - [x] フォールバックチェーン（high→medium→low→minimum）
+  - [x] FPS設定確認
+  - [x] 最低FPS閾値確認
+- [x] 種目別ランドマークグループ
+  - [x] squat（下半身関節）
+  - [x] armCurl（腕関節）
+  - [x] pushUp（全身）
+  - [x] sideRaise（肩・腕）
+  - [x] shoulderPress（肩・腕）
+- [x] End-to-Endデータフロー
+  - [x] 完全なセッションワークフロー
+  - [x] RecordedFrame JSONシリアライゼーション往復
+  - [x] 循環バッファ制限（1800フレーム）
 
 #### デバイステスト
 - [ ] 各種Android端末

@@ -1,8 +1,8 @@
-/// Camera Service
+/// カメラサービス
 ///
-/// Manages camera initialization, streaming, and lifecycle.
-/// Reference: docs/specs/00_要件定義書_v3_3.md (NFR-024, NFR-025, NFR-035)
-/// Important: Camera footage is NOT sent to server (NFR-015)
+/// カメラの初期化、ストリーミング、ライフサイクルを管理します。
+/// 参照: docs/specs/00_要件定義書_v3_3.md (NFR-024, NFR-025, NFR-035)
+/// 重要: カメラ映像はサーバーに送信されません (NFR-015)
 library;
 
 import 'dart:async';
@@ -13,18 +13,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'camera_config.dart';
 
-/// Camera service provider
+/// カメラサービスプロバイダー
 final cameraServiceProvider = Provider<CameraService>((ref) {
   return CameraService();
 });
 
-/// Camera state provider
+/// カメラ状態プロバイダー
 final cameraStateProvider = StateNotifierProvider<CameraStateNotifier, CameraServiceState>((ref) {
   final cameraService = ref.watch(cameraServiceProvider);
   return CameraStateNotifier(cameraService);
 });
 
-/// Camera service state
+/// カメラサービス状態
 class CameraServiceState {
   const CameraServiceState({
     this.state = CameraState.uninitialized,
@@ -61,14 +61,14 @@ class CameraServiceState {
   }
 }
 
-/// Camera state notifier
+/// カメラ状態Notifier
 class CameraStateNotifier extends StateNotifier<CameraServiceState> {
   CameraStateNotifier(this._cameraService) : super(const CameraServiceState());
 
   final CameraService _cameraService;
   StreamSubscription<CameraImage>? _imageStreamSubscription;
 
-  /// Initialize camera with optional configuration
+  /// オプション設定でカメラを初期化
   Future<bool> initialize({
     CameraConfig config = CameraConfig.highQuality,
     CameraLensDirection direction = CameraLensDirection.front,
@@ -126,7 +126,7 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
     }
   }
 
-  /// Start image stream for pose detection
+  /// 姿勢検出用の画像ストリームを開始
   Future<void> startImageStream(void Function(CameraImage) onImage) async {
     final controller = state.controller;
     if (controller == null || !controller.value.isInitialized) {
@@ -140,7 +140,7 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
     await controller.startImageStream(onImage);
   }
 
-  /// Stop image stream
+  /// 画像ストリームを停止
   Future<void> stopImageStream() async {
     final controller = state.controller;
     if (controller == null || !controller.value.isStreamingImages) {
@@ -152,43 +152,43 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
     _imageStreamSubscription = null;
   }
 
-  /// Pause camera
+  /// カメラを一時停止
   Future<void> pause() async {
     await stopImageStream();
     state = state.copyWith(state: CameraState.paused);
   }
 
-  /// Resume camera
+  /// カメラを再開
   Future<void> resume() async {
     if (state.controller != null) {
       state = state.copyWith(state: CameraState.ready);
     }
   }
 
-  /// Apply fallback configuration (lower resolution/fps)
+  /// フォールバック設定を適用（低解像度/FPS）
   Future<bool> applyFallback() async {
     final currentConfig = state.currentConfig;
     if (currentConfig == null) return false;
 
     final fallbackConfig = currentConfig.fallback;
     if (fallbackConfig == null) {
-      // No more fallbacks available
+      // これ以上のフォールバックは利用不可
       return false;
     }
 
     debugPrint('CameraService: Applying fallback from $currentConfig to $fallbackConfig');
 
-    // Dispose current controller
+    // 現在のコントローラーを破棄
     await disposeCamera();
 
-    // Re-initialize with fallback config
+    // フォールバック設定で再初期化
     return initialize(
       config: fallbackConfig,
       direction: CameraLensDirection.front,
     );
   }
 
-  /// Dispose camera resources
+  /// カメラリソースを破棄
   Future<void> disposeCamera() async {
     await stopImageStream();
     await state.controller?.dispose();
@@ -205,11 +205,11 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
   }
 }
 
-/// Camera service for low-level camera operations
+/// 低レベルカメラ操作用のカメラサービス
 class CameraService {
   List<CameraDescription>? _cachedCameras;
 
-  /// Get available cameras on the device
+  /// デバイスで利用可能なカメラを取得
   Future<List<CameraDescription>> getAvailableCameras() async {
     if (_cachedCameras != null) {
       return _cachedCameras!;
@@ -224,7 +224,7 @@ class CameraService {
     }
   }
 
-  /// Initialize a camera with the given configuration
+  /// 指定された設定でカメラを初期化
   Future<CameraController?> initializeCamera(
     CameraDescription camera,
     CameraConfig config,
@@ -233,13 +233,13 @@ class CameraService {
       camera,
       config.resolution,
       enableAudio: config.enableAudio,
-      imageFormatGroup: ImageFormatGroup.nv21, // Efficient format for ML processing
+      imageFormatGroup: ImageFormatGroup.nv21, // ML処理に効率的なフォーマット
     );
 
     try {
       await controller.initialize();
 
-      // Lock focus mode for better performance
+      // パフォーマンス向上のためフォーカスモードを固定
       if (controller.value.isInitialized) {
         await controller.setFocusMode(FocusMode.auto);
         await controller.setExposureMode(ExposureMode.auto);

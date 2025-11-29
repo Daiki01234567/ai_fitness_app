@@ -17,14 +17,14 @@ import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https
 
 import { requireStrictCsrfProtection } from "../middleware/csrf";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const db = admin.firestore();
 
-// Request interfaces
+// リクエストインターフェース
 interface SetClaimsRequest {
   targetUserId: string;
   claims: Record<string, unknown>;
@@ -46,7 +46,7 @@ interface GetClaimsRequest {
 export const setCustomClaims = onCall(
   { region: "asia-northeast1", cors: true },
   async (request: CallableRequest<SetClaimsRequest>) => {
-    // CSRF Protection (Strict mode for sensitive operation)
+    // CSRF保護（機密操作のためストリクトモード）
     requireStrictCsrfProtection(request);
 
     // 認証チェック
@@ -93,7 +93,7 @@ export const setCustomClaims = onCall(
       // カスタムクレームを設定
       await admin.auth().setCustomUserClaims(targetUserId, updatedClaims);
 
-      // Firestoreにもクレームの変更を記録（監査ログ）
+      // Firestore にもクレームの変更を記録（監査ログ）
       await db.collection("customClaimsLogs").add({
         targetUserId,
         previousClaims: currentClaims,
@@ -105,7 +105,7 @@ export const setCustomClaims = onCall(
 
       // 特定のクレームに対する追加処理
       if (claims.forceLogout === true) {
-        // 強制ログアウトフラグをFirestoreにも設定
+        // 強制ログアウトフラグを Firestore にも設定
         await db.collection("users").doc(targetUserId).update({
           forceLogout: true,
           forceLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -121,7 +121,7 @@ export const setCustomClaims = onCall(
         // 管理者権限付与の通知
         logger.info(`Admin privileges granted to user: ${targetUserId}`);
 
-        // 管理者権限付与をFirestoreに記録
+        // 管理者権限付与を Firestore に記録
         await db.collection("adminUsers").doc(targetUserId).set({
           userId: targetUserId,
           grantedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -154,7 +154,7 @@ export const setCustomClaims = onCall(
 export const removeCustomClaims = onCall(
   { region: "asia-northeast1", cors: true },
   async (request: CallableRequest<RemoveClaimsRequest>) => {
-    // CSRF Protection (Strict mode for sensitive operation)
+    // CSRF保護（機密操作のためストリクトモード）
     requireStrictCsrfProtection(request);
 
     // 認証チェック
@@ -215,7 +215,7 @@ export const removeCustomClaims = onCall(
 
       // 特定のクレーム削除に対する追加処理
       if (claimKeys.includes("forceLogout")) {
-        // 強制ログアウトフラグをFirestoreでも解除
+        // 強制ログアウトフラグを Firestore でも解除
         await db.collection("users").doc(targetUserId).update({
           forceLogout: false,
           forceLogoutClearedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -261,7 +261,7 @@ export const removeCustomClaims = onCall(
 export const getCustomClaims = onCall(
   { region: "asia-northeast1", cors: true },
   async (request: CallableRequest<GetClaimsRequest>) => {
-    // CSRF Protection
+    // CSRF保護
     requireStrictCsrfProtection(request);
 
     // 認証チェック
@@ -307,7 +307,7 @@ export const getCustomClaims = onCall(
 
 /**
  * 同意撤回時の強制ログアウト処理
- * Firestoreトリガーで自動実行
+ * Firestore トリガーで自動実行
  */
 export const onConsentWithdrawn = onDocumentCreated(
   {
@@ -344,7 +344,7 @@ export const onConsentWithdrawn = onDocumentCreated(
         lastUpdated: Date.now(),
       });
 
-      // Firestoreにも記録
+      // Firestore にも記録
       await db.collection("users").doc(userId).update({
         forceLogout: true,
         forceLogoutAt: admin.firestore.FieldValue.serverTimestamp(),

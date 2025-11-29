@@ -1,14 +1,13 @@
-/// Consent Management Section Widget
-///
-/// Widget for displaying and managing consent status in profile screen.
-/// Based on: docs/specs/00_要件定義書_v3_3.md (FR-002-1)
-///
-/// @version 1.0.0
-/// @date 2025-11-27
+// Consent Management Section Widget
+//
+// Widget for displaying and managing consent status in profile screen.
+// Based on: docs/specs/00_要件定義書_v3_3.md (FR-002-1)
+//
+// @version 1.0.0
+// @date 2025-11-27
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/auth/auth_state_notifier.dart';
@@ -81,9 +80,9 @@ class ConsentManagementSection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -195,7 +194,7 @@ class ConsentManagementSection extends ConsumerWidget {
                       color: Theme.of(context)
                           .colorScheme
                           .primaryContainer
-                          .withOpacity(0.5),
+                          .withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -368,7 +367,7 @@ class ConsentManagementSection extends ConsumerWidget {
         ),
       );
 
-      // Revoke consent
+      // Revoke consent via Cloud Function
       final result = await ref
           .read(consentStateProvider.notifier)
           .revokeAllConsents(requestDataDeletion: requestDeletion);
@@ -377,20 +376,32 @@ class ConsentManagementSection extends ConsumerWidget {
       if (context.mounted) {
         Navigator.of(context).pop();
 
-        if (result.success) {
-          // Sign out and redirect to login
-          await ref.read(authStateProvider.notifier).signOut();
-          if (context.mounted) {
-            context.go(AppRoutes.login);
-          }
-        } else {
-          // Show error
+        // Always force logout when user confirms consent revocation
+        // Even if Cloud Function fails, we should log out the user
+        // Based on: FR-002-1 同意撤回時の強制ログアウト
+        //
+        // The Cloud Function sets forceLogout in Firestore, but if it fails
+        // (e.g., emulator not running), we still need to log out the user.
+        await ref.read(authStateProvider.notifier).forceLogout();
+
+        if (!result.success && context.mounted) {
+          // Show warning that revocation may not be fully recorded
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result.error ?? '同意の解除に失敗しました'),
-              backgroundColor: Colors.red,
+              content: Text(
+                result.error ?? '同意解除の記録に問題が発生しました。ログアウトします。',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
             ),
           );
+        }
+
+        // Explicitly navigate to login screen to ensure redirect happens
+        // The router should handle this automatically, but we force it here
+        // to prevent returning to the previous screen
+        if (context.mounted) {
+          context.goToLogin();
         }
       }
     }

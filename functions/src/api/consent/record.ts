@@ -1,11 +1,11 @@
 /**
- * Record Consent API
+ * 同意記録 API
  *
- * Records user consent for Terms of Service and Privacy Policy.
- * Creates immutable consent records in the consents collection.
+ * 利用規約とプライバシーポリシーに対するユーザーの同意を記録
+ * consents コレクションに不変の同意レコードを作成
  *
- * Legal basis: GDPR Article 7, EDPB Guidelines 05/2020
- * Reference: docs/specs/02_Firestoreデータベース設計書_v3_3.md Section 6
+ * 法的根拠: GDPR 第7条、EDPB ガイドライン 05/2020
+ * 参照: docs/specs/02_Firestoreデータベース設計書_v3_3.md Section 6
  *
  * @version 1.0.0
  * @date 2025-11-27
@@ -19,24 +19,24 @@ import { requireCsrfProtection } from "../../middleware/csrf";
 import { logConsentAction } from "../../services/auditLog";
 import { logger } from "../../utils/logger";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const db = admin.firestore();
 
-// Current document versions
+// 現在のドキュメントバージョン
 const CURRENT_TOS_VERSION = "3.2";
 const CURRENT_PP_VERSION = "3.1";
 
 /**
- * Consent type
+ * 同意タイプ
  */
 type ConsentType = "tos" | "privacy_policy";
 
 /**
- * Record consent request data
+ * 同意記録リクエストデータ
  */
 interface RecordConsentRequest {
   consentType: ConsentType;
@@ -44,7 +44,7 @@ interface RecordConsentRequest {
 }
 
 /**
- * Consent details for audit trail
+ * 監査証跡用の同意詳細
  */
 interface ConsentDetails {
   ipAddress: string;
@@ -54,7 +54,7 @@ interface ConsentDetails {
 }
 
 /**
- * Extract client IP from request
+ * リクエストからクライアント IP を抽出
  */
 function getClientIp(rawRequest: unknown): string {
   if (!rawRequest || typeof rawRequest !== "object") {
@@ -78,7 +78,7 @@ function getClientIp(rawRequest: unknown): string {
 }
 
 /**
- * Extract user agent from request
+ * リクエストからユーザーエージェントを抽出
  */
 function getUserAgent(rawRequest: unknown): string {
   if (!rawRequest || typeof rawRequest !== "object") {
@@ -92,7 +92,7 @@ function getUserAgent(rawRequest: unknown): string {
 }
 
 /**
- * Detect device type from user agent
+ * ユーザーエージェントからデバイスタイプを検出
  */
 function detectDeviceType(userAgent: string): "mobile" | "tablet" | "desktop" {
   const ua = userAgent.toLowerCase();
@@ -106,7 +106,7 @@ function detectDeviceType(userAgent: string): "mobile" | "tablet" | "desktop" {
 }
 
 /**
- * Detect platform from user agent
+ * ユーザーエージェントからプラットフォームを検出
  */
 function detectPlatform(userAgent: string): "iOS" | "Android" | "Web" {
   const ua = userAgent.toLowerCase();
@@ -120,7 +120,7 @@ function detectPlatform(userAgent: string): "iOS" | "Android" | "Web" {
 }
 
 /**
- * Hash IP address for privacy
+ * プライバシーのために IP アドレスをハッシュ化
  */
 function hashIpAddress(ip: string): string {
   const crypto = require("crypto");
@@ -133,14 +133,14 @@ function hashIpAddress(ip: string): string {
 }
 
 /**
- * Get document version for consent type
+ * 同意タイプに対応するドキュメントバージョンを取得
  */
 function getDocumentVersion(consentType: ConsentType): string {
   return consentType === "tos" ? CURRENT_TOS_VERSION : CURRENT_PP_VERSION;
 }
 
 /**
- * Validate consent type
+ * 同意タイプをバリデート
  */
 function validateConsentType(type: unknown): ConsentType {
   if (type !== "tos" && type !== "privacy_policy") {
@@ -153,23 +153,23 @@ function validateConsentType(type: unknown): ConsentType {
 }
 
 /**
- * Record consent callable function
+ * 同意記録 callable 関数
  *
- * Records user consent for Terms of Service or Privacy Policy.
- * Creates an immutable consent record and updates the user document.
+ * 利用規約またはプライバシーポリシーに対するユーザーの同意を記録
+ * 不変の同意レコードを作成し、ユーザードキュメントを更新
  */
 export const recordConsent = onCall(
   {
     region: "asia-northeast1",
     memory: "256MiB",
     timeoutSeconds: 30,
-    cors: true, // Enable CORS for web clients
+    cors: true, // Web クライアント用に CORS を有効化
   },
   async (request: CallableRequest<RecordConsentRequest>) => {
-    // CSRF Protection
+    // CSRF 保護
     requireCsrfProtection(request);
 
-    // Check authentication
+    // 認証をチェック
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "認証が必要です");
     }
@@ -177,7 +177,7 @@ export const recordConsent = onCall(
     const userId = request.auth.uid;
     const data = request.data;
 
-    // Validate input
+    // 入力をバリデート
     if (data.accepted !== true) {
       throw new HttpsError("invalid-argument", "同意が必要です");
     }
@@ -185,7 +185,7 @@ export const recordConsent = onCall(
     const consentType = validateConsentType(data.consentType);
     const documentVersion = getDocumentVersion(consentType);
 
-    // Extract request metadata
+    // リクエストメタデータを抽出
     const clientIp = getClientIp(request.rawRequest);
     const userAgent = getUserAgent(request.rawRequest);
     const deviceType = detectDeviceType(userAgent);
@@ -198,7 +198,7 @@ export const recordConsent = onCall(
     });
 
     try {
-      // Check if user exists
+      // ユーザーの存在をチェック
       const userRef = db.collection("users").doc(userId);
       const userDoc = await userRef.get();
 
@@ -208,7 +208,7 @@ export const recordConsent = onCall(
 
       const userData = userDoc.data();
 
-      // Check if deletion is scheduled
+      // 削除予定かチェック
       if (userData?.deletionScheduled) {
         throw new HttpsError(
           "failed-precondition",
@@ -216,7 +216,7 @@ export const recordConsent = onCall(
         );
       }
 
-      // Create consent details
+      // 同意詳細を作成
       const consentDetails: ConsentDetails = {
         ipAddress: hashIpAddress(clientIp),
         userAgent,
@@ -224,11 +224,11 @@ export const recordConsent = onCall(
         platform,
       };
 
-      // Calculate data retention date (7 years from now)
+      // データ保存期限を計算（現在から7年後）
       const dataRetentionDate = new Date();
       dataRetentionDate.setFullYear(dataRetentionDate.getFullYear() + 7);
 
-      // Create consent record
+      // 同意レコードを作成
       const consentRecord = {
         userId,
         consentType,
@@ -239,7 +239,7 @@ export const recordConsent = onCall(
         dataRetentionDate: Timestamp.fromDate(dataRetentionDate),
       };
 
-      // Prepare user update based on consent type
+      // 同意タイプに基づいてユーザー更新を準備
       const userUpdate: Record<string, unknown> = {
         updatedAt: FieldValue.serverTimestamp(),
       };
@@ -254,17 +254,17 @@ export const recordConsent = onCall(
         userUpdate.ppVersion = documentVersion;
       }
 
-      // Execute transaction
+      // トランザクションを実行
       await db.runTransaction(async (transaction) => {
-        // Create consent record
+        // 同意レコードを作成
         const consentRef = db.collection("consents").doc();
         transaction.set(consentRef, consentRecord);
 
-        // Update user document
+        // ユーザードキュメントを更新
         transaction.update(userRef, userUpdate);
       });
 
-      // Log consent action (async)
+      // 同意アクションをログ出力（非同期）
       logConsentAction({
         userId,
         action: "consent_accept",
@@ -289,7 +289,7 @@ export const recordConsent = onCall(
         documentVersion,
       };
     } catch (error) {
-      // Re-throw HttpsError as-is
+      // HttpsError はそのまま再スロー
       if (error instanceof HttpsError) {
         throw error;
       }

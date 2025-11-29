@@ -1,33 +1,33 @@
 /**
- * API Functions Index
+ * API Functions インデックス
  *
- * HTTP callable functions for the AI Fitness App.
- * Organized by domain:
- * - auth: Authentication (signup, signin)
- * - user: User profile management
- * - training: Training session management
- * - gdpr: GDPR compliance (data export, deletion)
- * - settings: User settings
- * - subscription: Subscription management
+ * AI Fitness App 用の HTTP callable 関数
+ * ドメイン別に整理:
+ * - auth: 認証（サインアップ、サインイン）
+ * - user: ユーザープロフィール管理
+ * - training: トレーニングセッション管理
+ * - gdpr: GDPR 準拠（データエクスポート、削除）
+ * - settings: ユーザー設定
+ * - subscription: サブスクリプション管理
  */
 
-// Authentication
+// 認証
 export * from "./auth";
 
-// User Management
+// ユーザー管理
 export * from "./users";
 
-// Consent Management
+// 同意管理
 export * from "./consent";
 
-// Training Sessions
+// トレーニングセッション
 // export * from "./training";
 
-// GDPR Compliance
+// GDPR 準拠
 // export * from "./gdpr";
 
-// User Settings
+// ユーザー設定
 // export * from "./settings";
 
-// Subscription Management
+// サブスクリプション管理
 // export * from "./subscription";

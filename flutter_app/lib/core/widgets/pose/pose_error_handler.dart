@@ -1,7 +1,7 @@
-/// Pose Error Handler
+/// 姿勢エラーハンドラー
 ///
-/// Handles and displays pose detection errors.
-/// Reference: docs/specs/00_要件定義書_v3_3.md
+/// 姿勢検出エラーを処理して表示します。
+/// 参照: docs/specs/00_要件定義書_v3_3.md
 library;
 
 import 'package:flutter/material.dart';
@@ -11,46 +11,46 @@ import '../../camera/camera_service.dart';
 import '../../camera/permission_service.dart';
 import '../../pose/pose_session_controller.dart';
 
-/// Pose detection error types
+/// 姿勢検出エラータイプ
 enum PoseErrorType {
-  /// Camera is not available on device
+  /// デバイスでカメラが利用不可
   cameraUnavailable,
 
-  /// Camera permission denied
+  /// カメラ許可が拒否された
   cameraPermissionDenied,
 
-  /// Camera permission permanently denied
+  /// カメラ許可が永久に拒否された
   cameraPermissionPermanentlyDenied,
 
-  /// MediaPipe initialization failed
+  /// MediaPipeの初期化に失敗
   mediaPipeInitFailed,
 
-  /// Low light conditions
+  /// 低照度条件
   lowLight,
 
-  /// No person detected in frame
+  /// フレーム内に人物が検出されない
   noPerson,
 
-  /// Multiple people detected
+  /// 複数人が検出された
   multiplePeople,
 
-  /// Person too far from camera
+  /// カメラから人物が遠すぎる
   tooFar,
 
-  /// Person too close to camera
+  /// カメラに人物が近すぎる
   tooClose,
 
-  /// Person partially out of frame
+  /// 人物が部分的にフレーム外
   partiallyOutOfFrame,
 
-  /// Generic detection error
+  /// 一般的な検出エラー
   detectionFailed,
 
-  /// Session error
+  /// セッションエラー
   sessionError,
 }
 
-/// Pose error state
+/// 姿勢エラー状態
 class PoseErrorState {
   const PoseErrorState({
     this.errorType,
@@ -69,25 +69,25 @@ class PoseErrorState {
   static const none = PoseErrorState();
 }
 
-/// Pose error state provider
+/// 姿勢エラー状態プロバイダー
 final poseErrorStateProvider = StateNotifierProvider<PoseErrorNotifier, PoseErrorState>((ref) {
   return PoseErrorNotifier(ref);
 });
 
-/// Pose error state notifier
+/// 姿勢エラー状態Notifier
 class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
   PoseErrorNotifier(this._ref) : super(const PoseErrorState()) {
-    // Listen to session state changes
+    // セッション状態の変更を監視
     _ref.listen(poseSessionControllerProvider, (previous, next) {
       _checkSessionErrors(next);
     });
 
-    // Listen to camera state changes
+    // カメラ状態の変更を監視
     _ref.listen(cameraStateProvider, (previous, next) {
       _checkCameraErrors(next);
     });
 
-    // Listen to permission state changes
+    // 許可状態の変更を監視
     _ref.listen(cameraPermissionStateProvider, (previous, next) {
       _checkPermissionErrors(next);
     });
@@ -151,7 +151,7 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
     }
   }
 
-  /// Set pose quality error based on detection results
+  /// 検出結果に基づいて姿勢品質エラーを設定
   void checkPoseQuality({
     required bool isPoseDetected,
     required int reliableLandmarkCount,
@@ -184,7 +184,7 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
       return;
     }
 
-    // Clear error if pose quality is acceptable
+    // 姿勢品質が許容範囲ならエラーをクリア
     if (state.hasError &&
         state.errorType != PoseErrorType.cameraPermissionDenied &&
         state.errorType != PoseErrorType.cameraPermissionPermanentlyDenied &&
@@ -207,18 +207,18 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
     );
   }
 
-  /// Set a custom error
+  /// カスタムエラーを設定
   void setError(PoseErrorType type, String message) {
     _setError(type, message);
   }
 
-  /// Clear current error
+  /// 現在のエラーをクリア
   void clearError() {
     state = const PoseErrorState();
   }
 }
 
-/// Widget that displays pose detection errors
+/// 姿勢検出エラーを表示するWidget
 class PoseErrorDisplay extends ConsumerWidget {
   const PoseErrorDisplay({
     this.onRetry,
@@ -227,13 +227,13 @@ class PoseErrorDisplay extends ConsumerWidget {
     super.key,
   });
 
-  /// Callback when retry button is pressed
+  /// リトライボタンが押されたときのコールバック
   final VoidCallback? onRetry;
 
-  /// Callback when open settings button is pressed
+  /// 設定を開くボタンが押されたときのコールバック
   final VoidCallback? onOpenSettings;
 
-  /// Whether to use compact display
+  /// コンパクト表示を使用するか
   final bool compact;
 
   @override
@@ -458,7 +458,7 @@ class PoseErrorDisplay extends ConsumerWidget {
   }
 }
 
-/// Overlay widget that shows error on top of camera preview
+/// カメラプレビューの上にエラーを表示するオーバーレイWidget
 class PoseErrorOverlay extends ConsumerWidget {
   const PoseErrorOverlay({
     required this.child,

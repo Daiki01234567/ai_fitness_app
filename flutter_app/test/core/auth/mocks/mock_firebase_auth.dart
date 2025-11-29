@@ -1,10 +1,10 @@
-/// Mock FirebaseAuth for testing
-///
-/// Provides a testable implementation of FirebaseAuth
-/// without requiring actual Firebase initialization.
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// Mock FirebaseAuth for testing
+//
+// Provides a testable implementation of FirebaseAuth
+// without requiring actual Firebase initialization.
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'dart:async';
 
@@ -215,10 +215,7 @@ class MockIdTokenResult implements IdTokenResult {
   @override
   DateTime? get issuedAtTime => DateTime.now();
 
-  @override
-  String? get signInProvider => 'password';
-
-  @override
+  // Note: signInSecondFactor is not in IdTokenResult interface
   String? get signInSecondFactor => null;
 
   @override

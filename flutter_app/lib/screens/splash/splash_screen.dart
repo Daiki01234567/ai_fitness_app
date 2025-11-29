@@ -1,8 +1,8 @@
-/// Splash Screen
-/// Shows loading indicator while checking auth state
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// Splash Screen
+// Shows loading indicator while checking auth state
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter/material.dart';
 

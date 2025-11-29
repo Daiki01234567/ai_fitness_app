@@ -15,7 +15,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { auth, pubsub } from "firebase-functions/v1";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -127,10 +127,10 @@ export const onUserDelete = auth
         }
       } catch (storageError) {
         logger.error("Failed to delete storage files", storageError);
-        // ストレージエラーは無視して続行
+        // Storage エラーは無視して続行
       }
 
-      // 9. BigQueryへの削除記録（GDPR監査用）- 将来実装
+      // 9. BigQuery への削除記録（GDPR監査用）- 将来実装
       // await recordDeletionToBigQuery(uid, email);
 
       logger.info(`Successfully deleted all data for UID: ${uid}`);
@@ -164,7 +164,7 @@ export const onUserDelete = auth
  * スケジュール関数から呼び出される
  */
 export const processScheduledDeletions = pubsub
-  .schedule("every day 00:00")  // 毎日午前0時に実行
+  .schedule("every day 00:00")  // 毎日午前0時（JST）に実行
   .timeZone("Asia/Tokyo")
   .onRun(async () => {
     logger.info("Processing scheduled deletions");
@@ -196,7 +196,7 @@ export const processScheduledDeletions = pubsub
           await admin.auth().deleteUser(uid);
           logger.info(`Deleted auth user: ${uid}`);
 
-          // onDeleteトリガーが自動的にFirestoreデータをクリーンアップする
+          // onDelete トリガーが自動的に Firestore データをクリーンアップする
         } catch (error) {
           logger.error(`Failed to delete user ${uid}:`, error);
 

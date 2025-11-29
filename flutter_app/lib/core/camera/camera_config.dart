@@ -1,12 +1,12 @@
-/// Camera Configuration
+/// カメラ設定
 ///
-/// Configuration settings for camera capture.
-/// Reference: docs/specs/00_要件定義書_v3_3.md (NFR-024, NFR-025, NFR-035)
+/// カメラキャプチャの設定。
+/// 参照: docs/specs/00_要件定義書_v3_3.md (NFR-024, NFR-025, NFR-035)
 library;
 
 import 'package:camera/camera.dart';
 
-/// Camera resolution preset configurations
+/// カメラ解像度プリセット設定
 class CameraConfig {
   const CameraConfig({
     required this.resolution,
@@ -15,51 +15,51 @@ class CameraConfig {
     this.enableAudio = false,
   });
 
-  /// Camera resolution preset
+  /// カメラ解像度プリセット
   final ResolutionPreset resolution;
 
-  /// Target frames per second
+  /// ターゲットフレームレート（FPS）
   final int targetFps;
 
-  /// Minimum acceptable FPS before triggering fallback
+  /// フォールバックをトリガーする前の最小許容FPS
   final int minFps;
 
-  /// Whether to enable audio capture
+  /// 音声キャプチャを有効にするかどうか
   final bool enableAudio;
 
-  /// Default high-quality configuration
-  /// Target: 720p at 30fps
+  /// デフォルトの高画質設定
+  /// ターゲット: 720p 30fps
   static const highQuality = CameraConfig(
     resolution: ResolutionPreset.high, // 720p
     targetFps: 30,
     minFps: 20,
   );
 
-  /// Medium quality fallback configuration
-  /// Target: 480p at 30fps
+  /// 中画質フォールバック設定
+  /// ターゲット: 480p 30fps
   static const mediumQuality = CameraConfig(
     resolution: ResolutionPreset.medium, // 480p
     targetFps: 30,
     minFps: 20,
   );
 
-  /// Low quality fallback configuration
-  /// Target: 480p at 24fps
+  /// 低画質フォールバック設定
+  /// ターゲット: 480p 24fps
   static const lowQuality = CameraConfig(
     resolution: ResolutionPreset.medium, // 480p
     targetFps: 24,
     minFps: 15,
   );
 
-  /// Minimum quality fallback configuration
-  /// Target: 360p at 20fps
+  /// 最低画質フォールバック設定
+  /// ターゲット: 360p 20fps
   static const minimumQuality = CameraConfig(
     resolution: ResolutionPreset.low, // 360p
     targetFps: 20,
     minFps: 15,
   );
 
-  /// Get the next fallback configuration
+  /// 次のフォールバック設定を取得
   CameraConfig? get fallback {
     if (this == highQuality) return mediumQuality;
     if (this == mediumQuality) return lowQuality;
@@ -67,7 +67,7 @@ class CameraConfig {
     return null;
   }
 
-  /// Get all configurations in order of quality
+  /// 品質順に全設定を取得
   static const List<CameraConfig> allConfigs = [
     highQuality,
     mediumQuality,
@@ -94,26 +94,26 @@ class CameraConfig {
       resolution.hashCode ^ targetFps.hashCode ^ minFps.hashCode;
 }
 
-// Note: Use CameraLensDirection from package:camera/camera.dart
-// This enum was removed to avoid ambiguous imports
+// 注意: package:camera/camera.dartのCameraLensDirectionを使用
+// あいまいなインポートを避けるためこのenumは削除されました
 
-/// Camera state enumeration
+/// カメラ状態列挙型
 enum CameraState {
-  /// Camera is not initialized
+  /// カメラが初期化されていない
   uninitialized,
 
-  /// Camera is initializing
+  /// カメラが初期化中
   initializing,
 
-  /// Camera is ready and streaming
+  /// カメラがストリーミング準備完了
   ready,
 
-  /// Camera is paused
+  /// カメラが一時停止中
   paused,
 
-  /// Camera encountered an error
+  /// カメラがエラー状態
   error,
 
-  /// Camera is disposed
+  /// カメラが破棄済み
   disposed,
 }

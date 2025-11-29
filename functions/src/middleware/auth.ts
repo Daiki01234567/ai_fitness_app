@@ -1,6 +1,6 @@
 /**
- * Authentication Middleware
- * Validates Firebase Auth tokens and checks user permissions
+ * 認証ミドルウェア
+ * Firebase Auth トークンを検証し、ユーザー権限をチェック
  */
 
 import * as admin from "firebase-admin";
@@ -14,13 +14,13 @@ import {
 import { userRef } from "../utils/firestore";
 import { logger } from "../utils/logger";
 
-// Initialize admin if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 /**
- * Authenticated user context
+ * 認証済みユーザーコンテキスト
  */
 export interface AuthContext {
   uid: string;
@@ -30,14 +30,14 @@ export interface AuthContext {
 }
 
 /**
- * User context with full user data
+ * 完全なユーザーデータを持つユーザーコンテキスト
  */
 export interface UserContext extends AuthContext {
   user: User & { id: string };
 }
 
 /**
- * Extract authentication context from request
+ * リクエストから認証コンテキストを抽出
  */
 export function getAuthContext(request: CallableRequest): AuthContext {
   if (!request.auth) {
@@ -53,12 +53,12 @@ export function getAuthContext(request: CallableRequest): AuthContext {
 }
 
 /**
- * Require authentication
+ * 認証を要求
  */
 export function requireAuth(request: CallableRequest): AuthContext {
   const context = getAuthContext(request);
 
-  // Check for force logout
+  // 強制ログアウトをチェック
   if (context.claims.forceLogout) {
     logger.security("Force logout triggered", { userId: context.uid });
     throw AuthenticationError.sessionRevoked();
@@ -68,7 +68,7 @@ export function requireAuth(request: CallableRequest): AuthContext {
 }
 
 /**
- * Check if user has deletion scheduled
+ * ユーザーが削除予定かどうかをチェック
  */
 export async function checkDeletionScheduled(uid: string): Promise<boolean> {
   const userDoc = await userRef(uid).get();
@@ -81,7 +81,7 @@ export async function checkDeletionScheduled(uid: string): Promise<boolean> {
 }
 
 /**
- * Require write permission (not deletion scheduled)
+ * 書き込み権限を要求（削除予定でないこと）
  */
 export async function requireWritePermission(uid: string): Promise<void> {
   const isDeletionScheduled = await checkDeletionScheduled(uid);
@@ -93,7 +93,7 @@ export async function requireWritePermission(uid: string): Promise<void> {
 }
 
 /**
- * Require authentication and write permission
+ * 認証と書き込み権限を要求
  */
 export async function requireAuthWithWritePermission(
   request: CallableRequest,
@@ -104,7 +104,7 @@ export async function requireAuthWithWritePermission(
 }
 
 /**
- * Get full user context with user data
+ * ユーザーデータを含む完全なユーザーコンテキストを取得
  */
 export async function getUserContext(request: CallableRequest): Promise<UserContext> {
   const authContext = requireAuth(request);
@@ -125,7 +125,7 @@ export async function getUserContext(request: CallableRequest): Promise<UserCont
 }
 
 /**
- * Check if user has required consent
+ * ユーザーが必要な同意を持っているかをチェック
  */
 export function requireConsent(user: User): void {
   if (!user.tosAccepted || !user.ppAccepted) {
@@ -134,7 +134,7 @@ export function requireConsent(user: User): void {
 }
 
 /**
- * Check if user has admin claim
+ * ユーザーが管理者クレームを持っているかをチェック
  */
 export function requireAdmin(context: AuthContext): void {
   if (!context.claims.admin) {
@@ -143,7 +143,7 @@ export function requireAdmin(context: AuthContext): void {
 }
 
 /**
- * Check if user has specific custom claim
+ * ユーザーが特定のカスタムクレームを持っているかをチェック
  */
 export function requireClaim(context: AuthContext, claimKey: string): void {
   if (!context.claims[claimKey]) {
@@ -152,7 +152,7 @@ export function requireClaim(context: AuthContext, claimKey: string): void {
 }
 
 /**
- * Set custom claims for a user
+ * ユーザーにカスタムクレームを設定
  */
 export async function setCustomClaims(
   uid: string,
@@ -163,7 +163,7 @@ export async function setCustomClaims(
 }
 
 /**
- * Get custom claims for a user
+ * ユーザーのカスタムクレームを取得
  */
 export async function getCustomClaims(uid: string): Promise<Record<string, unknown>> {
   const user = await admin.auth().getUser(uid);
@@ -171,7 +171,7 @@ export async function getCustomClaims(uid: string): Promise<Record<string, unkno
 }
 
 /**
- * Revoke all refresh tokens for a user (force logout)
+ * ユーザーのすべてのリフレッシュトークンを取り消す（強制ログアウト）
  */
 export async function revokeRefreshTokens(uid: string): Promise<void> {
   await admin.auth().revokeRefreshTokens(uid);
@@ -179,7 +179,7 @@ export async function revokeRefreshTokens(uid: string): Promise<void> {
 }
 
 /**
- * Set force logout claim
+ * 強制ログアウトクレームを設定
  */
 export async function setForceLogout(uid: string): Promise<void> {
   const currentClaims = await getCustomClaims(uid);
@@ -188,19 +188,19 @@ export async function setForceLogout(uid: string): Promise<void> {
     forceLogout: true,
   });
 
-  // Also update Firestore
+  // Firestore も更新
   await userRef(uid).update({
     forceLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Revoke tokens
+  // トークンを取り消す
   await revokeRefreshTokens(uid);
 
   logger.security("Force logout set", { userId: uid });
 }
 
 /**
- * Clear force logout claim
+ * 強制ログアウトクレームをクリア
  */
 export async function clearForceLogout(uid: string): Promise<void> {
   const currentClaims = await getCustomClaims(uid);
@@ -212,7 +212,7 @@ export async function clearForceLogout(uid: string): Promise<void> {
 }
 
 /**
- * Verify ID token
+ * ID トークンを検証
  */
 export async function verifyIdToken(
   idToken: string,
@@ -233,7 +233,7 @@ export async function verifyIdToken(
 }
 
 /**
- * Get user by email
+ * メールアドレスでユーザーを取得
  */
 export async function getUserByEmail(email: string): Promise<admin.auth.UserRecord | null> {
   try {
@@ -244,7 +244,7 @@ export async function getUserByEmail(email: string): Promise<admin.auth.UserReco
 }
 
 /**
- * Delete user auth account
+ * ユーザー認証アカウントを削除
  */
 export async function deleteAuthUser(uid: string): Promise<void> {
   await admin.auth().deleteUser(uid);

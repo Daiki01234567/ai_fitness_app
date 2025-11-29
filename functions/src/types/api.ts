@@ -1,16 +1,16 @@
 /**
- * API Request/Response Type Definitions
- * Based on docs/specs/03_API設計書_Firebase_Functions_v3_3.md
+ * API リクエスト/レスポンス型定義
+ * docs/specs/03_API設計書_Firebase_Functions_v3_3.md に基づく
  */
 
 import { ExerciseType, SubscriptionPlan } from "./firestore";
 
 // ============================================================================
-// Common Response Types
+// 共通レスポンス型
 // ============================================================================
 
 /**
- * Standard success response wrapper
+ * 標準成功レスポンスラッパー
  */
 export interface SuccessResponse<T> {
   success: true;
@@ -19,7 +19,7 @@ export interface SuccessResponse<T> {
 }
 
 /**
- * Standard error response wrapper
+ * 標準エラーレスポンスラッパー
  */
 export interface ErrorResponse {
   success: false;
@@ -31,12 +31,12 @@ export interface ErrorResponse {
 }
 
 /**
- * Combined API response type
+ * 統合 API レスポンス型
  */
 export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 /**
- * Paginated response wrapper
+ * ページネーションレスポンスラッパー
  */
 export interface PaginatedResponse<T> {
   items: T[];
@@ -45,7 +45,7 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================================================
-// Authentication API Types
+// 認証 API 型
 // ============================================================================
 
 export interface SignUpRequest {
@@ -70,7 +70,7 @@ export interface SignInResponse {
 }
 
 // ============================================================================
-// User Management API Types
+// ユーザー管理 API 型
 // ============================================================================
 
 export interface GetProfileResponse {
@@ -106,7 +106,7 @@ export interface UpdateProfileResponse {
 }
 
 // ============================================================================
-// Consent Management API Types
+// 同意管理 API 型
 // ============================================================================
 
 export interface UpdateConsentRequest {
@@ -134,7 +134,7 @@ export interface RevokeConsentResponse {
 }
 
 // ============================================================================
-// Training Session API Types
+// トレーニングセッション API 型
 // ============================================================================
 
 export interface CreateSessionRequest {
@@ -235,7 +235,7 @@ export interface GetStatisticsResponse {
 }
 
 // ============================================================================
-// GDPR API Types
+// GDPR API 型
 // ============================================================================
 
 export interface RequestDataExportResponse {
@@ -270,7 +270,7 @@ export interface CancelAccountDeletionResponse {
 }
 
 // ============================================================================
-// Settings API Types
+// 設定 API 型
 // ============================================================================
 
 export interface GetSettingsResponse {
@@ -301,7 +301,7 @@ export interface UpdateSettingsResponse {
 }
 
 // ============================================================================
-// Subscription API Types
+// サブスクリプション API 型
 // ============================================================================
 
 export interface GetSubscriptionResponse {
@@ -328,7 +328,7 @@ export interface VerifyPurchaseResponse {
 }
 
 // ============================================================================
-// Admin API Types
+// 管理 API 型
 // ============================================================================
 
 export interface SetCustomClaimsRequest {
@@ -346,7 +346,7 @@ export interface SetCustomClaimsResponse {
 }
 
 // ============================================================================
-// Webhook Types
+// Webhook 型
 // ============================================================================
 
 export interface RevenueCatWebhookPayload {

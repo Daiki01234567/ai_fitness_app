@@ -1,9 +1,9 @@
-/// Consent State Notifier Tests
-///
-/// Unit tests for consent state management
-///
-/// @version 1.0.0
-/// @date 2025-11-27
+// Consent State Notifier Tests
+//
+// Unit tests for consent state management
+//
+// @version 1.0.0
+// @date 2025-11-27
 
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,8 +1,8 @@
-/// Login Screen
-/// Email/password authentication with social login options
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// Login Screen
+// Email/password authentication with social login options
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

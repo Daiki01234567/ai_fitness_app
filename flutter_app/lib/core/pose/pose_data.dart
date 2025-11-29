@@ -1,12 +1,12 @@
-/// Pose Data Models
+/// 姿勢データモデル
 ///
-/// Data structures for pose detection results.
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
+/// 姿勢検出結果のためのデータ構造。
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
 library;
 
 import 'pose_landmark_type.dart';
 
-/// Represents a single landmark point in 3D space
+/// 3D空間における単一のランドマークポイントを表す
 class PoseLandmark {
   const PoseLandmark({
     required this.type,
@@ -16,28 +16,28 @@ class PoseLandmark {
     required this.likelihood,
   });
 
-  /// The type of landmark
+  /// ランドマークの種類
   final PoseLandmarkType type;
 
-  /// X coordinate (normalized 0-1 relative to image width)
+  /// X座標（画像幅に対して正規化 0-1）
   final double x;
 
-  /// Y coordinate (normalized 0-1 relative to image height)
+  /// Y座標（画像高さに対して正規化 0-1）
   final double y;
 
-  /// Z coordinate (depth, normalized relative to hip center)
+  /// Z座標（深度、腰中心に対して正規化）
   final double z;
 
-  /// Confidence score (0.0 - 1.0)
-  /// Recommended threshold: 0.7, minimum: 0.5
+  /// 信頼度スコア（0.0 - 1.0）
+  /// 推奨閾値: 0.7、最小: 0.5
   final double likelihood;
 
-  /// Check if this landmark is reliable
-  /// Uses recommended threshold of 0.7
+  /// このランドマークが信頼できるかチェック
+  /// 推奨閾値0.7を使用
   bool get isReliable => likelihood >= 0.7;
 
-  /// Check if this landmark meets minimum threshold
-  /// Uses minimum threshold of 0.5
+  /// このランドマークが最小閾値を満たすかチェック
+  /// 最小閾値0.5を使用
   bool get meetsMinimumThreshold => likelihood >= 0.5;
 
   @override
@@ -46,7 +46,7 @@ class PoseLandmark {
       'y: ${y.toStringAsFixed(3)}, z: ${z.toStringAsFixed(3)}, '
       'likelihood: ${likelihood.toStringAsFixed(2)})';
 
-  /// Create a copy with optional parameter overrides
+  /// オプションのパラメータオーバーライドでコピーを作成
   PoseLandmark copyWith({
     PoseLandmarkType? type,
     double? x,
@@ -64,7 +64,7 @@ class PoseLandmark {
   }
 }
 
-/// Represents a complete pose detection result for a single frame
+/// 単一フレームの完全な姿勢検出結果を表す
 class PoseFrame {
   const PoseFrame({
     required this.landmarks,
@@ -72,24 +72,24 @@ class PoseFrame {
     this.processingTimeMs,
   });
 
-  /// All detected landmarks (up to 33)
+  /// 検出された全ランドマーク（最大33）
   final Map<PoseLandmarkType, PoseLandmark> landmarks;
 
-  /// Frame timestamp in milliseconds
+  /// フレームタイムスタンプ（ミリ秒）
   final int timestamp;
 
-  /// Time taken to process this frame in milliseconds
+  /// このフレームの処理にかかった時間（ミリ秒）
   final int? processingTimeMs;
 
-  /// Get a specific landmark
+  /// 特定のランドマークを取得
   PoseLandmark? getLandmark(PoseLandmarkType type) => landmarks[type];
 
-  /// Get multiple landmarks
+  /// 複数のランドマークを取得
   List<PoseLandmark?> getLandmarks(List<PoseLandmarkType> types) {
     return types.map((type) => landmarks[type]).toList();
   }
 
-  /// Check if all specified landmarks are reliable (likelihood >= 0.7)
+  /// 指定されたすべてのランドマークが信頼できるかチェック（likelihood >= 0.7）
   bool areAllReliable(List<PoseLandmarkType> types) {
     return types.every((type) {
       final landmark = landmarks[type];
@@ -97,7 +97,7 @@ class PoseFrame {
     });
   }
 
-  /// Check if all specified landmarks meet minimum threshold (likelihood >= 0.5)
+  /// 指定されたすべてのランドマークが最小閾値を満たすかチェック（likelihood >= 0.5）
   bool allMeetMinimumThreshold(List<PoseLandmarkType> types) {
     return types.every((type) {
       final landmark = landmarks[type];
@@ -105,7 +105,7 @@ class PoseFrame {
     });
   }
 
-  /// Get average confidence score for specified landmarks
+  /// 指定されたランドマークの平均信頼度スコアを取得
   double getAverageConfidence(List<PoseLandmarkType> types) {
     if (types.isEmpty) return 0.0;
 
@@ -121,7 +121,7 @@ class PoseFrame {
     return count > 0 ? sum / count : 0.0;
   }
 
-  /// Get overall average confidence for all detected landmarks
+  /// 検出されたすべてのランドマークの全体平均信頼度を取得
   double get overallConfidence {
     if (landmarks.isEmpty) return 0.0;
     final sum = landmarks.values.fold<double>(
@@ -131,14 +131,14 @@ class PoseFrame {
     return sum / landmarks.length;
   }
 
-  /// Number of landmarks detected
+  /// 検出されたランドマーク数
   int get landmarkCount => landmarks.length;
 
-  /// Number of reliable landmarks (likelihood >= 0.7)
+  /// 信頼できるランドマーク数（likelihood >= 0.7）
   int get reliableLandmarkCount =>
       landmarks.values.where((l) => l.isReliable).length;
 
-  /// Check if pose was detected (at least some landmarks found)
+  /// 姿勢が検出されたかチェック（少なくともいくつかのランドマークが見つかった）
   bool get isPoseDetected => landmarks.isNotEmpty;
 
   @override
@@ -148,7 +148,7 @@ class PoseFrame {
       'processingTime: ${processingTimeMs}ms)';
 }
 
-/// Configuration for pose detection
+/// 姿勢検出の設定
 class PoseDetectionConfig {
   const PoseDetectionConfig({
     this.mode = PoseDetectionMode.stream,
@@ -158,29 +158,29 @@ class PoseDetectionConfig {
     this.recommendedConfidenceThreshold = 0.7,
   });
 
-  /// Detection mode (single image or video stream)
+  /// 検出モード（単一画像またはビデオストリーム）
   final PoseDetectionMode mode;
 
-  /// Model complexity
+  /// モデルの複雑さ
   final PoseDetectionModel model;
 
-  /// Enable landmark tracking across frames
+  /// フレーム間のランドマーク追跡を有効化
   final bool enableTracking;
 
-  /// Minimum confidence threshold (0.5 per spec)
+  /// 最小信頼度閾値（仕様では0.5）
   final double minConfidenceThreshold;
 
-  /// Recommended confidence threshold (0.7 per spec)
+  /// 推奨信頼度閾値（仕様では0.7）
   final double recommendedConfidenceThreshold;
 
-  /// Default configuration for real-time detection
+  /// リアルタイム検出用のデフォルト設定
   static const realtime = PoseDetectionConfig(
     mode: PoseDetectionMode.stream,
     model: PoseDetectionModel.base,
     enableTracking: true,
   );
 
-  /// Configuration for single image analysis
+  /// 単一画像分析用の設定
   static const singleImage = PoseDetectionConfig(
     mode: PoseDetectionMode.single,
     model: PoseDetectionModel.accurate,
@@ -188,20 +188,20 @@ class PoseDetectionConfig {
   );
 }
 
-/// Pose detection mode
+/// 姿勢検出モード
 enum PoseDetectionMode {
-  /// Single image mode - more accurate, slower
+  /// 単一画像モード - より正確、より遅い
   single,
 
-  /// Stream mode - optimized for real-time video
+  /// ストリームモード - リアルタイムビデオに最適化
   stream,
 }
 
-/// Pose detection model complexity
+/// 姿勢検出モデルの複雑さ
 enum PoseDetectionModel {
-  /// Base model - faster, less accurate
+  /// 基本モデル - より速い、精度は低い
   base,
 
-  /// Accurate model - slower, more accurate
+  /// 精密モデル - より遅い、より正確
   accurate,
 }

@@ -1,6 +1,6 @@
 /**
- * Custom Error Classes and Error Handling Utilities
- * Provides consistent error handling across Cloud Functions
+ * カスタムエラークラスとエラーハンドリングユーティリティ
+ * Cloud Functions 全体で一貫したエラー処理を提供
  */
 
 import { HttpsError, FunctionsErrorCode } from "firebase-functions/v2/https";
@@ -10,7 +10,7 @@ import { AppErrorCode, AppErrorCodes, ErrorCodes, ErrorDetails } from "../types/
 import { logger } from "./logger";
 
 /**
- * Base application error class
+ * 基底アプリケーションエラークラス
  */
 export class AppError extends Error {
   public readonly code: FunctionsErrorCode;
@@ -34,7 +34,7 @@ export class AppError extends Error {
     this.appCode = options?.appCode;
     this.details = options?.details;
 
-    // Find error config
+    // エラー設定を検索
     const errorConfig = Object.values(ErrorCodes).find((e) => e.code === code);
     this.httpStatus = errorConfig?.httpStatus ?? 500;
     this.retryable = errorConfig?.retryable ?? false;
@@ -47,7 +47,7 @@ export class AppError extends Error {
   }
 
   /**
-   * Convert to HttpsError for Firebase Functions
+   * Firebase Functions 用の HttpsError に変換
    */
   toHttpsError(): HttpsError {
     return new HttpsError(this.code, this.message, this.details);
@@ -55,7 +55,7 @@ export class AppError extends Error {
 }
 
 /**
- * Validation error for invalid input data
+ * 無効な入力データ用のバリデーションエラー
  */
 export class ValidationError extends AppError {
   constructor(message: string, details?: ErrorDetails) {
@@ -101,7 +101,7 @@ export class ValidationError extends AppError {
 }
 
 /**
- * Authentication error for unauthenticated requests
+ * 未認証リクエスト用の認証エラー
  */
 export class AuthenticationError extends AppError {
   constructor(message = "認証が必要です") {
@@ -125,7 +125,7 @@ export class AuthenticationError extends AppError {
 }
 
 /**
- * Authorization error for forbidden access
+ * 禁止されたアクセス用の認可エラー
  */
 export class AuthorizationError extends AppError {
   constructor(message = "この操作を行う権限がありません") {
@@ -154,7 +154,7 @@ export class AuthorizationError extends AppError {
 }
 
 /**
- * Not found error for missing resources
+ * 見つからないリソース用の NotFound エラー
  */
 export class NotFoundError extends AppError {
   constructor(resource: string, id?: string) {
@@ -177,7 +177,7 @@ export class NotFoundError extends AppError {
 }
 
 /**
- * Rate limit error
+ * レート制限エラー
  */
 export class RateLimitError extends AppError {
   constructor(message = "リクエストが多すぎます。しばらく待ってから再度お試しください") {
@@ -189,7 +189,7 @@ export class RateLimitError extends AppError {
 }
 
 /**
- * External service error
+ * 外部サービスエラー
  */
 export class ExternalServiceError extends AppError {
   public readonly serviceName: string;
@@ -214,13 +214,13 @@ export class ExternalServiceError extends AppError {
 }
 
 /**
- * Global error handler for Cloud Functions
+ * Cloud Functions 用のグローバルエラーハンドラー
  */
 export function handleError(
   error: unknown,
   context?: { userId?: string; requestId?: string },
 ): never {
-  // Log the error
+  // エラーをログ出力
   if (error instanceof AppError) {
     logger.error(`AppError: ${error.message}`, error, {
       code: error.code,
@@ -249,7 +249,7 @@ export function handleError(
     throw new HttpsError("internal", "予期しないエラーが発生しました");
   }
 
-  // Unknown error type
+  // 不明なエラータイプ
   logger.error("Unknown error type", undefined, {
     error: String(error),
     userId: context?.userId,
@@ -259,7 +259,7 @@ export function handleError(
 }
 
 /**
- * Wrap async function with error handling
+ * エラーハンドリングで async 関数をラップ
  */
 export function withErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,

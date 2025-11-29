@@ -1,15 +1,15 @@
-/// Consent Management Service
-///
-/// Handles consent operations for Terms of Service and Privacy Policy.
-/// GDPR Article 7 compliant consent management.
-///
-/// @version 1.0.0
-/// @date 2025-11-27
+// 同意管理サービス
+//
+// 利用規約とプライバシーポリシーの同意操作を処理します。
+// GDPR第7条に準拠した同意管理。
+//
+// @version 1.0.0
+// @date 2025-11-27
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Result of a consent operation
+/// 同意操作の結果
 class ConsentResult {
   final bool success;
   final String? message;
@@ -24,7 +24,7 @@ class ConsentResult {
   });
 }
 
-/// Consent status data
+/// 同意ステータスデータ
 class ConsentStatus {
   final bool tosAccepted;
   final DateTime? tosAcceptedAt;
@@ -76,7 +76,7 @@ class ConsentStatus {
   }
 }
 
-/// Consent history entry
+/// 同意履歴エントリ
 class ConsentHistoryEntry {
   final String consentType;
   final String action;
@@ -102,7 +102,7 @@ class ConsentHistoryEntry {
   }
 }
 
-/// Consent Management Service
+/// 同意管理サービス
 class ConsentService {
   final FirebaseFunctions _functions;
   final FirebaseAuth _auth;
@@ -114,10 +114,10 @@ class ConsentService {
             FirebaseFunctions.instanceFor(region: 'asia-northeast1'),
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Check if user is authenticated
+  /// ユーザーが認証されているかチェック
   bool get _isAuthenticated => _auth.currentUser != null;
 
-  /// Get current consent status
+  /// 現在の同意ステータスを取得
   Future<ConsentStatus> getConsentStatus({bool includeHistory = false}) async {
     if (!_isAuthenticated) {
       throw Exception('認証が必要です');
@@ -141,7 +141,7 @@ class ConsentService {
     }
   }
 
-  /// Get consent history
+  /// 同意履歴を取得
   Future<List<ConsentHistoryEntry>> getConsentHistory({int limit = 10}) async {
     if (!_isAuthenticated) {
       throw Exception('認証が必要です');
@@ -169,7 +169,7 @@ class ConsentService {
     }
   }
 
-  /// Record consent acceptance
+  /// 同意受諾を記録
   Future<ConsentResult> recordConsent({
     required String consentType,
     required bool accepted,
@@ -202,9 +202,9 @@ class ConsentService {
     }
   }
 
-  /// Record both ToS and PP consent at once
+  /// 利用規約とプライバシーポリシーの同意を一度に記録
   Future<ConsentResult> recordAllConsents() async {
-    // Record ToS consent
+    // 利用規約の同意を記録
     final tosResult = await recordConsent(
       consentType: 'tos',
       accepted: true,
@@ -214,7 +214,7 @@ class ConsentService {
       return tosResult;
     }
 
-    // Record PP consent
+    // プライバシーポリシーの同意を記録
     final ppResult = await recordConsent(
       consentType: 'privacy_policy',
       accepted: true,
@@ -223,7 +223,7 @@ class ConsentService {
     return ppResult;
   }
 
-  /// Revoke consent
+  /// 同意を撤回
   Future<ConsentResult> revokeConsent({
     required String consentType,
     bool requestDataDeletion = false,
@@ -259,7 +259,7 @@ class ConsentService {
     }
   }
 
-  /// Revoke all consents
+  /// すべての同意を撤回
   Future<ConsentResult> revokeAllConsents({
     bool requestDataDeletion = false,
     String? reason,
@@ -271,7 +271,7 @@ class ConsentService {
     );
   }
 
-  /// Get error message from FirebaseFunctionsException
+  /// FirebaseFunctionsExceptionからエラーメッセージを取得
   String _getErrorMessage(FirebaseFunctionsException e) {
     switch (e.code) {
       case 'unauthenticated':

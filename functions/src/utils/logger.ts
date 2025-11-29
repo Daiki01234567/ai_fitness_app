@@ -1,14 +1,14 @@
 /**
- * Structured Logging Utility
- * Provides consistent logging across Cloud Functions with context
+ * 構造化ロギングユーティリティ
+ * Cloud Functions 全体で一貫したコンテキスト付きロギングを提供
  */
 
 import * as functions from "firebase-functions";
 
-// Log levels
+// ログレベル
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
-// Log context interface
+// ログコンテキストインターフェース
 export interface LogContext {
   requestId?: string;
   userId?: string;
@@ -16,7 +16,7 @@ export interface LogContext {
   [key: string]: unknown;
 }
 
-// Structured log entry
+// 構造化ログエントリ
 interface LogEntry {
   level: LogLevel;
   message: string;
@@ -31,7 +31,7 @@ interface LogEntry {
 }
 
 /**
- * Logger class for structured logging
+ * 構造化ロギング用ロガークラス
  */
 class Logger {
   private context: LogContext = {};
@@ -40,7 +40,7 @@ class Logger {
   private constructor() {}
 
   /**
-   * Get singleton instance
+   * シングルトンインスタンスを取得
    */
   static getInstance(): Logger {
     if (!Logger.instance) {
@@ -50,28 +50,28 @@ class Logger {
   }
 
   /**
-   * Set global context for all logs
+   * すべてのログにグローバルコンテキストを設定
    */
   setContext(context: LogContext): void {
     this.context = { ...this.context, ...context };
   }
 
   /**
-   * Clear context
+   * コンテキストをクリア
    */
   clearContext(): void {
     this.context = {};
   }
 
   /**
-   * Create a child logger with additional context
+   * 追加コンテキストを持つ子ロガーを作成
    */
   child(additionalContext: LogContext): ChildLogger {
     return new ChildLogger({ ...this.context, ...additionalContext });
   }
 
   /**
-   * Format log entry
+   * ログエントリをフォーマット
    */
   private formatEntry(
     level: LogLevel,
@@ -99,7 +99,7 @@ class Logger {
   }
 
   /**
-   * Debug level log
+   * デバッグレベルログ
    */
   debug(message: string, data?: Record<string, unknown>): void {
     const entry = this.formatEntry("debug", message, data);
@@ -107,7 +107,7 @@ class Logger {
   }
 
   /**
-   * Info level log
+   * 情報レベルログ
    */
   info(message: string, data?: Record<string, unknown>): void {
     const entry = this.formatEntry("info", message, data);
@@ -115,7 +115,7 @@ class Logger {
   }
 
   /**
-   * Warning level log
+   * 警告レベルログ
    */
   warn(message: string, data?: Record<string, unknown>, error?: Error): void {
     const entry = this.formatEntry("warn", message, data, error);
@@ -123,7 +123,7 @@ class Logger {
   }
 
   /**
-   * Error level log
+   * エラーレベルログ
    */
   error(message: string, error?: Error, data?: Record<string, unknown>): void {
     const entry = this.formatEntry("error", message, data, error);
@@ -131,7 +131,7 @@ class Logger {
   }
 
   /**
-   * Log function execution start
+   * 関数実行開始をログ出力
    */
   functionStart(functionName: string, data?: Record<string, unknown>): void {
     this.setContext({ functionName });
@@ -139,7 +139,7 @@ class Logger {
   }
 
   /**
-   * Log function execution end
+   * 関数実行終了をログ出力
    */
   functionEnd(functionName: string, durationMs: number, data?: Record<string, unknown>): void {
     this.info(`Function ${functionName} completed`, {
@@ -149,7 +149,7 @@ class Logger {
   }
 
   /**
-   * Log API request
+   * API リクエストをログ出力
    */
   apiRequest(
     method: string,
@@ -166,7 +166,7 @@ class Logger {
   }
 
   /**
-   * Log API response
+   * API レスポンスをログ出力
    */
   apiResponse(
     statusCode: number,
@@ -181,14 +181,14 @@ class Logger {
   }
 
   /**
-   * Log security event
+   * セキュリティイベントをログ出力
    */
   security(event: string, data?: Record<string, unknown>): void {
     this.warn(`Security Event: ${event}`, data);
   }
 
   /**
-   * Log performance metric
+   * パフォーマンスメトリクスをログ出力
    */
   performance(metric: string, value: number, unit: string, data?: Record<string, unknown>): void {
     this.info("Performance Metric", {
@@ -201,7 +201,7 @@ class Logger {
 }
 
 /**
- * Child logger with inherited context
+ * 継承されたコンテキストを持つ子ロガー
  */
 class ChildLogger {
   private context: LogContext;
@@ -256,8 +256,8 @@ class ChildLogger {
   }
 }
 
-// Export singleton instance
+// シングルトンインスタンスをエクスポート
 export const logger = Logger.getInstance();
 
-// Export Logger class for testing
+// テスト用に Logger クラスをエクスポート
 export { Logger, ChildLogger };

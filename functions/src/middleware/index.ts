@@ -1,6 +1,6 @@
 /**
- * Middleware module index
- * Re-exports all middleware
+ * ミドルウェアモジュールインデックス
+ * すべてのミドルウェアを再エクスポート
  */
 
 export * from "./auth";

@@ -1,15 +1,15 @@
 /**
- * Custom Error Type Definitions
- * Based on API design document error code system
+ * カスタムエラー型定義
+ * API 設計書のエラーコードシステムに基づく
  */
 
 import { FunctionsErrorCode } from "firebase-functions/v2/https";
 
 /**
- * Error codes mapped to HTTP status and retry behavior
+ * HTTP ステータスとリトライ動作にマップされたエラーコード
  */
 export const ErrorCodes = {
-  // Authentication errors
+  // 認証エラー
   UNAUTHENTICATED: {
     code: "unauthenticated" as FunctionsErrorCode,
     httpStatus: 401,
@@ -21,14 +21,14 @@ export const ErrorCodes = {
     retryable: false,
   },
 
-  // Validation errors
+  // バリデーションエラー
   INVALID_ARGUMENT: {
     code: "invalid-argument" as FunctionsErrorCode,
     httpStatus: 400,
     retryable: false,
   },
 
-  // Resource errors
+  // リソースエラー
   NOT_FOUND: {
     code: "not-found" as FunctionsErrorCode,
     httpStatus: 404,
@@ -40,14 +40,14 @@ export const ErrorCodes = {
     retryable: false,
   },
 
-  // Rate limiting
+  // レート制限
   RESOURCE_EXHAUSTED: {
     code: "resource-exhausted" as FunctionsErrorCode,
     httpStatus: 429,
     retryable: true,
   },
 
-  // Server errors
+  // サーバーエラー
   INTERNAL: {
     code: "internal" as FunctionsErrorCode,
     httpStatus: 500,
@@ -69,7 +69,7 @@ export const ErrorCodes = {
     retryable: true,
   },
 
-  // Business logic errors
+  // ビジネスロジックエラー
   FAILED_PRECONDITION: {
     code: "failed-precondition" as FunctionsErrorCode,
     httpStatus: 400,
@@ -105,31 +105,31 @@ export const ErrorCodes = {
 export type ErrorCodeKey = keyof typeof ErrorCodes;
 
 /**
- * Application-specific error codes for detailed error tracking
+ * 詳細なエラー追跡のためのアプリケーション固有エラーコード
  */
 export const AppErrorCodes = {
-  // Authentication
+  // 認証
   AUTH_TOKEN_EXPIRED: "AUTH_TOKEN_EXPIRED",
   AUTH_TOKEN_INVALID: "AUTH_TOKEN_INVALID",
   AUTH_SESSION_REVOKED: "AUTH_SESSION_REVOKED",
 
-  // User
+  // ユーザー
   USER_NOT_FOUND: "USER_NOT_FOUND",
   USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
   USER_DELETION_SCHEDULED: "USER_DELETION_SCHEDULED",
   USER_CONSENT_REQUIRED: "USER_CONSENT_REQUIRED",
 
-  // Session
+  // セッション
   SESSION_NOT_FOUND: "SESSION_NOT_FOUND",
   SESSION_ALREADY_COMPLETED: "SESSION_ALREADY_COMPLETED",
   SESSION_LIMIT_EXCEEDED: "SESSION_LIMIT_EXCEEDED",
 
-  // Validation
+  // バリデーション
   VALIDATION_FAILED: "VALIDATION_FAILED",
   INVALID_EXERCISE_TYPE: "INVALID_EXERCISE_TYPE",
   INVALID_POSE_DATA: "INVALID_POSE_DATA",
 
-  // Subscription
+  // サブスクリプション
   SUBSCRIPTION_REQUIRED: "SUBSCRIPTION_REQUIRED",
   SUBSCRIPTION_EXPIRED: "SUBSCRIPTION_EXPIRED",
   PURCHASE_VERIFICATION_FAILED: "PURCHASE_VERIFICATION_FAILED",
@@ -139,19 +139,19 @@ export const AppErrorCodes = {
   DELETION_IN_PROGRESS: "DELETION_IN_PROGRESS",
   CONSENT_REVOKED: "CONSENT_REVOKED",
 
-  // External services
+  // 外部サービス
   BIGQUERY_SYNC_FAILED: "BIGQUERY_SYNC_FAILED",
   REVENUECAT_ERROR: "REVENUECAT_ERROR",
   FCM_SEND_FAILED: "FCM_SEND_FAILED",
 
-  // Rate limiting
+  // レート制限
   RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
 } as const;
 
 export type AppErrorCode = (typeof AppErrorCodes)[keyof typeof AppErrorCodes];
 
 /**
- * Error details interface for structured error information
+ * 構造化エラー情報のためのエラー詳細インターフェース
  */
 export interface ErrorDetails {
   field?: string;
@@ -162,7 +162,7 @@ export interface ErrorDetails {
 }
 
 /**
- * Structured error information for logging
+ * ロギングのための構造化エラー情報
  */
 export interface ErrorInfo {
   code: FunctionsErrorCode;

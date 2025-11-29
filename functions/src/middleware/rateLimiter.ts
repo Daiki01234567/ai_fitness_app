@@ -1,6 +1,6 @@
 /**
- * Rate Limiter Middleware
- * Implements rate limiting using Firestore for storage
+ * レートリミッターミドルウェア
+ * Firestore をストレージとして使用したレート制限を実装
  */
 
 import * as admin from "firebase-admin";
@@ -10,13 +10,13 @@ import { RateLimitError } from "../utils/errors";
 import { getFirestore, serverTimestamp } from "../utils/firestore";
 import { logger } from "../utils/logger";
 
-// Initialize admin if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 /**
- * Rate limit configuration
+ * レート制限設定
  */
 export interface RateLimitConfig {
   maxRequests: number;
@@ -24,7 +24,7 @@ export interface RateLimitConfig {
 }
 
 /**
- * Rate limit record stored in Firestore
+ * Firestore に保存されるレート制限レコード
  */
 interface RateLimitRecord {
   count: number;
@@ -33,53 +33,53 @@ interface RateLimitRecord {
 }
 
 /**
- * Predefined rate limits for different API endpoints
+ * 各 API エンドポイント用の定義済みレート制限
  */
 export const RateLimits = {
-  // Authentication
-  AUTH_SIGNUP: { maxRequests: 10, windowSeconds: 3600 }, // 10/hour per IP
-  AUTH_SIGNIN: { maxRequests: 100, windowSeconds: 3600 }, // 100/hour per user
+  // 認証
+  AUTH_SIGNUP: { maxRequests: 10, windowSeconds: 3600 }, // IP あたり 10/時間
+  AUTH_SIGNIN: { maxRequests: 100, windowSeconds: 3600 }, // ユーザーあたり 100/時間
 
-  // User management
-  USER_GET_PROFILE: { maxRequests: 100, windowSeconds: 60 }, // 100/min
-  USER_UPDATE_PROFILE: { maxRequests: 50, windowSeconds: 3600 }, // 50/hour
-  USER_UPDATE_CONSENT: { maxRequests: 10, windowSeconds: 3600 }, // 10/hour
-  USER_REVOKE_CONSENT: { maxRequests: 5, windowSeconds: 86400 }, // 5/day
+  // ユーザー管理
+  USER_GET_PROFILE: { maxRequests: 100, windowSeconds: 60 }, // 100/分
+  USER_UPDATE_PROFILE: { maxRequests: 50, windowSeconds: 3600 }, // 50/時間
+  USER_UPDATE_CONSENT: { maxRequests: 10, windowSeconds: 3600 }, // 10/時間
+  USER_REVOKE_CONSENT: { maxRequests: 5, windowSeconds: 86400 }, // 5/日
 
-  // Training
-  TRAINING_CREATE_SESSION: { maxRequests: 100, windowSeconds: 86400 }, // 100/day
-  TRAINING_GET_SESSIONS: { maxRequests: 100, windowSeconds: 3600 }, // 100/hour
-  TRAINING_GET_STATISTICS: { maxRequests: 50, windowSeconds: 3600 }, // 50/hour
+  // トレーニング
+  TRAINING_CREATE_SESSION: { maxRequests: 100, windowSeconds: 86400 }, // 100/日
+  TRAINING_GET_SESSIONS: { maxRequests: 100, windowSeconds: 3600 }, // 100/時間
+  TRAINING_GET_STATISTICS: { maxRequests: 50, windowSeconds: 3600 }, // 50/時間
 
   // GDPR
-  GDPR_DATA_EXPORT: { maxRequests: 3, windowSeconds: 86400 }, // 3/day
-  GDPR_DELETE_REQUEST: { maxRequests: 3, windowSeconds: 86400 }, // 3/day
+  GDPR_DATA_EXPORT: { maxRequests: 3, windowSeconds: 86400 }, // 3/日
+  GDPR_DELETE_REQUEST: { maxRequests: 3, windowSeconds: 86400 }, // 3/日
 
-  // Settings
-  SETTINGS_UPDATE: { maxRequests: 30, windowSeconds: 3600 }, // 30/hour
+  // 設定
+  SETTINGS_UPDATE: { maxRequests: 30, windowSeconds: 3600 }, // 30/時間
 
-  // Default
-  DEFAULT: { maxRequests: 60, windowSeconds: 60 }, // 60/min
+  // デフォルト
+  DEFAULT: { maxRequests: 60, windowSeconds: 60 }, // 60/分
 } as const;
 
 export type RateLimitKey = keyof typeof RateLimits;
 
 /**
- * Rate limiter class
+ * レートリミッタークラス
  */
 export class RateLimiter {
   private readonly collectionName = "rateLimits";
 
   /**
-   * Get rate limit document reference
+   * レート制限ドキュメント参照を取得
    */
   private getDocRef(key: string): DocumentReference {
     return getFirestore().collection(this.collectionName).doc(key);
   }
 
   /**
-   * Check and update rate limit
-   * Returns true if request is allowed, throws RateLimitError if not
+   * レート制限をチェックして更新
+   * リクエストが許可される場合は true を返し、許可されない場合は RateLimitError をスロー
    */
   async checkLimit(
     identifier: string,
@@ -96,7 +96,7 @@ export class RateLimiter {
         const doc = await transaction.get(docRef);
 
         if (!doc.exists) {
-          // First request - create record
+          // 初回リクエスト - レコードを作成
           transaction.set(docRef, {
             count: 1,
             windowStart: now,
@@ -107,9 +107,9 @@ export class RateLimiter {
 
         const data = doc.data() as RateLimitRecord;
 
-        // Check if window has expired
+        // ウィンドウが期限切れかチェック
         if (data.windowStart.toMillis() < windowStartTimestamp.toMillis()) {
-          // Reset window
+          // ウィンドウをリセット
           transaction.set(docRef, {
             count: 1,
             windowStart: now,
@@ -118,12 +118,12 @@ export class RateLimiter {
           return true;
         }
 
-        // Check if limit exceeded
+        // 制限を超えたかチェック
         if (data.count >= config.maxRequests) {
           return false;
         }
 
-        // Increment count
+        // カウントをインクリメント
         transaction.update(docRef, {
           count: admin.firestore.FieldValue.increment(1),
           updatedAt: serverTimestamp(),
@@ -145,14 +145,14 @@ export class RateLimiter {
       if (error instanceof RateLimitError) {
         throw error;
       }
-      // Log but don't block on rate limit errors
+      // レート制限エラーの場合はログ出力するがブロックしない
       logger.error("Rate limit check failed", error as Error, { identifier: key });
       return true;
     }
   }
 
   /**
-   * Check rate limit with predefined config
+   * 定義済み設定でレート制限をチェック
    */
   async check(
     limitKey: RateLimitKey,
@@ -164,7 +164,7 @@ export class RateLimiter {
   }
 
   /**
-   * Get remaining requests
+   * 残りリクエスト数を取得
    */
   async getRemaining(
     limitKey: RateLimitKey,
@@ -203,7 +203,7 @@ export class RateLimiter {
   }
 
   /**
-   * Reset rate limit for identifier
+   * 識別子のレート制限をリセット
    */
   async reset(limitKey: RateLimitKey, identifier: string): Promise<void> {
     const fullKey = `${limitKey}:${identifier}`;
@@ -214,8 +214,8 @@ export class RateLimiter {
   }
 
   /**
-   * Clean up expired rate limit records
-   * Should be called by a scheduled function
+   * 期限切れのレート制限レコードをクリーンアップ
+   * スケジュール関数から呼び出されるべき
    */
   async cleanup(maxAgeSeconds = 86400): Promise<number> {
     const db = getFirestore();
@@ -242,19 +242,19 @@ export class RateLimiter {
   }
 
   /**
-   * Sanitize key for Firestore document ID
+   * Firestore ドキュメント ID 用にキーをサニタイズ
    */
   private sanitizeKey(key: string): string {
-    // Replace characters not allowed in Firestore document IDs
+    // Firestore ドキュメント ID で許可されていない文字を置換
     return key.replace(/[/.#$[\]]/g, "_");
   }
 }
 
-// Export singleton instance
+// シングルトンインスタンスをエクスポート
 export const rateLimiter = new RateLimiter();
 
 /**
- * Rate limit decorator for functions
+ * 関数用レート制限デコレーター
  */
 export function withRateLimit(
   limitKey: RateLimitKey,

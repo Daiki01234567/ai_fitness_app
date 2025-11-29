@@ -1,6 +1,6 @@
 /**
- * Cloud Tasks Service
- * Handles asynchronous task queue operations
+ * Cloud Tasks サービス
+ * 非同期タスクキュー操作を処理
  */
 
 import { CloudTasksClient, protos } from "@google-cloud/tasks";
@@ -8,12 +8,12 @@ import { CloudTasksClient, protos } from "@google-cloud/tasks";
 import { addMinutes, getExponentialBackoffDelay } from "../utils/date";
 import { logger } from "../utils/logger";
 
-// Type aliases for Cloud Tasks
+// Cloud Tasks 用の型エイリアス
 type Task = protos.google.cloud.tasks.v2.ITask;
 type CreateTaskRequest = protos.google.cloud.tasks.v2.ICreateTaskRequest;
 
 /**
- * Task configuration
+ * タスク設定
  */
 export interface TaskConfig {
   queueName: string;
@@ -24,7 +24,7 @@ export interface TaskConfig {
 }
 
 /**
- * Retry configuration
+ * リトライ設定
  */
 export interface RetryConfig {
   maxRetries: number;
@@ -34,17 +34,17 @@ export interface RetryConfig {
 }
 
 /**
- * Default retry configuration
+ * デフォルトのリトライ設定
  */
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxRetries: 5,
   minBackoffSeconds: 10,
-  maxBackoffSeconds: 3600, // 1 hour
+  maxBackoffSeconds: 3600, // 1時間
   maxDoublings: 5,
 };
 
 /**
- * Queue names
+ * キュー名
  */
 export const QueueNames = {
   BIGQUERY_SYNC: "bigquery-sync",
@@ -57,7 +57,7 @@ export const QueueNames = {
 export type QueueName = (typeof QueueNames)[keyof typeof QueueNames];
 
 /**
- * Cloud Tasks Service class
+ * Cloud Tasks サービスクラス
  */
 export class CloudTasksService {
   private client: CloudTasksClient;
@@ -71,14 +71,14 @@ export class CloudTasksService {
   }
 
   /**
-   * Get queue path
+   * キューパスを取得
    */
   private getQueuePath(queueName: string): string {
     return this.client.queuePath(this.projectId, this.location, queueName);
   }
 
   /**
-   * Create a new task
+   * 新しいタスクを作成
    */
   async createTask(config: TaskConfig): Promise<string | null> {
     const { queueName, url, payload, scheduleTime } = config;
@@ -97,7 +97,7 @@ export class CloudTasksService {
         },
       };
 
-      // Set schedule time if provided
+      // スケジュール時間が指定されている場合は設定
       if (scheduleTime) {
         task.scheduleTime = {
           seconds: Math.floor(scheduleTime.getTime() / 1000),
@@ -128,7 +128,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Create BigQuery sync task
+   * BigQuery 同期タスクを作成
    */
   async createBigQuerySyncTask(
     collection: string,
@@ -152,7 +152,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Create data export task
+   * データエクスポートタスクを作成
    */
   async createDataExportTask(
     userId: string,
@@ -172,7 +172,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Create data deletion task
+   * データ削除タスクを作成
    */
   async createDataDeletionTask(
     userId: string,
@@ -194,7 +194,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Create notification task
+   * 通知タスクを作成
    */
   async createNotificationTask(
     userId: string,
@@ -218,7 +218,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Create retry task with exponential backoff
+   * 指数バックオフ付きリトライタスクを作成
    */
   async createRetryTask(
     queueName: QueueName,
@@ -252,7 +252,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Delete a task
+   * タスクを削除
    */
   async deleteTask(taskName: string): Promise<void> {
     try {
@@ -265,7 +265,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Pause a queue
+   * キューを一時停止
    */
   async pauseQueue(queueName: QueueName): Promise<void> {
     const name = this.getQueuePath(queueName);
@@ -274,7 +274,7 @@ export class CloudTasksService {
   }
 
   /**
-   * Resume a queue
+   * キューを再開
    */
   async resumeQueue(queueName: QueueName): Promise<void> {
     const name = this.getQueuePath(queueName);
@@ -283,5 +283,5 @@ export class CloudTasksService {
   }
 }
 
-// Export singleton instance
+// シングルトンインスタンスをエクスポート
 export const cloudTasks = new CloudTasksService();

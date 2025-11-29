@@ -1,19 +1,19 @@
-/// App Theme Configuration
-/// Material Design 3 with Japanese market focus
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// アプリテーマ設定
+// 日本市場向けのMaterial Design 3
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter/material.dart';
 
-/// App color scheme seed
-const _primarySeed = Color(0xFF4CAF50); // Green - fitness/health association
+/// アプリカラースキームのシード
+const _primarySeed = Color(0xFF4CAF50); // グリーン - フィットネス/健康のイメージ
 
-/// App Theme
+/// アプリテーマ
 class AppTheme {
   AppTheme._();
 
-  /// Light theme
+  /// ライトテーマ
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: _primarySeed,
@@ -23,9 +23,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      // Typography
+      // タイポグラフィ
       fontFamily: 'NotoSansJP',
-      // AppBar theme
+      // AppBarテーマ
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -33,14 +33,14 @@ class AppTheme {
         foregroundColor: colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
-      // Card theme
+      // Cardテーマ
       cardTheme: const CardThemeData(
         elevation: 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
-      // Input decoration theme
+      // 入力装飾テーマ
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -79,7 +79,7 @@ class AppTheme {
           vertical: 16,
         ),
       ),
-      // Elevated button theme (minimum 48dp height for accessibility)
+      // ElevatedButtonテーマ（アクセシビリティのため最小高さ48dp）
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
@@ -90,7 +90,7 @@ class AppTheme {
           elevation: 1,
         ),
       ),
-      // Filled button theme
+      // FilledButtonテーマ
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
@@ -100,7 +100,7 @@ class AppTheme {
           ),
         ),
       ),
-      // Outlined button theme
+      // OutlinedButtonテーマ
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
@@ -110,53 +110,53 @@ class AppTheme {
           ),
         ),
       ),
-      // Text button theme
+      // TextButtonテーマ
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),
-      // Floating action button theme
+      // FloatingActionButtonテーマ
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      // Bottom navigation bar theme
+      // BottomNavigationBarテーマ
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedItemColor: colorScheme.primary,
         unselectedItemColor: colorScheme.onSurfaceVariant,
       ),
-      // Navigation bar theme (Material 3)
+      // NavigationBarテーマ（Material 3）
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
         indicatorColor: colorScheme.primaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
-      // Snackbar theme
+      // SnackBarテーマ
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-      // Dialog theme
+      // Dialogテーマ
       dialogTheme: const DialogThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
-      // Checkbox theme
+      // Checkboxテーマ
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
       ),
-      // Divider theme
+      // Dividerテーマ
       dividerTheme: DividerThemeData(
         space: 1,
         thickness: 1,
@@ -165,7 +165,7 @@ class AppTheme {
     );
   }
 
-  /// Dark theme
+  /// ダークテーマ
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: _primarySeed,
@@ -175,9 +175,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      // Typography
+      // タイポグラフィ
       fontFamily: 'NotoSansJP',
-      // AppBar theme
+      // AppBarテーマ
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -185,14 +185,14 @@ class AppTheme {
         foregroundColor: colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
-      // Card theme
+      // Cardテーマ
       cardTheme: const CardThemeData(
         elevation: 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
-      // Input decoration theme
+      // 入力装飾テーマ
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -231,7 +231,7 @@ class AppTheme {
           vertical: 16,
         ),
       ),
-      // Elevated button theme
+      // ElevatedButtonテーマ
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
@@ -242,7 +242,7 @@ class AppTheme {
           elevation: 1,
         ),
       ),
-      // Filled button theme
+      // FilledButtonテーマ
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
@@ -252,7 +252,7 @@ class AppTheme {
           ),
         ),
       ),
-      // Outlined button theme
+      // OutlinedButtonテーマ
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
@@ -262,53 +262,53 @@ class AppTheme {
           ),
         ),
       ),
-      // Text button theme
+      // TextButtonテーマ
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),
-      // Floating action button theme
+      // FloatingActionButtonテーマ
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      // Bottom navigation bar theme
+      // BottomNavigationBarテーマ
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedItemColor: colorScheme.primary,
         unselectedItemColor: colorScheme.onSurfaceVariant,
       ),
-      // Navigation bar theme (Material 3)
+      // NavigationBarテーマ（Material 3）
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
         indicatorColor: colorScheme.primaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
-      // Snackbar theme
+      // SnackBarテーマ
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-      // Dialog theme
+      // Dialogテーマ
       dialogTheme: const DialogThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
-      // Checkbox theme
+      // Checkboxテーマ
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
       ),
-      // Divider theme
+      // Dividerテーマ
       dividerTheme: DividerThemeData(
         space: 1,
         thickness: 1,
@@ -318,7 +318,7 @@ class AppTheme {
   }
 }
 
-/// App spacing constants
+/// アプリスペーシング定数
 class AppSpacing {
   AppSpacing._();
 
@@ -329,11 +329,11 @@ class AppSpacing {
   static const double xl = 32;
   static const double xxl = 48;
 
-  /// Minimum tap target size (WCAG accessibility)
+  /// 最小タップターゲットサイズ（WCAGアクセシビリティ）
   static const double minTapTarget = 48;
 }
 
-/// App border radius constants
+/// アプリ角丸定数
 class AppRadius {
   AppRadius._();
 
@@ -342,4 +342,21 @@ class AppRadius {
   static const double lg = 12;
   static const double xl = 16;
   static const double xxl = 24;
+}
+
+/// スコア表示用カラー定数
+class AppColors {
+  AppColors._();
+
+  /// Excellent score (80+) - Green
+  static const Color scoreExcellent = Color(0xFF4CAF50);
+
+  /// Good score (60-79) - Light Green
+  static const Color scoreGood = Color(0xFF8BC34A);
+
+  /// Average score (40-59) - Orange
+  static const Color scoreAverage = Color(0xFFFF9800);
+
+  /// Poor score (<40) - Red
+  static const Color scorePoor = Color(0xFFF44336);
 }

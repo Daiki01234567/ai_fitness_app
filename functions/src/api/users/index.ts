@@ -1,5 +1,5 @@
 /**
- * User API Functions Index
+ * ユーザー API Functions インデックス
  */
 
 export { updateProfile } from "./updateProfile";

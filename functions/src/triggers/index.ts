@@ -1,15 +1,15 @@
 /**
- * Firestore Triggers Index
+ * Firestore トリガーインデックス
  *
- * Document-triggered functions for the AI Fitness App.
- * These functions respond to Firestore document changes.
+ * AI Fitness App 用のドキュメントトリガー関数
+ * これらの関数は Firestore ドキュメントの変更に応答
  */
 
-// Session completion triggers
+// セッション完了トリガー
 // export * from "./sessions";
 
-// Consent change triggers
+// 同意変更トリガー
 export * from "./consents";
 
-// User deletion triggers
+// ユーザー削除トリガー
 // export * from "./users";

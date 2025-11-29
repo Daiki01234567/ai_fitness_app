@@ -8,6 +8,7 @@
 - `docs/specs/00_要件定義書_v3_3.md` (FR-001～FR-005)
 - `docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md`
 - `docs/specs/03_API設計書_Firebase_Functions_v3_3.md`
+- - `docs/specs/06_データ処理記録_ROPA_v1_0.md` (316 - 605)
 
 ## 概要
 ユーザー認証機能（ログイン、新規登録、ログアウト）を実装する。

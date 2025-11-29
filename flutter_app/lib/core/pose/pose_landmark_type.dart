@@ -1,12 +1,12 @@
-/// MediaPipe Pose 33 Landmark Types
+/// MediaPipe Pose 33ランドマークタイプ
 ///
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
-/// Maps to google_mlkit_pose_detection PoseLandmarkType
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
+/// google_mlkit_pose_detection PoseLandmarkTypeにマップ
 library;
 
-/// Enum representing all 33 MediaPipe Pose landmarks
+/// 全33個のMediaPipe Poseランドマークを表すenum
 enum PoseLandmarkType {
-  // Face landmarks (0-10)
+  // 顔のランドマーク (0-10)
   nose(0),
   leftEyeInner(1),
   leftEye(2),
@@ -19,7 +19,7 @@ enum PoseLandmarkType {
   leftMouth(9),
   rightMouth(10),
 
-  // Upper body landmarks (11-22)
+  // 上半身のランドマーク (11-22)
   leftShoulder(11),
   rightShoulder(12),
   leftElbow(13),
@@ -33,7 +33,7 @@ enum PoseLandmarkType {
   leftThumb(21),
   rightThumb(22),
 
-  // Lower body landmarks (23-32)
+  // 下半身のランドマーク (23-32)
   leftHip(23),
   rightHip(24),
   leftKnee(25),
@@ -47,10 +47,10 @@ enum PoseLandmarkType {
 
   const PoseLandmarkType(this.landmarkIndex);
 
-  /// The MediaPipe landmark index (0-32)
+  /// MediaPipeランドマークインデックス (0-32)
   final int landmarkIndex;
 
-  /// Get landmark type by index
+  /// インデックスからランドマークタイプを取得
   static PoseLandmarkType fromIndex(int idx) {
     return PoseLandmarkType.values.firstWhere(
       (type) => type.landmarkIndex == idx,
@@ -59,11 +59,11 @@ enum PoseLandmarkType {
   }
 }
 
-/// Key landmark groups for different exercises
+/// 異なるエクササイズ用の主要ランドマークグループ
 class LandmarkGroups {
   LandmarkGroups._();
 
-  /// Landmarks for squat exercise
+  /// スクワットエクササイズ用のランドマーク
   static const squat = [
     PoseLandmarkType.leftHip,
     PoseLandmarkType.rightHip,
@@ -79,7 +79,7 @@ class LandmarkGroups {
     PoseLandmarkType.rightFootIndex,
   ];
 
-  /// Landmarks for arm curl exercise
+  /// アームカールエクササイズ用のランドマーク
   static const armCurl = [
     PoseLandmarkType.leftShoulder,
     PoseLandmarkType.rightShoulder,
@@ -91,7 +91,7 @@ class LandmarkGroups {
     PoseLandmarkType.rightHip,
   ];
 
-  /// Landmarks for side raise exercise
+  /// サイドレイズエクササイズ用のランドマーク
   static const sideRaise = [
     PoseLandmarkType.leftShoulder,
     PoseLandmarkType.rightShoulder,
@@ -104,7 +104,7 @@ class LandmarkGroups {
     PoseLandmarkType.nose,
   ];
 
-  /// Landmarks for shoulder press exercise
+  /// ショルダープレスエクササイズ用のランドマーク
   static const shoulderPress = [
     PoseLandmarkType.leftShoulder,
     PoseLandmarkType.rightShoulder,
@@ -116,7 +116,7 @@ class LandmarkGroups {
     PoseLandmarkType.rightHip,
   ];
 
-  /// Landmarks for push-up exercise
+  /// プッシュアップエクササイズ用のランドマーク
   static const pushUp = [
     PoseLandmarkType.leftShoulder,
     PoseLandmarkType.rightShoulder,

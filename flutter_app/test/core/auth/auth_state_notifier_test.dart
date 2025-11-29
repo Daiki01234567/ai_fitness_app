@@ -1,24 +1,21 @@
-/// AuthStateNotifier Unit Tests
-///
-/// Tests for authentication state management
-/// Based on: auth_test_guide.md test methodology
-///
-/// Test coverage:
-/// - Initial state verification
-/// - Login success/failure state transitions
-/// - Logout processing
-/// - Auto login functionality
-/// - Token refresh
-/// - forceLogout flag detection
-/// - Error handling
-///
-/// @version 1.0.0
-/// @date 2025-11-26
-
-import 'dart:async';
+// AuthStateNotifier Unit Tests
+//
+// Tests for authentication state management
+// Based on: auth_test_guide.md test methodology
+//
+// Test coverage:
+// - Initial state verification
+// - Login success/failure state transitions
+// - Logout processing
+// - Auto login functionality
+// - Token refresh
+// - forceLogout flag detection
+// - Error handling
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 
@@ -365,7 +362,7 @@ void main() {
       mockAuth.emitError(Exception('Auth stream error'));
       await Future.delayed(const Duration(milliseconds: 100));
 
-      expect(notifier.state.error, contains('Authentication error'));
+      expect(notifier.state.error, contains('認証エラー'));
       expect(notifier.state.isLoading, isFalse);
     });
 

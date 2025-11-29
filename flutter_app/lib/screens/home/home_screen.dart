@@ -1,8 +1,8 @@
-/// Home Screen
-/// Main app screen after authentication
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// Home Screen
+// Main app screen after authentication
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

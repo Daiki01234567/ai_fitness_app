@@ -1,81 +1,81 @@
-/// Camera Permission Service
+/// カメラ許可サービス
 ///
-/// Manages camera permission requests and status.
-/// Reference: docs/specs/00_要件定義書_v3_3.md (NFR-024)
+/// カメラ許可リクエストとステータスを管理します。
+/// 参照: docs/specs/00_要件定義書_v3_3.md (NFR-024)
 library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Permission service provider
+/// 許可サービスプロバイダー
 final permissionServiceProvider = Provider<PermissionService>((ref) {
   return PermissionService();
 });
 
-/// Permission state provider
+/// 許可状態プロバイダー
 final cameraPermissionStateProvider =
     StateNotifierProvider<CameraPermissionNotifier, CameraPermissionState>((ref) {
   final service = ref.watch(permissionServiceProvider);
   return CameraPermissionNotifier(service);
 });
 
-/// Camera permission state
+/// カメラ許可状態
 enum CameraPermissionState {
-  /// Permission status is unknown
+  /// 許可状態が不明
   unknown,
 
-  /// Permission has been granted
+  /// 許可が付与された
   granted,
 
-  /// Permission has been denied
+  /// 許可が拒否された
   denied,
 
-  /// Permission has been permanently denied
+  /// 許可が永久に拒否された
   permanentlyDenied,
 
-  /// Permission is restricted (iOS only)
+  /// 許可が制限されている（iOSのみ）
   restricted,
 
-  /// Permission is limited (iOS 14+ only)
+  /// 許可が限定的（iOS 14以降のみ）
   limited,
 }
 
-/// Camera permission state notifier
+/// カメラ許可状態Notifier
 class CameraPermissionNotifier extends StateNotifier<CameraPermissionState> {
   CameraPermissionNotifier(this._service) : super(CameraPermissionState.unknown);
 
   final PermissionService _service;
 
-  /// Check current permission status
+  /// 現在の許可状態をチェック
   Future<CameraPermissionState> checkPermission() async {
     state = await _service.checkCameraPermission();
     return state;
   }
 
-  /// Request camera permission
+  /// カメラ許可をリクエスト
   Future<CameraPermissionState> requestPermission() async {
     state = await _service.requestCameraPermission();
     return state;
   }
 
-  /// Open app settings
+  /// アプリ設定を開く
   Future<bool> openSettings() async {
     return _service.openAppSettings();
   }
 }
 
-/// Permission service for handling camera permissions
+/// カメラ許可を処理するための許可サービス
 class PermissionService {
-  /// Check camera permission status
+  /// カメラ許可状態をチェック
   Future<CameraPermissionState> checkCameraPermission() async {
     final status = await Permission.camera.status;
     return _convertStatus(status);
   }
 
-  /// Request camera permission
+  /// カメラ許可をリクエスト
   Future<CameraPermissionState> requestCameraPermission() async {
-    // First check current status
+    // まず現在の状態をチェック
     final currentStatus = await Permission.camera.status;
 
     if (currentStatus.isGranted) {
@@ -87,20 +87,20 @@ class PermissionService {
       return CameraPermissionState.permanentlyDenied;
     }
 
-    // Request permission
+    // 許可をリクエスト
     final newStatus = await Permission.camera.request();
     debugPrint('PermissionService: Camera permission result: $newStatus');
 
     return _convertStatus(newStatus);
   }
 
-  /// Open app settings for permission configuration
+  /// 許可設定のためアプリ設定を開く
   Future<bool> openAppSettings() async {
     debugPrint('PermissionService: Opening app settings');
     return openAppSettings();
   }
 
-  /// Convert permission_handler status to our enum
+  /// permission_handlerのステータスを独自のenumに変換
   CameraPermissionState _convertStatus(PermissionStatus status) {
     switch (status) {
       case PermissionStatus.granted:
@@ -119,22 +119,22 @@ class PermissionService {
   }
 }
 
-/// Extension methods for CameraPermissionState
+/// CameraPermissionStateの拡張メソッド
 extension CameraPermissionStateExtension on CameraPermissionState {
-  /// Whether permission allows camera usage
+  /// 許可がカメラ使用を許可しているか
   bool get isGranted => this == CameraPermissionState.granted;
 
-  /// Whether permission was denied
+  /// 許可が拒否されたか
   bool get isDenied =>
       this == CameraPermissionState.denied ||
       this == CameraPermissionState.permanentlyDenied;
 
-  /// Whether user needs to go to settings to grant permission
+  /// ユーザーが許可を付与するために設定に行く必要があるか
   bool get requiresSettings =>
       this == CameraPermissionState.permanentlyDenied ||
       this == CameraPermissionState.restricted;
 
-  /// Get user-friendly message for permission state
+  /// 許可状態に対するユーザーフレンドリーなメッセージを取得
   String get message {
     switch (this) {
       case CameraPermissionState.unknown:

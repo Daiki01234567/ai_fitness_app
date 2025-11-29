@@ -1,8 +1,8 @@
-/// App Router Configuration
-/// GoRouter-based navigation with auth state handling
-///
-/// @version 1.1.0
-/// @date 2025-11-27
+// アプリルーター設定
+// 認証状態を考慮したGoRouterベースのナビゲーション
+//
+// @version 1.1.0
+// @date 2025-11-27
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 
 import '../auth/auth_state_notifier.dart';
 import '../consent/consent_state_notifier.dart';
+import '../form_analyzer/form_analyzer.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
 import '../../screens/auth/password_reset_screen.dart';
@@ -17,8 +18,14 @@ import '../../screens/home/home_screen.dart';
 import '../../screens/profile/profile_screen.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/legal/consent_screen.dart';
+import '../../screens/session/pre_session_screen.dart';
+import '../../screens/session/active_session_screen.dart';
+import '../../screens/session/session_result_screen.dart';
+import '../../screens/session/exercise_selection_screen.dart';
+import '../../screens/history/history_screen.dart';
+import '../../screens/analytics/analytics_screen.dart';
 
-/// Route paths
+/// ルートパス
 class AppRoutes {
   AppRoutes._();
 
@@ -28,13 +35,17 @@ class AppRoutes {
   static const passwordReset = '/password-reset';
   static const home = '/home';
   static const training = '/training';
+  static const trainingSetup = '/training/setup';
+  static const trainingActive = '/training/active';
+  static const trainingResult = '/training/result';
   static const history = '/history';
+  static const analytics = '/analytics';
   static const profile = '/profile';
   static const settings = '/settings';
   static const consent = '/consent';
 }
 
-/// Router provider
+/// ルータープロバイダー
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   final consentState = ref.watch(consentStateProvider);
@@ -54,40 +65,42 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isOnSplash = state.matchedLocation == AppRoutes.splash;
       final isOnConsent = state.matchedLocation == AppRoutes.consent;
 
-      // Clear error when navigating to a different page
+      // 別のページに移動する際にエラーをクリア
       if (authState.error != null) {
-        // Use Future.microtask to avoid modifying state during build
+        // ビルド中に状態を変更しないようにFuture.microtaskを使用
         Future.microtask(() => authNotifier.clearError());
       }
 
-      // Show splash while loading
+      // 読み込み中はスプラッシュを表示
       if (isLoading && isOnSplash) {
         return null;
       }
 
-      // Check for force logout first
+      // まず強制ログアウトをチェック
       if (authState.isForceLogout) {
+        // ログインへのリダイレクト後に強制ログアウトフラグをクリア
+        Future.microtask(() => authNotifier.clearForceLogout());
         return AppRoutes.login;
       }
 
-      // If loading is done and on splash, redirect based on auth and consent state
+      // 読み込み完了後、スプラッシュにいる場合は認証と同意状態に基づいてリダイレクト
       if (!isLoading && isOnSplash) {
         if (!isAuthenticated) {
           return AppRoutes.login;
         }
-        // Check consent after authentication
+        // 認証後に同意をチェック
         if (needsConsent) {
           return AppRoutes.consent;
         }
         return AppRoutes.home;
       }
 
-      // If not authenticated and not on auth page, redirect to login
+      // 未認証で認証ページにいない場合はログインにリダイレクト
       if (!isAuthenticated && !isOnAuthPage && !isOnSplash) {
         return AppRoutes.login;
       }
 
-      // If authenticated and on auth page, check consent then go home
+      // 認証済みで認証ページにいる場合は同意をチェックしてホームへ
       if (isAuthenticated && isOnAuthPage) {
         if (needsConsent) {
           return AppRoutes.consent;
@@ -95,12 +108,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.home;
       }
 
-      // If authenticated but needs consent, redirect to consent screen
+      // 認証済みだが同意が必要な場合は同意画面にリダイレクト
       if (isAuthenticated && needsConsent && !isOnConsent && !isOnSplash) {
         return AppRoutes.consent;
       }
 
-      // If authenticated with consent and on consent page, go to home
+      // 認証済みで同意済みかつ同意ページにいる場合はホームへ
       if (isAuthenticated && !needsConsent && isOnConsent) {
         return AppRoutes.home;
       }
@@ -108,13 +121,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Splash screen
+      // スプラッシュ画面
       GoRoute(
         path: AppRoutes.splash,
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Auth routes
+      // 認証ルート
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
@@ -128,13 +141,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PasswordResetScreen(),
       ),
 
-      // Consent screen
+      // 同意画面
       GoRoute(
         path: AppRoutes.consent,
         builder: (context, state) => const ConsentScreen(),
       ),
 
-      // Main app routes
+      // メインアプリルート
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),
@@ -142,6 +155,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+
+      // トレーニングルート
+      GoRoute(
+        path: AppRoutes.training,
+        builder: (context, state) => const ExerciseSelectionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.trainingSetup,
+        builder: (context, state) {
+          final exerciseTypeStr = state.uri.queryParameters['exercise'];
+          final exerciseType = exerciseTypeStr != null
+              ? ExerciseType.values.firstWhere(
+                  (e) => e.name == exerciseTypeStr,
+                  orElse: () => ExerciseType.squat,
+                )
+              : ExerciseType.squat;
+          return PreSessionScreen(exerciseType: exerciseType);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.trainingActive,
+        builder: (context, state) => const ActiveSessionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.trainingResult,
+        builder: (context, state) => const SessionResultScreen(),
+      ),
+
+      // 履歴・分析ルート
+      GoRoute(
+        path: AppRoutes.history,
+        builder: (context, state) => const HistoryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.analytics,
+        builder: (context, state) => const AnalyticsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
@@ -176,37 +226,57 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Helper class to listen to auth and consent state changes for router refresh
+/// ルーター更新のために認証と同意状態の変更をリッスンするヘルパークラス
 class _AuthConsentStateNotifier extends ChangeNotifier {
   _AuthConsentStateNotifier(this._ref) {
-    _ref.listen(authStateProvider, (_, __) {
+    _ref.listen(authStateProvider, (previous, next) {
       notifyListeners();
     });
-    _ref.listen(consentStateProvider, (_, __) {
+    _ref.listen(consentStateProvider, (previous, next) {
       notifyListeners();
     });
   }
 
+  // ignore: unused_field - リスナー用にrefの参照を保持するために使用されるフィールド
   final Ref _ref;
 }
 
-/// Extension for navigation convenience
+/// ナビゲーション便利機能の拡張
 extension GoRouterExtension on BuildContext {
-  /// Navigate to login
+  /// ログインに移動
   void goToLogin() => GoRouter.of(this).go(AppRoutes.login);
 
-  /// Navigate to register
+  /// 新規登録に移動
   void goToRegister() => GoRouter.of(this).go(AppRoutes.register);
 
-  /// Navigate to password reset
+  /// パスワードリセットに移動
   void goToPasswordReset() => GoRouter.of(this).go(AppRoutes.passwordReset);
 
-  /// Navigate to consent
+  /// 同意画面に移動
   void goToConsent() => GoRouter.of(this).go(AppRoutes.consent);
 
-  /// Navigate to home
+  /// ホームに移動
   void goToHome() => GoRouter.of(this).go(AppRoutes.home);
 
-  /// Navigate to profile
+  /// プロフィールに移動
   void goToProfile() => GoRouter.of(this).go(AppRoutes.profile);
+
+  /// トレーニング（種目選択）に移動
+  void goToTraining() => GoRouter.of(this).go(AppRoutes.training);
+
+  /// 種目タイプ付きでトレーニングセットアップに移動
+  void goToTrainingSetup(ExerciseType exerciseType) =>
+      GoRouter.of(this).go('${AppRoutes.trainingSetup}?exercise=${exerciseType.name}');
+
+  /// アクティブトレーニングに移動
+  void goToActiveTraining() => GoRouter.of(this).go(AppRoutes.trainingActive);
+
+  /// トレーニング結果に移動
+  void goToTrainingResult() => GoRouter.of(this).go(AppRoutes.trainingResult);
+
+  /// 履歴に移動
+  void goToHistory() => GoRouter.of(this).go(AppRoutes.history);
+
+  /// 分析に移動
+  void goToAnalytics() => GoRouter.of(this).go(AppRoutes.analytics);
 }

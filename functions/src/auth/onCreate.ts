@@ -16,7 +16,7 @@ import { logger } from "firebase-functions";
 import { auth } from "firebase-functions/v1";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -32,7 +32,7 @@ export const onUserCreate = auth
   .onCreate(async (user) => {
     const { uid, email, phoneNumber, displayName, photoURL } = user;
 
-    // DEBUG: Log function start
+    // DEBUG: 関数開始をログ出力
     console.log("onCreate triggered for user:", uid);
     logger.info(`Creating user document for UID: ${uid}`, {
       email,
@@ -58,7 +58,7 @@ export const onUserCreate = auth
           email: email || null,
           phoneNumber: phoneNumber || null,
           displayName: displayName || null,
-          nickname: displayName || null, // Firestore security rules require this field
+          nickname: displayName || null, // Firestore セキュリティルールでこのフィールドが必要
           photoUrl: photoURL || null,
 
           // アカウント状態
@@ -145,7 +145,7 @@ export const onUserCreate = auth
 
           // アプリ設定
           app: {
-            theme: "system",  // light, dark, system
+            theme: "system",  // ライト、ダーク、システム
             language: "ja",
             soundEnabled: true,
             hapticEnabled: true,
@@ -173,7 +173,7 @@ export const onUserCreate = auth
           type: "account_created",
           action: "create",
           version: "1.0.0",
-          ipAddress: null,  // Cloud Functions からは取得できない
+          ipAddress: null,  // Cloud Functions からは取得不可
           userAgent: null,
           timestamp: FieldValue.serverTimestamp(),
         };
@@ -184,11 +184,11 @@ export const onUserCreate = auth
       // ウェルカムメール送信の準備（将来実装）
       // await sendWelcomeEmail(email);
 
-      // DEBUG: Log success
+      // DEBUG: 成功をログ出力
       console.log("User document created successfully");
       logger.info(`Successfully created user document for UID: ${uid}`);
     } catch (error) {
-      // DEBUG: Log error
+      // DEBUG: エラーをログ出力
       console.error("Error creating user document:", error);
       logger.error(`Failed to create user document for UID: ${uid}`, error);
 

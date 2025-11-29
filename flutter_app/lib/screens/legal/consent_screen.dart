@@ -1,10 +1,10 @@
-/// Consent Screen
-///
-/// GDPR-compliant consent screen for Terms of Service and Privacy Policy.
-/// Based on: docs/specs/00_要件定義書_v3_3.md (FR-024-1)
-///
-/// @version 1.0.0
-/// @date 2025-11-27
+// Consent Screen
+//
+// GDPR-compliant consent screen for Terms of Service and Privacy Policy.
+// Based on: docs/specs/00_要件定義書_v3_3.md (FR-024-1)
+//
+// @version 1.0.0
+// @date 2025-11-27
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -141,10 +141,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     );
 
     if (confirmed == true) {
-      await ref.read(authStateProvider.notifier).signOut();
-      if (mounted) {
-        context.go(AppRoutes.login);
-      }
+      // Use forceLogout to ensure router redirects to login screen
+      await ref.read(authStateProvider.notifier).forceLogout();
+      // Note: context.go is not needed as forceLogout triggers router redirect
     }
   }
 
@@ -204,7 +203,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                     _buildConsentSection(
                       context,
                       title: '利用規約',
-                      version: 'v${currentTosVersion}',
+                      version: 'v$currentTosVersion',
                       scrollController: _tosScrollController,
                       scrolledToEnd: _tosScrolledToEnd,
                       isChecked: _tosChecked,
@@ -222,7 +221,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                     _buildConsentSection(
                       context,
                       title: 'プライバシーポリシー',
-                      version: 'v${currentPpVersion}',
+                      version: 'v$currentPpVersion',
                       scrollController: _ppScrollController,
                       scrolledToEnd: _ppScrolledToEnd,
                       isChecked: _ppChecked,
@@ -246,7 +245,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, -2),
                   ),
@@ -339,7 +338,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           height: 200,
           decoration: BoxDecoration(
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -370,7 +369,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Theme.of(context).colorScheme.surface.withOpacity(0),
+                          Theme.of(context).colorScheme.surface.withValues(alpha: 0.0),
                           Theme.of(context).colorScheme.surface,
                         ],
                       ),

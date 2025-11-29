@@ -1,12 +1,12 @@
 /**
- * Response Utilities
- * Standard response formatting for API
+ * レスポンスユーティリティ
+ * API 用の標準レスポンスフォーマット
  */
 
 import { ApiResponse, PaginatedResponse, SuccessResponse } from "../types/api";
 
 /**
- * Create success response
+ * 成功レスポンスを作成
  */
 export function success<T>(data: T, message?: string): SuccessResponse<T> {
   const response: SuccessResponse<T> = {
@@ -20,7 +20,7 @@ export function success<T>(data: T, message?: string): SuccessResponse<T> {
 }
 
 /**
- * Create paginated success response
+ * ページネーション付き成功レスポンスを作成
  */
 export function successPaginated<T>(
   items: T[],
@@ -39,35 +39,35 @@ export function successPaginated<T>(
 }
 
 /**
- * Type guard for success response
+ * 成功レスポンスの型ガード
  */
 export function isSuccessResponse<T>(response: ApiResponse<T>): response is SuccessResponse<T> {
   return response.success === true;
 }
 
 /**
- * Create empty success response
+ * 空の成功レスポンスを作成
  */
 export function successEmpty(message?: string): SuccessResponse<null> {
   return success(null, message);
 }
 
 /**
- * Create created response
+ * 作成完了レスポンスを作成
  */
 export function created<T>(data: T, message = "作成しました"): SuccessResponse<T> {
   return success(data, message);
 }
 
 /**
- * Create updated response
+ * 更新完了レスポンスを作成
  */
 export function updated<T>(data: T, message = "更新しました"): SuccessResponse<T> {
   return success(data, message);
 }
 
 /**
- * Create deleted response
+ * 削除完了レスポンスを作成
  */
 export function deleted(message = "削除しました"): SuccessResponse<null> {
   return successEmpty(message);

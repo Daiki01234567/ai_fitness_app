@@ -1,8 +1,8 @@
-/// Pose Detector Service
+/// 姿勢検出サービス
 ///
-/// MediaPipe Pose detection service for real-time pose estimation.
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
-/// Important: Camera footage is NOT sent to server (NFR-015)
+/// リアルタイム姿勢推定用のMediaPipe Pose検出サービス。
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
+/// 重要: カメラ映像はサーバーに送信されません (NFR-015)
 library;
 
 import 'dart:async';
@@ -17,19 +17,19 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart'
 import 'pose_data.dart';
 import 'pose_landmark_type.dart';
 
-/// Pose detector service provider
+/// 姿勢検出サービスプロバイダー
 final poseDetectorServiceProvider = Provider<PoseDetectorService>((ref) {
   return PoseDetectorService();
 });
 
-/// Pose detection state provider
+/// 姿勢検出状態プロバイダー
 final poseDetectionStateProvider =
     StateNotifierProvider<PoseDetectionStateNotifier, PoseDetectionState>((ref) {
   final service = ref.watch(poseDetectorServiceProvider);
   return PoseDetectionStateNotifier(service);
 });
 
-/// Pose detection state
+/// 姿勢検出状態
 class PoseDetectionState {
   const PoseDetectionState({
     this.isInitialized = false,
@@ -40,28 +40,28 @@ class PoseDetectionState {
     this.config = PoseDetectionConfig.realtime,
   });
 
-  /// Whether the detector is initialized
+  /// 検出器が初期化されているか
   final bool isInitialized;
 
-  /// Whether a frame is currently being processed
+  /// フレームが現在処理中かどうか
   final bool isProcessing;
 
-  /// Current detected pose
+  /// 現在検出された姿勢
   final PoseFrame? currentPose;
 
-  /// Processing time of the last frame in milliseconds
+  /// 最後のフレームの処理時間（ミリ秒）
   final int? lastProcessingTimeMs;
 
-  /// Error message if any
+  /// エラーメッセージ（ある場合）
   final String? errorMessage;
 
-  /// Current configuration
+  /// 現在の設定
   final PoseDetectionConfig config;
 
-  /// Check if pose is detected
+  /// 姿勢が検出されたかチェック
   bool get hasPose => currentPose?.isPoseDetected ?? false;
 
-  /// Get overall confidence
+  /// 全体信頼度を取得
   double get overallConfidence => currentPose?.overallConfidence ?? 0.0;
 
   PoseDetectionState copyWith({
@@ -83,13 +83,13 @@ class PoseDetectionState {
   }
 }
 
-/// Pose detection state notifier
+/// 姿勢検出状態Notifier
 class PoseDetectionStateNotifier extends StateNotifier<PoseDetectionState> {
   PoseDetectionStateNotifier(this._service) : super(const PoseDetectionState());
 
   final PoseDetectorService _service;
 
-  /// Initialize pose detector
+  /// 姿勢検出器を初期化
   Future<bool> initialize([PoseDetectionConfig config = PoseDetectionConfig.realtime]) async {
     try {
       await _service.initialize(config);
@@ -108,7 +108,7 @@ class PoseDetectionStateNotifier extends StateNotifier<PoseDetectionState> {
     }
   }
 
-  /// Process a camera image
+  /// カメラ画像を処理
   Future<PoseFrame?> processImage(CameraImage image, InputImageRotation rotation) async {
     if (!state.isInitialized || state.isProcessing) {
       return null;
@@ -138,20 +138,20 @@ class PoseDetectionStateNotifier extends StateNotifier<PoseDetectionState> {
     }
   }
 
-  /// Close the detector
+  /// 検出器を閉じる
   Future<void> close() async {
     await _service.close();
     state = const PoseDetectionState();
   }
 }
 
-/// Pose detector service
+/// 姿勢検出サービス
 class PoseDetectorService {
   mlkit.PoseDetector? _detector;
 
-  /// Initialize the pose detector
+  /// 姿勢検出器を初期化
   Future<void> initialize([PoseDetectionConfig config = PoseDetectionConfig.realtime]) async {
-    await close(); // Close existing detector if any
+    await close(); // 既存の検出器があれば閉じる
 
     final options = mlkit.PoseDetectorOptions(
       mode: config.mode == PoseDetectionMode.stream
@@ -166,7 +166,7 @@ class PoseDetectorService {
     debugPrint('PoseDetectorService: Initialized with config: $config');
   }
 
-  /// Process a camera image and detect poses
+  /// カメラ画像を処理し姿勢を検出
   Future<PoseFrame?> processImage(
     CameraImage image,
     InputImageRotation rotation,
@@ -177,13 +177,13 @@ class PoseDetectorService {
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
 
-    // Convert CameraImage to InputImage
+    // CameraImageをInputImageに変換
     final inputImage = _convertCameraImage(image, rotation);
     if (inputImage == null) {
       return null;
     }
 
-    // Detect poses
+    // 姿勢を検出
     final poses = await _detector!.processImage(inputImage);
 
     if (poses.isEmpty) {
@@ -194,10 +194,10 @@ class PoseDetectorService {
       );
     }
 
-    // Use the first detected pose (single person mode)
+    // 最初に検出された姿勢を使用（単一人物モード）
     final mlkitPose = poses.first;
 
-    // Convert ML Kit landmarks to our format
+    // ML Kitランドマークを独自フォーマットに変換
     final landmarks = <PoseLandmarkType, PoseLandmark>{};
     for (final mlkitLandmark in mlkitPose.landmarks.values) {
       final type = PoseLandmarkType.fromIndex(mlkitLandmark.type.index);
@@ -217,22 +217,22 @@ class PoseDetectorService {
     );
   }
 
-  /// Convert CameraImage to InputImage
+  /// CameraImageをInputImageに変換
   mlkit.InputImage? _convertCameraImage(
     CameraImage image,
     InputImageRotation rotation,
   ) {
-    // Get rotation for ML Kit
+    // ML Kit用の回転を取得
     final mlkitRotation = _convertRotation(rotation);
 
-    // Get image format
+    // 画像フォーマットを取得
     final format = _getInputImageFormat(image.format.group);
     if (format == null) {
       debugPrint('PoseDetectorService: Unsupported image format: ${image.format.group}');
       return null;
     }
 
-    // Build metadata
+    // メタデータを構築
     final metadata = mlkit.InputImageMetadata(
       size: ui.Size(image.width.toDouble(), image.height.toDouble()),
       rotation: mlkitRotation,
@@ -240,14 +240,14 @@ class PoseDetectorService {
       bytesPerRow: image.planes[0].bytesPerRow,
     );
 
-    // Create InputImage from bytes
+    // バイトからInputImageを作成
     return mlkit.InputImage.fromBytes(
       bytes: _concatenatePlanes(image.planes),
       metadata: metadata,
     );
   }
 
-  /// Concatenate image planes into a single byte array
+  /// 画像プレーンを単一のバイト配列に連結
   Uint8List _concatenatePlanes(List<Plane> planes) {
     final bytes = <int>[];
     for (final plane in planes) {
@@ -256,7 +256,7 @@ class PoseDetectorService {
     return Uint8List.fromList(bytes);
   }
 
-  /// Convert rotation enum
+  /// 回転enumを変換
   mlkit.InputImageRotation _convertRotation(InputImageRotation rotation) {
     switch (rotation) {
       case InputImageRotation.rotation0deg:
@@ -270,7 +270,7 @@ class PoseDetectorService {
     }
   }
 
-  /// Get ML Kit input image format
+  /// ML Kit入力画像フォーマットを取得
   mlkit.InputImageFormat? _getInputImageFormat(ImageFormatGroup group) {
     switch (group) {
       case ImageFormatGroup.nv21:
@@ -284,7 +284,7 @@ class PoseDetectorService {
     }
   }
 
-  /// Close the detector and release resources
+  /// 検出器を閉じてリソースを解放
   Future<void> close() async {
     await _detector?.close();
     _detector = null;
@@ -292,7 +292,7 @@ class PoseDetectorService {
   }
 }
 
-/// Input image rotation enum (matches camera rotation)
+/// 入力画像回転enum（カメラ回転に一致）
 enum InputImageRotation {
   rotation0deg,
   rotation90deg,

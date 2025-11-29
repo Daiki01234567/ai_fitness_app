@@ -1,0 +1,190 @@
+# =============================================================================
+# Cloud Billing Budget アラート設定
+# AIフィットネスアプリ コスト管理
+#
+# 参照: docs/specs/01_システムアーキテクチャ設計書_v3_2.md Section 13
+#
+# 使用方法:
+#   gcloud billingにて予算作成、またはCloudコンソールから設定
+#
+# 設定日: 2025-11-28
+# バージョン: 1.0.0
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 月次予算アラート
+# -----------------------------------------------------------------------------
+budgets:
+  # 全体予算
+  - displayName: "AI Fitness App - 月次全体予算"
+    description: "月間支出の全体監視"
+    budgetFilter:
+      projects:
+        - "projects/ai-fitness-c38f0"
+      # すべてのサービスを含む
+    amount:
+      specifiedAmount:
+        currencyCode: "JPY"
+        units: "50000"  # 月額5万円
+    thresholdRules:
+      # 50% 到達時（情報）
+      - thresholdPercent: 0.5
+        spendBasis: CURRENT_SPEND
+      # 80% 到達時（警告）
+      - thresholdPercent: 0.8
+        spendBasis: CURRENT_SPEND
+      # 90% 到達時（重要）
+      - thresholdPercent: 0.9
+        spendBasis: CURRENT_SPEND
+      # 100% 到達時（緊急）
+      - thresholdPercent: 1.0
+        spendBasis: CURRENT_SPEND
+      # 120% 超過時（超過）
+      - thresholdPercent: 1.2
+        spendBasis: CURRENT_SPEND
+    notificationsRule:
+      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      schemaVersion: "1.0"
+      monitoringNotificationChannels: []  # 通知チャネルIDを追加
+      disableDefaultIamRecipients: false
+
+  # Cloud Functions 予算
+  - displayName: "AI Fitness App - Cloud Functions 予算"
+    description: "Cloud Functions 実行コスト監視"
+    budgetFilter:
+      projects:
+        - "projects/ai-fitness-c38f0"
+      services:
+        - "services/cloudfunctions.googleapis.com"
+    amount:
+      specifiedAmount:
+        currencyCode: "JPY"
+        units: "20000"  # 月額2万円
+    thresholdRules:
+      - thresholdPercent: 0.5
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 0.8
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 1.0
+        spendBasis: CURRENT_SPEND
+    notificationsRule:
+      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      schemaVersion: "1.0"
+
+  # Firestore 予算
+  - displayName: "AI Fitness App - Firestore 予算"
+    description: "Firestore 読み書きコスト監視"
+    budgetFilter:
+      projects:
+        - "projects/ai-fitness-c38f0"
+      services:
+        - "services/firestore.googleapis.com"
+    amount:
+      specifiedAmount:
+        currencyCode: "JPY"
+        units: "15000"  # 月額1.5万円
+    thresholdRules:
+      - thresholdPercent: 0.5
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 0.8
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 1.0
+        spendBasis: CURRENT_SPEND
+    notificationsRule:
+      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      schemaVersion: "1.0"
+
+  # BigQuery 予算
+  - displayName: "AI Fitness App - BigQuery 予算"
+    description: "BigQuery 分析コスト監視"
+    budgetFilter:
+      projects:
+        - "projects/ai-fitness-c38f0"
+      services:
+        - "services/bigquery.googleapis.com"
+    amount:
+      specifiedAmount:
+        currencyCode: "JPY"
+        units: "10000"  # 月額1万円
+    thresholdRules:
+      - thresholdPercent: 0.5
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 0.8
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 1.0
+        spendBasis: CURRENT_SPEND
+    notificationsRule:
+      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      schemaVersion: "1.0"
+
+  # Cloud Storage 予算
+  - displayName: "AI Fitness App - Cloud Storage 予算"
+    description: "Cloud Storage ストレージ・転送コスト監視"
+    budgetFilter:
+      projects:
+        - "projects/ai-fitness-c38f0"
+      services:
+        - "services/storage.googleapis.com"
+    amount:
+      specifiedAmount:
+        currencyCode: "JPY"
+        units: "5000"  # 月額5千円
+    thresholdRules:
+      - thresholdPercent: 0.5
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 0.8
+        spendBasis: CURRENT_SPEND
+      - thresholdPercent: 1.0
+        spendBasis: CURRENT_SPEND
+    notificationsRule:
+      pubsubTopic: "projects/ai-fitness-c38f0/topics/budget-alerts"
+      schemaVersion: "1.0"
+
+# -----------------------------------------------------------------------------
+# 予算アラート対応手順
+# -----------------------------------------------------------------------------
+#
+# 50% 到達時:
+#   - 支出傾向を確認
+#   - 月末までの予測を計算
+#   - 特定のリソースで異常な増加がないか確認
+#
+# 80% 到達時:
+#   - 詳細なコスト分析を実施
+#   - 不要なリソースを特定して削減
+#   - チームに通知
+#
+# 90% 到達時:
+#   - 緊急のコスト削減策を実施
+#   - バッチ処理の一時停止を検討
+#   - 管理者に報告
+#
+# 100% 超過時:
+#   - コスト削減のための即時対応
+#   - 非必須サービスの一時停止
+#   - 予算増加の承認プロセスを開始
+#
+# -----------------------------------------------------------------------------
+# コスト最適化のベストプラクティス
+# -----------------------------------------------------------------------------
+#
+# Cloud Functions:
+#   - maxInstances を適切に設定（現在: 10）
+#   - メモリサイズの最適化（現在: 256MiB）
+#   - コールドスタートを最小化
+#
+# Firestore:
+#   - 効率的なクエリ設計
+#   - 複合インデックスの最適化
+#   - キャッシュ戦略の実装
+#
+# BigQuery:
+#   - パーティションテーブルの使用
+#   - クエリコストの事前見積もり
+#   - スロットリザベーションの検討
+#
+# Cloud Storage:
+#   - ライフサイクルルールの設定
+#   - 適切なストレージクラスの選択
+#   - CDN キャッシュの活用
+# -----------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 /**
- * Consent Firestore Triggers
+ * 同意 Firestore トリガー
  *
- * Handles consent-related document changes.
- * Primarily used for consent withdrawal notifications.
+ * 同意関連のドキュメント変更を処理
+ * 主に同意撤回の通知に使用
  *
- * Legal basis: GDPR Article 7(3)
+ * 法的根拠: GDPR 第7条(3)
  *
  * @version 1.0.0
  * @date 2025-11-27
@@ -15,7 +15,7 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 
 import { logger } from "../utils/logger";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -24,10 +24,10 @@ const db = admin.firestore();
 const auth = admin.auth();
 
 /**
- * Trigger: On consent record created
+ * トリガー: 同意レコード作成時
  *
- * When a consent revocation is recorded, ensures the user
- * is properly logged out and notified.
+ * 同意撤回が記録された時、ユーザーが適切にログアウトされ
+ * 通知されることを保証
  */
 export const onConsentCreated = onDocumentCreated(
   {
@@ -46,7 +46,7 @@ export const onConsentCreated = onDocumentCreated(
     const consentData = snapshot.data();
     const consentId = event.params.consentId;
 
-    // Only process revocations
+    // 撤回のみを処理
     if (consentData.action !== "revoke") {
       logger.info("Consent action is not revoke, skipping", {
         consentId,
@@ -65,7 +65,7 @@ export const onConsentCreated = onDocumentCreated(
     });
 
     try {
-      // Verify user has force logout flag set
+      // ユーザーに強制ログアウトフラグが設定されているか確認
       const userRef = db.collection("users").doc(userId);
       const userDoc = await userRef.get();
 
@@ -76,7 +76,7 @@ export const onConsentCreated = onDocumentCreated(
 
       const userData = userDoc.data()!;
 
-      // If forceLogoutAt is not set, set it now
+      // forceLogoutAt が設定されていない場合、ここで設定
       if (!userData.forceLogoutAt) {
         await userRef.update({
           forceLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -85,7 +85,7 @@ export const onConsentCreated = onDocumentCreated(
         logger.info("Set forceLogoutAt for user", { userId });
       }
 
-      // Ensure custom claims are set
+      // カスタムクレームが設定されていることを確認
       try {
         const user = await auth.getUser(userId);
         const currentClaims = user.customClaims || {};
@@ -103,7 +103,7 @@ export const onConsentCreated = onDocumentCreated(
         logger.error("Failed to set custom claims", authError as Error, { userId });
       }
 
-      // Create notification for the user
+      // ユーザー用の通知を作成
       const notificationRef = db.collection("notifications").doc();
       await notificationRef.set({
         userId,
@@ -126,7 +126,7 @@ export const onConsentCreated = onDocumentCreated(
         consentId,
       });
 
-      // Revoke all refresh tokens to force re-authentication
+      // 再認証を強制するためにすべてのリフレッシュトークンを取り消す
       try {
         await auth.revokeRefreshTokens(userId);
         logger.info("Revoked refresh tokens for user", { userId });
@@ -149,10 +149,10 @@ export const onConsentCreated = onDocumentCreated(
 );
 
 /**
- * Trigger: On consent withdrawal (all consents)
+ * トリガー: 同意撤回時（全ての同意）
  *
- * Monitors for users who have revoked all consents
- * and may need additional processing.
+ * 全ての同意を撤回したユーザーを監視し、
+ * 追加の処理が必要かどうかを確認
  */
 export const onUserConsentWithdrawn = onDocumentCreated(
   {
@@ -169,7 +169,7 @@ export const onUserConsentWithdrawn = onDocumentCreated(
 
     const consentData = snapshot.data();
 
-    // Only process revocations
+    // 撤回のみを処理
     if (consentData.action !== "revoke") {
       return;
     }
@@ -177,7 +177,7 @@ export const onUserConsentWithdrawn = onDocumentCreated(
     const userId = consentData.userId;
 
     try {
-      // Check if user has any remaining consents
+      // ユーザーに残りの同意があるかチェック
       const userRef = db.collection("users").doc(userId);
       const userDoc = await userRef.get();
 
@@ -187,15 +187,15 @@ export const onUserConsentWithdrawn = onDocumentCreated(
 
       const userData = userDoc.data()!;
 
-      // If both consents are revoked, log for compliance tracking
+      // 両方の同意が撤回された場合、コンプライアンス追跡用にログ出力
       if (!userData.tosAccepted && !userData.ppAccepted) {
         logger.info("User has revoked all consents", {
           userId,
           deletionScheduled: userData.deletionScheduled,
         });
 
-        // Add to compliance tracking if needed
-        // This could trigger additional GDPR processes
+        // 必要に応じてコンプライアンス追跡に追加
+        // これにより追加の GDPR プロセスがトリガーされる可能性がある
       }
     } catch (error) {
       logger.error("Failed to check user consent status", error as Error, { userId });

@@ -1,8 +1,8 @@
-/// Pose Session Controller
+/// 姿勢セッションコントローラー
 ///
-/// Integrates camera, pose detection, and frame rate monitoring.
-/// Reference: docs/specs/00_要件定義書_v3_3.md (NFR-035)
-/// Important: Camera footage is NOT sent to server (NFR-015)
+/// カメラ、姿勢検出、フレームレート監視を統合します。
+/// 参照: docs/specs/00_要件定義書_v3_3.md (NFR-035)
+/// 重要: カメラ映像はサーバーに送信されません (NFR-015)
 library;
 
 import 'dart:async';
@@ -17,7 +17,7 @@ import '../camera/frame_rate_monitor.dart';
 import 'pose_data.dart';
 import 'pose_detector_service.dart';
 
-/// Pose session controller provider
+/// 姿勢セッションコントローラープロバイダー
 final poseSessionControllerProvider =
     StateNotifierProvider<PoseSessionController, PoseSessionState>((ref) {
   final cameraStateNotifier = ref.watch(cameraStateProvider.notifier);
@@ -31,7 +31,7 @@ final poseSessionControllerProvider =
   );
 });
 
-/// Pose session state
+/// 姿勢セッション状態
 class PoseSessionState {
   const PoseSessionState({
     this.isActive = false,
@@ -43,28 +43,28 @@ class PoseSessionState {
     this.currentConfig = CameraConfig.highQuality,
   });
 
-  /// Whether the session is active
+  /// セッションがアクティブかどうか
   final bool isActive;
 
-  /// Whether the session is initializing
+  /// セッションが初期化中かどうか
   final bool isInitializing;
 
-  /// Current detected pose
+  /// 現在検出された姿勢
   final PoseFrame? currentPose;
 
-  /// Error message if any
+  /// エラーメッセージ（ある場合）
   final String? errorMessage;
 
-  /// Session start time
+  /// セッション開始時刻
   final DateTime? sessionStartTime;
 
-  /// Total frames processed in this session
+  /// このセッションで処理された総フレーム数
   final int totalFramesProcessed;
 
-  /// Current camera configuration
+  /// 現在のカメラ設定
   final CameraConfig currentConfig;
 
-  /// Duration of the session
+  /// セッションの継続時間
   Duration? get sessionDuration {
     if (sessionStartTime == null) return null;
     return DateTime.now().difference(sessionStartTime!);
@@ -91,7 +91,7 @@ class PoseSessionState {
   }
 }
 
-/// Pose session controller
+/// 姿勢セッションコントローラー
 class PoseSessionController extends StateNotifier<PoseSessionState> {
   PoseSessionController({
     required CameraStateNotifier cameraStateNotifier,
@@ -101,7 +101,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
         _poseDetectionNotifier = poseDetectionNotifier,
         _frameRateMonitor = frameRateMonitor,
         super(const PoseSessionState()) {
-    // Set up fallback callback
+    // フォールバックコールバックを設定
     _frameRateMonitor.onFallbackNeeded = _handleFallback;
   }
 
@@ -111,10 +111,10 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
 
   bool _isProcessingFrame = false;
 
-  /// Whether the session is currently active
+  /// セッションが現在アクティブかどうか
   bool get isSessionActive => state.isActive;
 
-  /// Start a pose detection session
+  /// 姿勢検出セッションを開始
   Future<bool> startSession({
     CameraConfig config = CameraConfig.highQuality,
   }) async {
@@ -128,7 +128,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     );
 
     try {
-      // Initialize pose detector
+      // 姿勢検出器を初期化
       final poseInitialized = await _poseDetectionNotifier.initialize();
       if (!poseInitialized) {
         state = state.copyWith(
@@ -138,7 +138,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
         return false;
       }
 
-      // Initialize camera
+      // カメラを初期化
       final cameraInitialized = await _cameraStateNotifier.initialize(
         config: config,
         direction: CameraLensDirection.front,
@@ -152,10 +152,10 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
         return false;
       }
 
-      // Start image stream
+      // 画像ストリームを開始
       await _cameraStateNotifier.startImageStream(_processFrame);
 
-      // Reset frame rate monitor
+      // フレームレートモニターをリセット
       _frameRateMonitor.reset();
 
       state = state.copyWith(
@@ -176,9 +176,9 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     }
   }
 
-  /// Process a camera frame
+  /// カメラフレームを処理
   void _processFrame(CameraImage image) {
-    // Skip if already processing (to maintain frame rate)
+    // 既に処理中の場合はスキップ（フレームレートを維持するため）
     if (_isProcessingFrame || !state.isActive) {
       _frameRateMonitor.recordDroppedFrame();
       return;
@@ -186,16 +186,16 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
 
     _isProcessingFrame = true;
 
-    // Determine rotation based on camera orientation
+    // カメラの向きに基づいて回転を決定
     final rotation = _getImageRotation();
 
-    // Process frame asynchronously
+    // フレームを非同期で処理
     _poseDetectionNotifier.processImage(image, rotation).then((poseFrame) {
       if (poseFrame != null) {
-        // Record frame for FPS calculation
+        // FPS計算用にフレームを記録
         _frameRateMonitor.recordFrame(poseFrame.timestamp);
 
-        // Update state with new pose
+        // 新しい姿勢で状態を更新
         state = state.copyWith(
           currentPose: poseFrame,
           totalFramesProcessed: state.totalFramesProcessed + 1,
@@ -208,40 +208,40 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     });
   }
 
-  /// Get image rotation based on device orientation
+  /// デバイスの向きに基づいて画像回転を取得
   InputImageRotation _getImageRotation() {
-    // For front camera, we typically need 270 degree rotation
-    // This may need adjustment based on device and camera orientation
+    // 前面カメラでは通常270度回転が必要
+    // デバイスとカメラの向きに応じて調整が必要な場合あり
     return InputImageRotation.rotation270deg;
   }
 
-  /// Handle performance fallback
+  /// パフォーマンスフォールバックを処理
   void _handleFallback(FallbackLevel level) {
     debugPrint('PoseSessionController: Handling fallback level: $level');
 
     switch (level) {
       case FallbackLevel.none:
-        // No action needed
+        // アクション不要
         break;
 
       case FallbackLevel.reducedResolution:
-        // Apply camera fallback (reduced resolution)
+        // カメラフォールバックを適用（解像度低下）
         _applyConfigFallback();
         break;
 
       case FallbackLevel.reducedFps:
-        // Camera already handles FPS through config
+        // カメラは既に設定を通じてFPSを処理
         _applyConfigFallback();
         break;
 
       case FallbackLevel.simplifiedRendering:
-        // This is handled by the UI layer
+        // これはUIレイヤーで処理される
         debugPrint('PoseSessionController: Simplified rendering requested');
         break;
     }
   }
 
-  /// Apply camera configuration fallback
+  /// カメラ設定フォールバックを適用
   Future<void> _applyConfigFallback() async {
     final currentConfig = state.currentConfig;
     final fallbackConfig = currentConfig.fallback;
@@ -253,20 +253,20 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
 
     debugPrint('PoseSessionController: Applying fallback config: $fallbackConfig');
 
-    // Pause current session
+    // 現在のセッションを一時停止
     await pauseSession();
 
-    // Re-initialize with fallback config
+    // フォールバック設定で再初期化
     final success = await _cameraStateNotifier.applyFallback();
     if (success) {
       state = state.copyWith(currentConfig: fallbackConfig);
 
-      // Resume session
+      // セッションを再開
       await resumeSession();
     }
   }
 
-  /// Pause the session
+  /// セッションを一時停止
   Future<void> pauseSession() async {
     if (!state.isActive) return;
 
@@ -275,7 +275,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     debugPrint('PoseSessionController: Session paused');
   }
 
-  /// Resume the session
+  /// セッションを再開
   Future<void> resumeSession() async {
     if (state.isActive) return;
 
@@ -284,7 +284,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     debugPrint('PoseSessionController: Session resumed');
   }
 
-  /// Stop the session
+  /// セッションを停止
   Future<void> stopSession() async {
     await _cameraStateNotifier.stopImageStream();
     await _cameraStateNotifier.disposeCamera();

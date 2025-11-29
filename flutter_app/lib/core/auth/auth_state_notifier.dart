@@ -1,10 +1,10 @@
-/// Firebase Authentication State Management
-///
-/// 認証状態の管理とユーザーセッション処理
-/// Riverpodを使用した状態管理実装
-///
-/// @version 1.1.0
-/// @date 2025-11-26
+// Firebase認証状態管理
+//
+// 認証状態の管理とユーザーセッション処理
+// Riverpodを使用した状態管理実装
+//
+// @version 1.1.0
+// @date 2025-11-26
 
 import 'dart:async';
 
@@ -57,10 +57,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   StreamSubscription<DocumentSnapshot>? _userDataSubscription;
   Timer? _tokenRefreshTimer;
 
-  /// Current Terms of Service version
+  /// 現在の利用規約バージョン
   static const String tosVersion = '3.2';
 
-  /// Current Privacy Policy version
+  /// 現在のプライバシーポリシーバージョン
   static const String ppVersion = '3.1';
 
   AuthStateNotifier({
@@ -87,7 +87,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       },
       onError: (error) {
         state = state.copyWith(
-          error: 'Authentication error: $error',
+          error: '認証エラー: $error',
           isLoading: false,
         );
       },
@@ -128,9 +128,20 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           .doc(user.uid)
           .snapshots()
           .listen(
-        (snapshot) {
+        (snapshot) async {
           if (snapshot.exists) {
             final userData = snapshot.data()!;
+
+            // Firestoreからの強制ログアウトフラグをチェック
+            // 同意撤回やその他のサーバー側ログアウトトリガーを処理
+            if (userData['forceLogout'] == true) {
+              await signOut();
+              state = state.copyWith(
+                error: 'セッションが無効になりました。再度ログインしてください。',
+                isForceLogout: true,
+              );
+              return;
+            }
 
             state = state.copyWith(
               user: updatedUser ?? user,
@@ -151,7 +162,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
                     .difference(DateTime.now())
                     .inDays;
                 state = state.copyWith(
-                  error: 'アカウントは${daysLeft}日後に削除されます',
+                  error: 'アカウントは$daysLeft日後に削除されます',
                 );
               }
             }
@@ -167,7 +178,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         },
         onError: (error) {
           state = state.copyWith(
-            error: 'Failed to load user data: $error',
+            error: 'ユーザーデータの読み込みに失敗しました: $error',
             isLoading: false,
           );
         },
@@ -178,7 +189,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
     } catch (e) {
       state = state.copyWith(
-        error: 'Sign in error: $e',
+        error: 'サインインエラー: $e',
         isLoading: false,
       );
     }
@@ -189,7 +200,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     _userDataSubscription?.cancel();
     _tokenRefreshTimer?.cancel();
 
-    state = const AuthState();
+    // サインアウト中にisForceLogoutフラグを保持
+    // これにより強制ログアウト後にルーターがログイン画面にリダイレクトすることを保証
+    final wasForceLogout = state.isForceLogout;
+    state = AuthState(isForceLogout: wasForceLogout);
   }
 
   /// トークンリフレッシュタイマーの開始
@@ -220,8 +234,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
             }
           }
         } catch (e) {
-          // トークンリフレッシュエラーは無視
-          print('Token refresh error: $e');
+          // トークンリフレッシュエラーは無視 - Token refresh error
         }
       },
     );
@@ -240,10 +253,12 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         password: password,
       );
 
-      // ユーザードキュメントの最終ログイン時刻を更新
+      // ユーザードキュメントの最終ログイン時刻を更新し、forceLogoutフラグをリセット
       if (credential.user != null) {
         await _firestore.collection('users').doc(credential.user!.uid).update({
           'lastLoginAt': FieldValue.serverTimestamp(),
+          'forceLogout': false,
+          'forceLogoutAt': null,
         });
       }
     } on FirebaseAuthException catch (e) {
@@ -389,7 +404,45 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   /// サインアウト
   Future<void> signOut() async {
     try {
-      // Sign out from Google if signed in
+      // Googleサインイン済みの場合はGoogleからもサインアウト
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (e) {
+      state = state.copyWith(
+        error: 'サインアウトエラー: $e',
+      );
+    }
+  }
+
+  /// 強制ログアウト（同意撤回時など）
+  ///
+  /// isForceLogoutフラグを設定してからサインアウトすることで、
+  /// ルーターが確実にログイン画面にリダイレクトするようにする
+  ///
+  /// フォールバックとしてFirestoreのforceLogoutフィールドも更新し、
+  /// 全デバイスでのログアウトを保証（Cloud Functionsが失敗した場合に備えて）
+  /// 仕様: FR-002-1 同意撤回時の強制ログアウト
+  Future<void> forceLogout() async {
+    // まず強制ログアウトフラグを設定してルーターがログインにリダイレクトするようにする
+    state = state.copyWith(isForceLogout: true);
+
+    try {
+      // フォールバックとしてFirestoreのforceLogoutフィールドを更新
+      // （Cloud Functionsで更新されているはずだが、失敗している可能性あり）
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        try {
+          await _firestore.collection('users').doc(currentUser.uid).update({
+            'forceLogout': true,
+            'forceLogoutAt': FieldValue.serverTimestamp(),
+          });
+        } catch (firestoreError) {
+          // Firestoreエラーは無視 - ローカルでのサインアウトは続行
+          // セキュリティルールで禁止されている場合やユーザーが存在しない場合に失敗する可能性あり
+        }
+      }
+
+      // Googleサインイン済みの場合はGoogleからもサインアウト
       await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
@@ -401,7 +454,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   /// Googleアカウントでサインイン
   ///
-  /// Based on FR-015: Google/Apple認証
+  /// 仕様: FR-015: Google/Apple認証
   /// - OAuth 2.0認証フロー
   /// - 新規ユーザーの場合はFirestoreにユーザードキュメントを作成
   /// - 同意状態の記録
@@ -412,26 +465,26 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Start Google Sign In flow
+      // Googleサインインフローを開始
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        // User cancelled the sign-in
+        // ユーザーがサインインをキャンセル
         state = state.copyWith(isLoading: false);
         return;
       }
 
-      // Get authentication details
+      // 認証詳細を取得
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create Firebase credential
+      // Firebase認証情報を作成
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase
+      // Firebaseにサインイン
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
 
@@ -439,11 +492,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         throw Exception('Firebase認証に失敗しました');
       }
 
-      // Check if this is a new user or existing user
+      // 新規ユーザーか既存ユーザーかをチェック
       final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
 
       if (isNewUser) {
-        // Create user document for new users
+        // 新規ユーザーのユーザードキュメントを作成
         await _createSocialLoginUserDocument(
           user: user,
           provider: 'google',
@@ -451,11 +504,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           ppAccepted: ppAccepted,
         );
       } else {
-        // Update last login for existing users
+        // 既存ユーザーの最終ログインを更新
         await _updateLastLogin(user.uid);
       }
 
-      // Note: The auth state listener will handle the rest of the sign-in flow
+      // 注意: 認証状態リスナーが残りのサインインフローを処理
 
     } on FirebaseAuthException catch (e) {
       String errorMessage;
@@ -490,7 +543,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   /// Apple IDでサインイン
   ///
-  /// Based on FR-015: Google/Apple認証
+  /// 仕様: FR-015: Google/Apple認証
   /// - Apple Sign In使用
   /// - 新規ユーザーの場合はFirestoreにユーザードキュメントを作成
   Future<void> signInWithApple({
@@ -500,12 +553,12 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Create Apple auth provider
+      // Apple認証プロバイダーを作成
       final appleProvider = AppleAuthProvider()
         ..addScope('email')
         ..addScope('name');
 
-      // Sign in with Apple
+      // Appleでサインイン
       final userCredential = await _auth.signInWithProvider(appleProvider);
       final user = userCredential.user;
 
@@ -513,11 +566,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         throw Exception('Apple認証に失敗しました');
       }
 
-      // Check if this is a new user
+      // 新規ユーザーかどうかをチェック
       final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
 
       if (isNewUser) {
-        // Create user document for new users
+        // 新規ユーザーのユーザードキュメントを作成
         await _createSocialLoginUserDocument(
           user: user,
           provider: 'apple',
@@ -525,11 +578,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           ppAccepted: ppAccepted,
         );
       } else {
-        // Update last login for existing users
+        // 既存ユーザーの最終ログインを更新
         await _updateLastLogin(user.uid);
       }
 
-      // Note: The auth state listener will handle the rest of the sign-in flow
+      // 注意: 認証状態リスナーが残りのサインインフローを処理
 
     } on FirebaseAuthException catch (e) {
       String errorMessage;
@@ -567,7 +620,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   /// ソーシャルログイン用のユーザードキュメントを作成
   ///
-  /// Based on Firestoreデータベース設計書 Section 4 (Users コレクション)
+  /// 仕様: Firestoreデータベース設計書 Section 4 (Usersコレクション)
   Future<void> _createSocialLoginUserDocument({
     required User user,
     required String provider,
@@ -577,13 +630,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     final now = FieldValue.serverTimestamp();
 
     final userData = {
-      // Basic info (from Firebase Auth)
+      // 基本情報（Firebase Authから取得）
       'userId': user.uid,
       'email': user.email ?? '',
       'displayName': user.displayName,
       'photoURL': user.photoURL,
 
-      // Profile (empty for social login - user can fill in later)
+      // プロフィール（ソーシャルログインでは空 - ユーザーが後で入力可能）
       'profile': {
         'height': null,
         'weight': null,
@@ -593,7 +646,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         'goals': <String>[],
       },
 
-      // Consent management (GDPR compliance)
+      // 同意管理（GDPR準拠）
       'tosAccepted': tosAccepted,
       'tosAcceptedAt': tosAccepted ? now : null,
       'tosVersion': tosAccepted ? tosVersion : null,
@@ -601,42 +654,42 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       'ppAcceptedAt': ppAccepted ? now : null,
       'ppVersion': ppAccepted ? ppVersion : null,
 
-      // Account status
+      // アカウントステータス
       'isActive': true,
       'deletionScheduled': false,
       'deletionScheduledAt': null,
       'scheduledDeletionDate': null,
 
-      // Force logout
+      // 強制ログアウト
       'forceLogout': false,
       'forceLogoutAt': null,
 
-      // Daily usage (Phase 3)
+      // 1日の使用量（Phase 3）
       'dailyUsageCount': 0,
       'lastUsageResetDate': null,
 
-      // Subscription
+      // サブスクリプション
       'subscriptionStatus': 'free',
       'subscriptionPlan': null,
       'subscriptionStartDate': null,
       'subscriptionEndDate': null,
 
-      // System
+      // システム
       'createdAt': now,
       'updatedAt': now,
       'lastLoginAt': now,
 
-      // Data retention
+      // データ保持
       'dataRetentionDate': null,
 
-      // Auth provider info
+      // 認証プロバイダー情報
       'authProvider': provider,
     };
 
-    // Create user document
+    // ユーザードキュメントを作成
     await _firestore.collection('users').doc(user.uid).set(userData);
 
-    // Create consent records for audit trail
+    // 監査証跡用の同意記録を作成
     await _createConsentRecord(
       userId: user.uid,
       documentType: 'tos',
@@ -668,22 +721,28 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     });
   }
 
-  /// 最終ログイン日時を更新
+  /// 最終ログイン日時を更新し、forceLogoutフラグをリセット
   Future<void> _updateLastLogin(String userId) async {
     try {
       await _firestore.collection('users').doc(userId).update({
         'lastLoginAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
+        'forceLogout': false,
+        'forceLogoutAt': null,
       });
-    } catch (e) {
-      // User document might not exist (legacy user), ignore error
-      print('Failed to update last login: $e');
+    } catch (_) {
+      // ユーザードキュメントが存在しない可能性あり（レガシーユーザー）、エラーは無視
     }
   }
 
   /// エラーをクリア
   void clearError() {
     state = state.copyWith(error: null);
+  }
+
+  /// 強制ログアウトフラグをクリア
+  void clearForceLogout() {
+    state = state.copyWith(isForceLogout: false);
   }
 
   /// アカウント削除リクエスト

@@ -1,6 +1,6 @@
 /**
- * Utils module index
- * Re-exports all utilities
+ * Utils モジュールインデックス
+ * すべてのユーティリティを再エクスポート
  */
 
 export * from "./logger";

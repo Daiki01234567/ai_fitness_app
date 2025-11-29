@@ -1,8 +1,8 @@
-/// Profile Screen
-/// User profile and settings screen with consent management
-///
-/// @version 1.0.0
-/// @date 2025-11-27
+// Profile Screen
+// User profile and settings screen with consent management
+//
+// @version 1.0.0
+// @date 2025-11-27
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

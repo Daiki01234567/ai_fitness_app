@@ -1,15 +1,14 @@
 /**
- * CSRF Protection Middleware
+ * CSRF 保護ミドルウェア
  *
- * Provides Cross-Site Request Forgery protection for Cloud Functions.
+ * Cloud Functions 用のクロスサイトリクエストフォージェリ保護を提供
  *
- * Firebase Callable Functions already have built-in CSRF protection
- * through the Firebase SDK, but this middleware adds additional
- * security layers:
+ * Firebase Callable Functions は Firebase SDK を通じて組み込みの CSRF 保護を
+ * 既に持っていますが、このミドルウェアは追加のセキュリティレイヤーを追加します:
  *
- * 1. Origin header validation
- * 2. Referer header validation
- * 3. Custom CSRF token validation (for HTTP endpoints)
+ * 1. Origin ヘッダー検証
+ * 2. Referer ヘッダー検証
+ * 3. カスタム CSRF トークン検証（HTTP エンドポイント用）
  *
  * @see https://firebase.google.com/docs/functions/callable
  * @see https://owasp.org/www-community/attacks/csrf
@@ -24,19 +23,19 @@ import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "../utils/logger";
 
 // =============================================================================
-// Configuration
+// 設定
 // =============================================================================
 
 /**
- * Allowed origins for CORS/CSRF validation
- * Add production domains here
+ * CORS/CSRF バリデーション用の許可されたオリジン
+ * 本番ドメインをここに追加
  */
 const ALLOWED_ORIGINS: string[] = [
-  // Production domains (update when deploying)
+  // 本番ドメイン（デプロイ時に更新）
   "https://ai-fitness-c38f0.web.app",
   "https://ai-fitness-c38f0.firebaseapp.com",
 
-  // Development domains
+  // 開発ドメイン
   "http://localhost:5000",
   "http://localhost:5001",
   "http://localhost:3000",
@@ -44,47 +43,47 @@ const ALLOWED_ORIGINS: string[] = [
   "http://127.0.0.1:5001",
   "http://127.0.0.1:3000",
 
-  // Flutter web debug
+  // Flutter Web デバッグ
   "http://localhost:8080",
   "http://127.0.0.1:8080",
 ];
 
 /**
- * Mobile app identifiers for Origin validation
- * Mobile apps send package name as Origin
+ * Origin バリデーション用のモバイルアプリ識別子
+ * モバイルアプリはパッケージ名を Origin として送信
  */
 const ALLOWED_MOBILE_ORIGINS: string[] = [
   // Android
   "android:com.example.flutter_app",
-  // iOS bundle identifier (if using custom URL scheme)
+  // iOS バンドル識別子（カスタム URL スキーム使用時）
   "ios:com.example.flutterApp",
 ];
 
 /**
- * Firebase emulator marker
+ * Firebase エミュレーターマーカー
  */
 const FIREBASE_EMULATOR_ORIGIN = "firebase";
 
 // =============================================================================
-// Types
+// 型定義
 // =============================================================================
 
 /**
- * CSRF validation options
+ * CSRF バリデーションオプション
  */
 export interface CsrfOptions {
-  /** Skip validation for specific origins */
+  /** 特定のオリジンでバリデーションをスキップ */
   skipOrigins?: string[];
-  /** Require strict origin validation */
+  /** 厳格なオリジンバリデーションを要求 */
   strictMode?: boolean;
-  /** Allow requests without Origin header (mobile apps) */
+  /** Origin ヘッダーなしのリクエストを許可（モバイルアプリ用） */
   allowMissingOrigin?: boolean;
-  /** Custom allowed origins */
+  /** カスタム許可オリジン */
   customOrigins?: string[];
 }
 
 /**
- * CSRF validation result
+ * CSRF バリデーション結果
  */
 export interface CsrfValidationResult {
   valid: boolean;
@@ -93,14 +92,14 @@ export interface CsrfValidationResult {
 }
 
 // =============================================================================
-// Utility Functions
+// ユーティリティ関数
 // =============================================================================
 
 /**
- * Extract Origin header from request
+ * リクエストから Origin ヘッダーを抽出
  */
 function getOrigin(request: CallableRequest | Request): string | undefined {
-  // CallableRequest with rawRequest
+  // rawRequest 付きの CallableRequest
   if ("rawRequest" in request && request.rawRequest) {
     const rawReq = request.rawRequest as unknown as Record<string, unknown>;
     const headers = rawReq.headers as Record<string, string> | undefined;
@@ -117,10 +116,10 @@ function getOrigin(request: CallableRequest | Request): string | undefined {
 }
 
 /**
- * Extract Referer header from request
+ * リクエストから Referer ヘッダーを抽出
  */
 function getReferer(request: CallableRequest | Request): string | undefined {
-  // CallableRequest with rawRequest
+  // rawRequest 付きの CallableRequest
   if ("rawRequest" in request && request.rawRequest) {
     const rawReq = request.rawRequest as unknown as Record<string, unknown>;
     const headers = rawReq.headers as Record<string, string> | undefined;
@@ -137,7 +136,7 @@ function getReferer(request: CallableRequest | Request): string | undefined {
 }
 
 /**
- * Extract origin from Referer URL
+ * Referer URL からオリジンを抽出
  */
 function getOriginFromReferer(referer: string): string | undefined {
   try {
@@ -149,33 +148,33 @@ function getOriginFromReferer(referer: string): string | undefined {
 }
 
 /**
- * Check if origin is allowed
+ * オリジンが許可されているかチェック
  */
 function isAllowedOrigin(
   origin: string,
   customOrigins?: string[],
 ): boolean {
-  // Check standard allowed origins
+  // 標準許可オリジンをチェック
   if (ALLOWED_ORIGINS.includes(origin)) {
     return true;
   }
 
-  // Check mobile app origins
+  // モバイルアプリオリジンをチェック
   if (ALLOWED_MOBILE_ORIGINS.includes(origin)) {
     return true;
   }
 
-  // Check Firebase emulator
+  // Firebase エミュレーターをチェック
   if (origin === FIREBASE_EMULATOR_ORIGIN) {
     return true;
   }
 
-  // Check custom origins
+  // カスタムオリジンをチェック
   if (customOrigins && customOrigins.includes(origin)) {
     return true;
   }
 
-  // Check if running in emulator (localhost variations)
+  // エミュレーターで実行中かチェック（localhost バリエーション）
   if (process.env.FUNCTIONS_EMULATOR === "true") {
     if (origin.startsWith("http://localhost:") ||
         origin.startsWith("http://127.0.0.1:")) {
@@ -187,15 +186,15 @@ function isAllowedOrigin(
 }
 
 // =============================================================================
-// Validation Functions
+// バリデーション関数
 // =============================================================================
 
 /**
- * Validate CSRF protection for a request
+ * リクエストの CSRF 保護をバリデート
  *
- * @param request - The incoming request
- * @param options - Validation options
- * @returns Validation result
+ * @param request - 受信リクエスト
+ * @param options - バリデーションオプション
+ * @returns バリデーション結果
  */
 export function validateCsrf(
   request: CallableRequest | Request,
@@ -207,14 +206,14 @@ export function validateCsrf(
     customOrigins,
   } = options;
 
-  // Get Origin header
+  // Origin ヘッダーを取得
   const origin = getOrigin(request);
 
-  // If Origin is missing
+  // Origin がない場合
   if (!origin) {
-    // In non-strict mode, allow missing Origin (mobile apps don't always send it)
+    // 非厳格モードでは Origin なしを許可（モバイルアプリは常に送信するわけではない）
     if (allowMissingOrigin && !strictMode) {
-      // Try to get origin from Referer
+      // Referer からオリジンを取得試行
       const referer = getReferer(request);
       if (referer) {
         const refererOrigin = getOriginFromReferer(referer);
@@ -223,8 +222,8 @@ export function validateCsrf(
         }
       }
 
-      // Allow requests without Origin in non-strict mode
-      // This is necessary for mobile apps
+      // 非厳格モードでは Origin なしのリクエストを許可
+      // これはモバイルアプリに必要
       logger.debug("Request without Origin header allowed", {
         hasReferer: !!referer,
       });
@@ -237,7 +236,7 @@ export function validateCsrf(
     };
   }
 
-  // Validate Origin
+  // Origin をバリデート
   if (!isAllowedOrigin(origin, customOrigins)) {
     logger.security("CSRF validation failed - invalid origin", {
       origin,
@@ -255,11 +254,11 @@ export function validateCsrf(
 }
 
 /**
- * CSRF protection middleware for Callable Functions
+ * Callable Functions 用 CSRF 保護ミドルウェア
  *
- * @param request - The callable request
- * @param options - Validation options
- * @throws HttpsError if CSRF validation fails
+ * @param request - Callable リクエスト
+ * @param options - バリデーションオプション
+ * @throws CSRF バリデーション失敗時に HttpsError
  */
 export function requireCsrfProtection(
   request: CallableRequest,
@@ -281,15 +280,15 @@ export function requireCsrfProtection(
 }
 
 /**
- * Strict CSRF validation (requires valid Origin)
+ * 厳格な CSRF バリデーション（有効な Origin が必要）
  *
- * Use this for sensitive operations like:
- * - Account deletion
- * - Password changes
- * - Payment operations
+ * 以下のような機密操作に使用:
+ * - アカウント削除
+ * - パスワード変更
+ * - 決済操作
  *
- * @param request - The callable request
- * @throws HttpsError if CSRF validation fails
+ * @param request - Callable リクエスト
+ * @throws CSRF バリデーション失敗時に HttpsError
  */
 export function requireStrictCsrfProtection(
   request: CallableRequest,
@@ -301,14 +300,14 @@ export function requireStrictCsrfProtection(
 }
 
 // =============================================================================
-// Helper for Express HTTP Functions
+// Express HTTP Functions 用ヘルパー
 // =============================================================================
 
 /**
- * CSRF middleware for Express-style HTTP functions
+ * Express スタイル HTTP 関数用 CSRF ミドルウェア
  *
- * @param options - Validation options
- * @returns Express middleware function
+ * @param options - バリデーションオプション
+ * @returns Express ミドルウェア関数
  */
 export function csrfMiddleware(options: CsrfOptions = {}) {
   return (
@@ -340,26 +339,26 @@ export function csrfMiddleware(options: CsrfOptions = {}) {
 }
 
 // =============================================================================
-// Configuration Helpers
+// 設定ヘルパー
 // =============================================================================
 
 /**
- * Get all allowed origins (for CORS configuration)
+ * すべての許可オリジンを取得（CORS 設定用）
  */
 export function getAllowedOrigins(): string[] {
   return [...ALLOWED_ORIGINS];
 }
 
 /**
- * Check if running in emulator mode
+ * エミュレーターモードで実行中かチェック
  */
 export function isEmulatorMode(): boolean {
   return process.env.FUNCTIONS_EMULATOR === "true";
 }
 
 /**
- * Add a custom origin to allowed list at runtime
- * (useful for testing)
+ * 実行時に許可リストへカスタムオリジンを追加
+ * （テストに便利）
  */
 export function addAllowedOrigin(origin: string): void {
   if (!ALLOWED_ORIGINS.includes(origin)) {

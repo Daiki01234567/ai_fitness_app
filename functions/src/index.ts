@@ -1,12 +1,12 @@
 /**
- * AI Fitness App - Cloud Functions Entry Point
+ * AI Fitness App - Cloud Functions エントリーポイント
  *
- * This module exports all Cloud Functions for the AI Fitness App.
- * Functions are organized by domain:
- * - auth: Authentication and user lifecycle
- * - api: HTTP callable functions
- * - triggers: Firestore triggers
- * - scheduled: Scheduled maintenance tasks
+ * AI Fitness App のすべての Cloud Functions をエクスポートするモジュール。
+ * 関数はドメインごとに整理されている:
+ * - auth: 認証とユーザーライフサイクル
+ * - api: HTTP callable 関数
+ * - triggers: Firestore トリガー
+ * - scheduled: スケジュールされたメンテナンスタスク
  *
  * @see https://firebase.google.com/docs/functions
  */
@@ -14,22 +14,22 @@
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
 
-// Initialize Firebase Admin SDK
+// Firebase Admin SDK を初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 /**
- * Global Function Configuration
+ * グローバル関数設定
  *
- * These settings apply to all functions unless overridden:
- * - region: asia-northeast1 (Tokyo) for Japan market
- * - maxInstances: 10 for cost control
- * - memory: 256MB default
- * - timeoutSeconds: 60 seconds
- * - minInstances: 0 for cost optimization (cold start acceptable)
+ * 個別に上書きされない限り、すべての関数に適用される設定:
+ * - region: asia-northeast1（東京）日本市場向け
+ * - maxInstances: 10 コスト制御のため
+ * - memory: 256MB デフォルト
+ * - timeoutSeconds: 60秒
+ * - minInstances: 0 コスト最適化のため（コールドスタートは許容）
  *
- * Critical functions (auth) may override with minInstances: 1
+ * 重要な関数（auth）は minInstances: 1 で上書きする場合がある
  */
 setGlobalOptions({
   region: "asia-northeast1",
@@ -40,17 +40,17 @@ setGlobalOptions({
 });
 
 // ========================================
-// Auth Functions (User Lifecycle)
+// Auth 関数（ユーザーライフサイクル）
 // ========================================
-// - auth_onCreate: Create user document on signup
-// - auth_onDelete: Cleanup on account deletion
-// - auth_setCustomClaims: Set custom claims (admin only)
+// - auth_onCreate: サインアップ時にユーザードキュメントを作成
+// - auth_onDelete: アカウント削除時のクリーンアップ
+// - auth_setCustomClaims: カスタムクレームを設定（管理者のみ）
 export * from "./auth";
 
 // ========================================
-// API Functions (HTTP Callable)
+// API 関数（HTTP Callable）
 // ========================================
-// - user_updateProfile: Update user profile
+// - user_updateProfile: ユーザープロフィールを更新
 // TODO: Implement remaining:
 // - user_getProfile
 // - training_createSession, training_getSessions
@@ -60,24 +60,24 @@ export * from "./auth";
 export * from "./api";
 
 // ========================================
-// Firestore Triggers
+// Firestore トリガー
 // ========================================
-// - triggers_onConsentCreated: Handle consent creation/revocation
-// - triggers_onUserConsentWithdrawn: Monitor full consent withdrawal
+// - triggers_onConsentCreated: 同意の作成/撤回を処理
+// - triggers_onUserConsentWithdrawn: 全同意の撤回を監視
 export * from "./triggers";
 
 // ========================================
-// Scheduled Functions
+// スケジュール関数
 // ========================================
-// Uncomment when implementing:
-// - scheduled_processDeletedUsers: 30-day deletion cleanup
-// - scheduled_cleanupRateLimits: Remove expired rate limit records
-// - scheduled_processDLQ: Retry failed BigQuery syncs
+// 実装時にコメントを解除:
+// - scheduled_processDeletedUsers: 30日間の削除クリーンアップ
+// - scheduled_cleanupRateLimits: 期限切れレート制限レコードを削除
+// - scheduled_processDLQ: 失敗した BigQuery 同期をリトライ
 // export * from "./scheduled";
 
 // ========================================
-// Webhook Handlers
+// Webhook ハンドラー
 // ========================================
-// Uncomment when implementing:
-// - webhook_revenueCat: Handle subscription events
+// 実装時にコメントを解除:
+// - webhook_revenueCat: サブスクリプションイベントを処理
 // export * from "./webhooks";

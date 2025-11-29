@@ -1,7 +1,7 @@
-/// Pose Painter
+/// 姿勢ペインター
 ///
-/// Custom painter for drawing skeleton landmarks and bones.
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
+/// スケルトンランドマークとボーンを描画するためのカスタムペインター。
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
 library;
 
 import 'dart:ui' as ui;
@@ -13,25 +13,25 @@ import '../../pose/pose_data.dart';
 import '../../pose/pose_landmark_type.dart';
 import 'pose_overlay.dart';
 
-/// Skeleton bone connections
+/// スケルトンボーン接続
 class SkeletonBones {
   SkeletonBones._();
 
-  /// All bone connections for full skeleton
+  /// 全スケルトン用の全ボーン接続
   static const List<(PoseLandmarkType, PoseLandmarkType)> all = [
-    // Face
+    // 顔
     (PoseLandmarkType.leftEar, PoseLandmarkType.leftEye),
     (PoseLandmarkType.leftEye, PoseLandmarkType.nose),
     (PoseLandmarkType.nose, PoseLandmarkType.rightEye),
     (PoseLandmarkType.rightEye, PoseLandmarkType.rightEar),
 
-    // Torso
+    // 胴体
     (PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder),
     (PoseLandmarkType.leftShoulder, PoseLandmarkType.leftHip),
     (PoseLandmarkType.rightShoulder, PoseLandmarkType.rightHip),
     (PoseLandmarkType.leftHip, PoseLandmarkType.rightHip),
 
-    // Left arm
+    // 左腕
     (PoseLandmarkType.leftShoulder, PoseLandmarkType.leftElbow),
     (PoseLandmarkType.leftElbow, PoseLandmarkType.leftWrist),
     (PoseLandmarkType.leftWrist, PoseLandmarkType.leftPinky),
@@ -39,7 +39,7 @@ class SkeletonBones {
     (PoseLandmarkType.leftWrist, PoseLandmarkType.leftThumb),
     (PoseLandmarkType.leftPinky, PoseLandmarkType.leftIndex),
 
-    // Right arm
+    // 右腕
     (PoseLandmarkType.rightShoulder, PoseLandmarkType.rightElbow),
     (PoseLandmarkType.rightElbow, PoseLandmarkType.rightWrist),
     (PoseLandmarkType.rightWrist, PoseLandmarkType.rightPinky),
@@ -47,14 +47,14 @@ class SkeletonBones {
     (PoseLandmarkType.rightWrist, PoseLandmarkType.rightThumb),
     (PoseLandmarkType.rightPinky, PoseLandmarkType.rightIndex),
 
-    // Left leg
+    // 左脚
     (PoseLandmarkType.leftHip, PoseLandmarkType.leftKnee),
     (PoseLandmarkType.leftKnee, PoseLandmarkType.leftAnkle),
     (PoseLandmarkType.leftAnkle, PoseLandmarkType.leftHeel),
     (PoseLandmarkType.leftAnkle, PoseLandmarkType.leftFootIndex),
     (PoseLandmarkType.leftHeel, PoseLandmarkType.leftFootIndex),
 
-    // Right leg
+    // 右脚
     (PoseLandmarkType.rightHip, PoseLandmarkType.rightKnee),
     (PoseLandmarkType.rightKnee, PoseLandmarkType.rightAnkle),
     (PoseLandmarkType.rightAnkle, PoseLandmarkType.rightHeel),
@@ -62,21 +62,21 @@ class SkeletonBones {
     (PoseLandmarkType.rightHeel, PoseLandmarkType.rightFootIndex),
   ];
 
-  /// Essential bones only (for simplified rendering)
+  /// 必須ボーンのみ（簡易描画用）
   static const List<(PoseLandmarkType, PoseLandmarkType)> essential = [
-    // Torso
+    // 胴体
     (PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder),
     (PoseLandmarkType.leftShoulder, PoseLandmarkType.leftHip),
     (PoseLandmarkType.rightShoulder, PoseLandmarkType.rightHip),
     (PoseLandmarkType.leftHip, PoseLandmarkType.rightHip),
 
-    // Arms
+    // 腕
     (PoseLandmarkType.leftShoulder, PoseLandmarkType.leftElbow),
     (PoseLandmarkType.leftElbow, PoseLandmarkType.leftWrist),
     (PoseLandmarkType.rightShoulder, PoseLandmarkType.rightElbow),
     (PoseLandmarkType.rightElbow, PoseLandmarkType.rightWrist),
 
-    // Legs
+    // 脚
     (PoseLandmarkType.leftHip, PoseLandmarkType.leftKnee),
     (PoseLandmarkType.leftKnee, PoseLandmarkType.leftAnkle),
     (PoseLandmarkType.rightHip, PoseLandmarkType.rightKnee),
@@ -84,7 +84,7 @@ class SkeletonBones {
   ];
 }
 
-/// Custom painter for pose skeleton
+/// 姿勢スケルトン用のカスタムペインター
 class PosePainter extends CustomPainter {
   PosePainter({
     required this.pose,
@@ -104,18 +104,18 @@ class PosePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (!pose.isPoseDetected) return;
 
-    // Transform all landmarks
+    // すべてのランドマークを変換
     final transformedLandmarks = _transformAndSmooth();
 
-    // Notify callback
+    // コールバックに通知
     onPoseTransformed?.call(transformedLandmarks);
 
-    // Draw bones first (so landmarks appear on top)
+    // まずボーンを描画（ランドマークが上に表示されるように）
     if (config.showSkeleton) {
       _drawBones(canvas, transformedLandmarks);
     }
 
-    // Draw landmarks
+    // ランドマークを描画
     if (config.showLandmarks) {
       _drawLandmarks(canvas, transformedLandmarks);
     }
@@ -127,7 +127,7 @@ class PosePainter extends CustomPainter {
     for (final entry in pose.landmarks.entries) {
       var point = transformer.transformLandmark(entry.value);
 
-      // Apply smoothing if enabled and we have previous data
+      // スムージングが有効で前のデータがあれば適用
       if (config.smoothingEnabled && previousPose != null) {
         final previousPoint = previousPose![entry.key];
         if (previousPoint != null) {
@@ -167,7 +167,7 @@ class PosePainter extends CustomPainter {
 
       if (startPoint == null || endPoint == null) continue;
 
-      // Apply gradient based on confidence
+      // 信頼度に基づいてグラデーションを適用
       if (config.showConfidence) {
         bonePaint.shader = ui.Gradient.linear(
           startPoint,
@@ -195,20 +195,20 @@ class PosePainter extends CustomPainter {
           ? _getConfidenceColor(landmark.likelihood)
           : config.highConfidenceColor;
 
-      // Draw outer circle (border)
+      // 外側の円を描画（境界線）
       final outerPaint = Paint()
         ..color = Colors.black.withValues(alpha: 0.5)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       canvas.drawCircle(point, config.landmarkRadius + 1, outerPaint);
 
-      // Draw inner circle (fill)
+      // 内側の円を描画（塗りつぶし）
       final innerPaint = Paint()
         ..color = color
         ..style = PaintingStyle.fill;
       canvas.drawCircle(point, config.landmarkRadius, innerPaint);
 
-      // Draw confidence text if enabled
+      // 有効な場合は信頼度テキストを描画
       if (config.showConfidence && landmark.isReliable) {
         _drawConfidenceText(canvas, point, landmark.likelihood);
       }
@@ -255,7 +255,7 @@ class PosePainter extends CustomPainter {
   }
 }
 
-/// Painter for highlighting specific landmarks (e.g., for exercise feedback)
+/// 特定のランドマークを強調表示するためのペインター（例：エクササイズフィードバック用）
 class HighlightPainter extends CustomPainter {
   HighlightPainter({
     required this.landmarks,
@@ -293,13 +293,13 @@ class HighlightPainter extends CustomPainter {
 
       final point = transformer.transformLandmark(landmark);
 
-      // Draw glow effect
+      // グローエフェクトを描画
       final glowPaint = Paint()
         ..color = color.withValues(alpha: 0.2)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
       canvas.drawCircle(point, radius + 4, glowPaint);
 
-      // Draw highlight circle
+      // ハイライト円を描画
       canvas.drawCircle(point, radius, paint);
       canvas.drawCircle(point, radius, strokePaint);
     }
@@ -313,7 +313,7 @@ class HighlightPainter extends CustomPainter {
   }
 }
 
-/// Painter for drawing angle indicators
+/// 角度インジケーターを描画するためのペインター
 class AnglePainter extends CustomPainter {
   AnglePainter({
     required this.vertex,
@@ -333,7 +333,7 @@ class AnglePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw arc
+    // 弧を描画
     final arcPaint = Paint()
       ..color = color.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
@@ -354,7 +354,7 @@ class AnglePainter extends CustomPainter {
 
     canvas.drawPath(path, arcPaint);
 
-    // Draw arc border
+    // 弧の境界線を描画
     final borderPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
@@ -368,7 +368,7 @@ class AnglePainter extends CustomPainter {
       borderPaint,
     );
 
-    // Draw angle value
+    // 角度値を描画
     if (showValue) {
       final textPainter = TextPainter(
         text: TextSpan(
@@ -383,7 +383,7 @@ class AnglePainter extends CustomPainter {
       );
       textPainter.layout();
 
-      // Position text outside the arc
+      // テキストを弧の外側に配置
       final textAngle = startAngle + sweepAngle / 2;
       final textRadius = radius + 15;
       final textOffset = Offset(

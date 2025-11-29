@@ -1,6 +1,6 @@
 /**
- * Type definitions index
- * Re-exports all types from sub-modules
+ * 型定義インデックス
+ * サブモジュールからすべての型を再エクスポート
  */
 
 export * from "./firestore";

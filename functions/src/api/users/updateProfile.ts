@@ -1,8 +1,8 @@
 /**
- * Update User Profile API
+ * ユーザープロフィール更新 API
  *
- * Updates user profile information in Firestore.
- * Called after registration Step 2 or from profile settings.
+ * Firestore のユーザープロフィール情報を更新
+ * 登録ステップ 2 後またはプロフィール設定から呼び出される
  *
  * @version 1.1.0
  * @date 2025-11-26
@@ -24,7 +24,7 @@ import {
   isNonEmptyString,
 } from "../../utils/validation";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -32,7 +32,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 /**
- * Profile update request data
+ * プロフィール更新リクエストデータ
  */
 interface UpdateProfileRequest {
   displayName?: string;
@@ -45,8 +45,8 @@ interface UpdateProfileRequest {
 }
 
 /**
- * Validate date of birth
- * Must be a valid date string and user must be at least 13 years old (Japan regulation)
+ * 生年月日をバリデート
+ * 有効な日付文字列で、ユーザーは少なくとも13歳以上である必要がある（日本の規制）
  */
 function validateDateOfBirth(dateOfBirth: unknown): Date | undefined {
   if (dateOfBirth === undefined || dateOfBirth === null || dateOfBirth === "") {
@@ -57,13 +57,13 @@ function validateDateOfBirth(dateOfBirth: unknown): Date | undefined {
     throw new HttpsError("invalid-argument", "生年月日の形式が不正です");
   }
 
-  // Parse ISO 8601 date format
+  // ISO 8601 日付形式をパース
   const date = new Date(dateOfBirth);
   if (isNaN(date.getTime())) {
     throw new HttpsError("invalid-argument", "生年月日の形式が不正です（YYYY-MM-DD）");
   }
 
-  // Check minimum age (13 years for Japan)
+  // 最低年齢をチェック（日本は13歳）
   const now = new Date();
   let age = now.getFullYear() - date.getFullYear();
   const monthDiff = now.getMonth() - date.getMonth();
@@ -83,7 +83,7 @@ function validateDateOfBirth(dateOfBirth: unknown): Date | undefined {
 }
 
 /**
- * Validate fitness goal
+ * フィットネス目標をバリデート
  */
 function validateFitnessGoal(goal: unknown): string | undefined {
   if (goal === undefined || goal === null || goal === "") {
@@ -94,7 +94,7 @@ function validateFitnessGoal(goal: unknown): string | undefined {
     throw new HttpsError("invalid-argument", "目標の形式が不正です");
   }
 
-  // Validate max length
+  // 最大長をバリデート
   if (goal.length > 100) {
     throw new HttpsError("invalid-argument", "目標は100文字以内で入力してください");
   }
@@ -103,7 +103,7 @@ function validateFitnessGoal(goal: unknown): string | undefined {
 }
 
 /**
- * Extract client IP from request
+ * リクエストからクライアント IP を抽出
  */
 function getClientIp(rawRequest: unknown): string | undefined {
   if (!rawRequest || typeof rawRequest !== "object") {
@@ -113,7 +113,7 @@ function getClientIp(rawRequest: unknown): string | undefined {
   const req = rawRequest as Record<string, unknown>;
   const headers = req.headers as Record<string, string> | undefined;
 
-  // Check common IP headers
+  // 一般的な IP ヘッダーをチェック
   const xForwardedFor = headers?.["x-forwarded-for"];
   if (typeof xForwardedFor === "string") {
     return xForwardedFor.split(",")[0].trim();
@@ -128,7 +128,7 @@ function getClientIp(rawRequest: unknown): string | undefined {
 }
 
 /**
- * Extract user agent from request
+ * リクエストからユーザーエージェントを抽出
  */
 function getUserAgent(rawRequest: unknown): string | undefined {
   if (!rawRequest || typeof rawRequest !== "object") {
@@ -142,23 +142,23 @@ function getUserAgent(rawRequest: unknown): string | undefined {
 }
 
 /**
- * Update user profile
+ * ユーザープロフィールを更新
  *
- * Callable function to update user profile in Firestore.
- * Requires authentication.
+ * Firestore でユーザープロフィールを更新する callable 関数
+ * 認証が必要
  */
 export const updateProfile = onCall(
   {
     region: "asia-northeast1",
     memory: "256MiB",
     timeoutSeconds: 30,
-    cors: true, // Enable CORS for web clients
+    cors: true, // Web クライアント用に CORS を有効化
   },
   async (request) => {
-    // CSRF Protection
+    // CSRF 保護
     requireCsrfProtection(request);
 
-    // Check authentication
+    // 認証をチェック
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "認証が必要です");
     }
@@ -166,7 +166,7 @@ export const updateProfile = onCall(
     const userId = request.auth.uid;
     const data = request.data as UpdateProfileRequest;
 
-    // Extract request metadata for audit logging
+    // 監査ログ用にリクエストメタデータを抽出
     const clientIp = getClientIp(request.rawRequest);
     const userAgent = getUserAgent(request.rawRequest);
 
@@ -181,15 +181,15 @@ export const updateProfile = onCall(
     });
 
     try {
-      // Validate input data
+      // 入力データをバリデート
       const validatedData: Record<string, unknown> = {};
 
-      // Display name
+      // 表示名
       if (data.displayName !== undefined) {
         validatedData.displayName = validateNickname(data.displayName);
       }
 
-      // Date of birth
+      // 生年月日
       if (data.dateOfBirth !== undefined) {
         const dob = validateDateOfBirth(data.dateOfBirth);
         if (dob) {
@@ -197,7 +197,7 @@ export const updateProfile = onCall(
         }
       }
 
-      // Gender
+      // 性別
       if (data.gender !== undefined) {
         const gender = validateGender(data.gender);
         if (gender) {
@@ -205,7 +205,7 @@ export const updateProfile = onCall(
         }
       }
 
-      // Height
+      // 身長
       if (data.height !== undefined) {
         const height = validateHeight(data.height);
         if (height !== undefined) {
@@ -213,7 +213,7 @@ export const updateProfile = onCall(
         }
       }
 
-      // Weight
+      // 体重
       if (data.weight !== undefined) {
         const weight = validateWeight(data.weight);
         if (weight !== undefined) {
@@ -221,7 +221,7 @@ export const updateProfile = onCall(
         }
       }
 
-      // Fitness goal
+      // フィットネス目標
       if (data.fitnessGoal !== undefined) {
         const goal = validateFitnessGoal(data.fitnessGoal);
         if (goal) {
@@ -229,7 +229,7 @@ export const updateProfile = onCall(
         }
       }
 
-      // Fitness level
+      // フィットネスレベル
       if (data.fitnessLevel !== undefined) {
         const level = validateFitnessLevel(data.fitnessLevel);
         if (level) {
@@ -237,18 +237,18 @@ export const updateProfile = onCall(
         }
       }
 
-      // Check if there's anything to update
+      // 更新するものがあるかチェック
       if (Object.keys(validatedData).length === 0) {
         throw new HttpsError("invalid-argument", "更新するデータがありません");
       }
 
-      // Add timestamp
+      // タイムスタンプを追加
       validatedData.updatedAt = FieldValue.serverTimestamp();
 
-      // Update Firestore
+      // Firestore を更新
       const userRef = db.collection("users").doc(userId);
 
-      // Check if user document exists and get previous values
+      // ユーザードキュメントが存在するかチェックして以前の値を取得
       const userDoc = await userRef.get();
       if (!userDoc.exists) {
         throw new HttpsError("not-found", "ユーザーが見つかりません");
@@ -256,7 +256,7 @@ export const updateProfile = onCall(
 
       const previousData = userDoc.data() || {};
 
-      // Check if deletion is scheduled
+      // 削除予定かチェック
       if (previousData?.deletionScheduled) {
         throw new HttpsError(
           "failed-precondition",
@@ -264,10 +264,10 @@ export const updateProfile = onCall(
         );
       }
 
-      // Perform update
+      // 更新を実行
       await userRef.update(validatedData);
 
-      // Create audit log (async, don't await to avoid slowing down response)
+      // 監査ログを作成（非同期、レスポンスを遅延させないため await しない）
       logProfileUpdate({
         userId,
         previousValues: previousData,
@@ -289,7 +289,7 @@ export const updateProfile = onCall(
         message: "プロフィールを更新しました",
       };
     } catch (error) {
-      // Create audit log for failed update
+      // 失敗した更新の監査ログを作成
       logProfileUpdate({
         userId,
         newValues: data as Record<string, unknown>,
@@ -301,12 +301,12 @@ export const updateProfile = onCall(
         logger.warn("Failed to create audit log for failed profile update", { auditError });
       });
 
-      // Re-throw HttpsError as-is
+      // HttpsError はそのまま再スロー
       if (error instanceof HttpsError) {
         throw error;
       }
 
-      // Log and wrap other errors
+      // 他のエラーはログ出力してラップ
       logger.error("Failed to update profile", error as Error, { userId });
       throw new HttpsError(
         "internal",

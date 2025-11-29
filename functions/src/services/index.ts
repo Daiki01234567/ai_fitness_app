@@ -1,6 +1,6 @@
 /**
- * Services module index
- * Re-exports all services
+ * サービスモジュールインデックス
+ * すべてのサービスを再エクスポート
  */
 
 export * from "./auditLog";

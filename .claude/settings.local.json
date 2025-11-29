@@ -24,7 +24,11 @@
       "Bash(flutter pub:*)",
       "Bash(Select-String -Pattern \"^\\d{2}:\\d{2}|All tests|Some tests|^$\")",
       "Bash(Out-String -Width 500)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "mcp__mcp-server-commands__run_command",
+      "mcp__ide__getDiagnostics",
+      "Bash(firebase functions:list:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [
       "Bash(rm:*)",

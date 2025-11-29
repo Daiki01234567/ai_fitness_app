@@ -1,8 +1,8 @@
-/// Registration Screen
-/// 2-step registration: Auth info + Profile info
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// Registration Screen
+// 2-step registration: Auth info + Profile info
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -687,75 +687,78 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildFitnessLevelSelection(AuthState authState) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: FitnessLevel.values.map((level) {
-        final isSelected = _selectedFitnessLevel == level;
+    return RadioGroup<FitnessLevel>(
+      groupValue: _selectedFitnessLevel,
+      onChanged: (value) {
+        if (!authState.isLoading) {
+          setState(() {
+            _selectedFitnessLevel = value;
+          });
+        }
+      },
+      child: Column(
+        children: FitnessLevel.values.map((level) {
+          final isSelected = _selectedFitnessLevel == level;
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-          child: InkWell(
-            onTap: authState.isLoading
-                ? null
-                : () {
-                    setState(() {
-                      _selectedFitnessLevel = level;
-                    });
-                  },
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                border: Border.all(
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: InkWell(
+              onTap: authState.isLoading
+                  ? null
+                  : () {
+                      setState(() {
+                        _selectedFitnessLevel = level;
+                      });
+                    },
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.outlineVariant,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.outlineVariant,
-                  width: isSelected ? 2 : 1,
+                      ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+                      : null,
                 ),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                color: isSelected
-                    ? colorScheme.primaryContainer.withOpacity(0.3)
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Radio<FitnessLevel>(
-                    value: level,
-                    groupValue: _selectedFitnessLevel,
-                    onChanged: authState.isLoading
-                        ? null
-                        : (value) {
-                            setState(() {
-                              _selectedFitnessLevel = value;
-                            });
-                          },
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          level.label,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                        ),
-                        Text(
-                          level.description,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
+                child: Row(
+                  children: [
+                    // Radio managed by RadioGroup ancestor
+                    Radio<FitnessLevel>.adaptive(
+                      value: level,
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            level.label,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                          ),
+                          Text(
+                            level.description,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 

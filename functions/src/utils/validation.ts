@@ -1,6 +1,6 @@
 /**
- * Validation Utilities
- * Common validation functions for request data
+ * バリデーションユーティリティ
+ * リクエストデータの共通バリデーション関数
  */
 
 import { ExerciseType } from "../types/firestore";
@@ -8,33 +8,33 @@ import { ExerciseType } from "../types/firestore";
 import { ValidationError } from "./errors";
 
 /**
- * Validation result type
+ * バリデーション結果型
  */
 export type ValidationResult<T> = { success: true; data: T } | { success: false; error: string };
 
 /**
- * Check if value is a non-empty string
+ * 値が空でない文字列かどうかをチェック
  */
 export function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
 /**
- * Check if value is a positive number
+ * 値が正の数値かどうかをチェック
  */
 export function isPositiveNumber(value: unknown): value is number {
   return typeof value === "number" && !isNaN(value) && value > 0;
 }
 
 /**
- * Check if value is a non-negative number
+ * 値が非負の数値かどうかをチェック
  */
 export function isNonNegativeNumber(value: unknown): value is number {
   return typeof value === "number" && !isNaN(value) && value >= 0;
 }
 
 /**
- * Check if value is a valid email
+ * 値が有効なメールアドレスかどうかをチェック
  */
 export function isValidEmail(value: unknown): value is string {
   if (typeof value !== "string") {
@@ -45,7 +45,7 @@ export function isValidEmail(value: unknown): value is string {
 }
 
 /**
- * Check if value is a valid exercise type
+ * 値が有効なエクササイズタイプかどうかをチェック
  */
 export function isValidExerciseType(value: unknown): value is ExerciseType {
   const validTypes: ExerciseType[] = [
@@ -59,7 +59,7 @@ export function isValidExerciseType(value: unknown): value is ExerciseType {
 }
 
 /**
- * Validate string length
+ * 文字列の長さをバリデート
  */
 export function validateStringLength(
   value: string,
@@ -73,7 +73,7 @@ export function validateStringLength(
 }
 
 /**
- * Validate number range
+ * 数値の範囲をバリデート
  */
 export function validateNumberRange(
   value: number,
@@ -87,7 +87,7 @@ export function validateNumberRange(
 }
 
 /**
- * Validate required field
+ * 必須フィールドをバリデート
  */
 export function validateRequired(value: unknown, fieldName: string): void {
   if (value === undefined || value === null) {
@@ -99,7 +99,7 @@ export function validateRequired(value: unknown, fieldName: string): void {
 }
 
 /**
- * Validate nickname
+ * ニックネームをバリデート
  */
 export function validateNickname(nickname: unknown): string {
   validateRequired(nickname, "ニックネーム");
@@ -111,7 +111,7 @@ export function validateNickname(nickname: unknown): string {
 }
 
 /**
- * Validate email
+ * メールアドレスをバリデート
  */
 export function validateEmail(email: unknown): string {
   validateRequired(email, "メールアドレス");
@@ -125,7 +125,7 @@ export function validateEmail(email: unknown): string {
 }
 
 /**
- * Validate birth year
+ * 生年をバリデート
  */
 export function validateBirthYear(birthYear: unknown): number | undefined {
   if (birthYear === undefined || birthYear === null) {
@@ -140,7 +140,7 @@ export function validateBirthYear(birthYear: unknown): number | undefined {
 }
 
 /**
- * Validate height (cm)
+ * 身長をバリデート（cm）
  */
 export function validateHeight(height: unknown): number | undefined {
   if (height === undefined || height === null) {
@@ -154,7 +154,7 @@ export function validateHeight(height: unknown): number | undefined {
 }
 
 /**
- * Validate weight (kg)
+ * 体重をバリデート（kg）
  */
 export function validateWeight(weight: unknown): number | undefined {
   if (weight === undefined || weight === null) {
@@ -168,7 +168,7 @@ export function validateWeight(weight: unknown): number | undefined {
 }
 
 /**
- * Validate gender
+ * 性別をバリデート
  */
 export function validateGender(
   gender: unknown,
@@ -187,7 +187,7 @@ export function validateGender(
 }
 
 /**
- * Validate fitness level
+ * フィットネスレベルをバリデート
  */
 export function validateFitnessLevel(
   level: unknown,
@@ -206,7 +206,7 @@ export function validateFitnessLevel(
 }
 
 /**
- * Validate exercise type
+ * エクササイズタイプをバリデート
  */
 export function validateExerciseType(exerciseType: unknown): ExerciseType {
   validateRequired(exerciseType, "種目");
@@ -220,7 +220,7 @@ export function validateExerciseType(exerciseType: unknown): ExerciseType {
 }
 
 /**
- * Validate pose landmark
+ * ポーズランドマークをバリデート
  */
 export function validatePoseLandmark(
   landmark: unknown,
@@ -235,7 +235,7 @@ export function validatePoseLandmark(
 
   const data = landmark as Record<string, unknown>;
 
-  // Validate index
+  // インデックスをバリデート
   if (typeof data.index !== "number" || data.index < 0 || data.index > 32) {
     throw new ValidationError(`ポーズデータ[${index}].indexが不正です（0-32）`, {
       field: `poseData[${index}].index`,
@@ -243,14 +243,14 @@ export function validatePoseLandmark(
     });
   }
 
-  // Validate coordinates
+  // 座標をバリデート
   for (const coord of ["x", "y", "z"]) {
     if (typeof data[coord] !== "number") {
       throw ValidationError.invalidType(`poseData[${index}].${coord}`, "数値");
     }
   }
 
-  // Validate visibility
+  // 可視性をバリデート
   if (typeof data.visibility !== "number" || data.visibility < 0 || data.visibility > 1) {
     throw new ValidationError(
       `ポーズデータ[${index}].visibilityが不正です（0-1）`,
@@ -271,7 +271,7 @@ export function validatePoseLandmark(
 }
 
 /**
- * Validate array of pose landmarks (33 points)
+ * ポーズランドマークの配列をバリデート（33点）
  */
 export function validatePoseData(
   poseData: unknown,
@@ -290,7 +290,7 @@ export function validatePoseData(
 }
 
 /**
- * Validate pagination limit
+ * ページネーションの制限値をバリデート
  */
 export function validateLimit(limit: unknown, defaultValue = 20, maxValue = 100): number {
   if (limit === undefined || limit === null) {
@@ -303,7 +303,7 @@ export function validateLimit(limit: unknown, defaultValue = 20, maxValue = 100)
 }
 
 /**
- * Validate page token (base64 encoded)
+ * ページトークンをバリデート（base64エンコード）
  */
 export function validatePageToken(pageToken: unknown): string | undefined {
   if (pageToken === undefined || pageToken === null) {
@@ -312,7 +312,7 @@ export function validatePageToken(pageToken: unknown): string | undefined {
   if (!isNonEmptyString(pageToken)) {
     throw ValidationError.invalidType("pageToken", "文字列");
   }
-  // Basic base64 validation
+  // 基本的な base64 バリデーション
   try {
     Buffer.from(pageToken, "base64").toString();
     return pageToken;

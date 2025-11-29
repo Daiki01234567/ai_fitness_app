@@ -1,10 +1,10 @@
-/// Firebase Authentication Service
-///
-/// 認証機能の追加サービスメソッド
-/// 電話番号認証、ソーシャル認証など
-///
-/// @version 1.0.0
-/// @date 2025-11-24
+// Firebase認証サービス
+//
+// 認証機能の追加サービスメソッド
+// 電話番号認証、ソーシャル認証など
+//
+// @version 1.0.0
+// @date 2025-11-24
 
 import 'dart:async';
 
@@ -97,7 +97,7 @@ class AuthService {
   /// SMS確認コードで認証を完了
   Future<UserCredential?> verifyPhoneCode(String smsCode) async {
     if (_verificationId == null) {
-      throw Exception('Verification ID not found. Please request SMS first.');
+      throw Exception('認証IDが見つかりません。まずSMSをリクエストしてください。');
     }
 
     try {
@@ -126,7 +126,7 @@ class AuthService {
   /// Google Sign In
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Google Sign Inフローを開始
+      // Googleサインインフローを開始
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -155,24 +155,21 @@ class AuthService {
   Future<void> signOutGoogle() async {
     try {
       await _googleSignIn.signOut();
-    } catch (e) {
-      // エラーは無視
-      print('Google sign out error: $e');
+    } catch (_) {
+      // エラーは無視 - Google sign out error
     }
   }
 
   /// Apple Sign In（iOS）
   Future<UserCredential?> signInWithApple() async {
     try {
-      // Apple Sign Inプロバイダーを作成
+      // Appleサインインプロバイダーを作成
       final appleProvider = AppleAuthProvider()
         ..addScope('email')
         ..addScope('name');
 
       // プラットフォームごとの処理
-      if (_auth.app.options.projectId == null) {
-        throw Exception('Firebase project ID not found');
-      }
+      // 注意: Firebaseが正しく初期化されている場合、projectIdは常に非nullです
 
       // Webまたはモバイルでの認証
       return await _auth.signInWithProvider(appleProvider);
@@ -376,8 +373,8 @@ class AuthService {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await user.updateEmail(newEmail);
-        await user.sendEmailVerification();
+        // セキュリティのためverifyBeforeUpdateEmailを使用 - メール変更前に確認メールを送信
+        await user.verifyBeforeUpdateEmail(newEmail);
       } else {
         throw Exception('ユーザーが認証されていません');
       }
@@ -465,7 +462,7 @@ class AuthService {
           errorMessage = 'ユーザーが見つかりません';
           break;
         case 'invalid-argument':
-          // Cloud Functionからの詳細エラーメッセージを使用
+          // Cloud Functionsからの詳細エラーメッセージを使用
           errorMessage = e.message ?? '入力内容に誤りがあります';
           break;
         case 'failed-precondition':

@@ -1,24 +1,24 @@
 /**
- * Date Utilities
- * Common date manipulation functions
+ * 日付ユーティリティ
+ * 共通の日付操作関数
  */
 
 /**
- * Get current timestamp in milliseconds
+ * 現在のタイムスタンプをミリ秒で取得
  */
 export function now(): number {
   return Date.now();
 }
 
 /**
- * Get current date as ISO string
+ * 現在の日付を ISO 文字列で取得
  */
 export function nowISO(): string {
   return new Date().toISOString();
 }
 
 /**
- * Add days to a date
+ * 日付に日数を加算
  */
 export function addDays(date: Date, days: number): Date {
   const result = new Date(date);
@@ -27,7 +27,7 @@ export function addDays(date: Date, days: number): Date {
 }
 
 /**
- * Add hours to a date
+ * 日付に時間を加算
  */
 export function addHours(date: Date, hours: number): Date {
   const result = new Date(date);
@@ -36,7 +36,7 @@ export function addHours(date: Date, hours: number): Date {
 }
 
 /**
- * Add minutes to a date
+ * 日付に分を加算
  */
 export function addMinutes(date: Date, minutes: number): Date {
   const result = new Date(date);
@@ -45,7 +45,7 @@ export function addMinutes(date: Date, minutes: number): Date {
 }
 
 /**
- * Get start of day
+ * 日の開始を取得
  */
 export function startOfDay(date: Date): Date {
   const result = new Date(date);
@@ -54,7 +54,7 @@ export function startOfDay(date: Date): Date {
 }
 
 /**
- * Get end of day
+ * 日の終了を取得
  */
 export function endOfDay(date: Date): Date {
   const result = new Date(date);
@@ -63,7 +63,7 @@ export function endOfDay(date: Date): Date {
 }
 
 /**
- * Get start of week (Monday)
+ * 週の開始を取得（月曜日）
  */
 export function startOfWeek(date: Date): Date {
   const result = new Date(date);
@@ -74,7 +74,7 @@ export function startOfWeek(date: Date): Date {
 }
 
 /**
- * Get start of month
+ * 月の開始を取得
  */
 export function startOfMonth(date: Date): Date {
   const result = new Date(date);
@@ -83,7 +83,7 @@ export function startOfMonth(date: Date): Date {
 }
 
 /**
- * Get start of year
+ * 年の開始を取得
  */
 export function startOfYear(date: Date): Date {
   const result = new Date(date);
@@ -92,7 +92,7 @@ export function startOfYear(date: Date): Date {
 }
 
 /**
- * Check if date is today
+ * 日付が今日かどうかをチェック
  */
 export function isToday(date: Date): boolean {
   const today = new Date();
@@ -104,21 +104,21 @@ export function isToday(date: Date): boolean {
 }
 
 /**
- * Check if date is in the past
+ * 日付が過去かどうかをチェック
  */
 export function isPast(date: Date): boolean {
   return date.getTime() < Date.now();
 }
 
 /**
- * Check if date is in the future
+ * 日付が未来かどうかをチェック
  */
 export function isFuture(date: Date): boolean {
   return date.getTime() > Date.now();
 }
 
 /**
- * Get days between two dates
+ * 2つの日付間の日数を取得
  */
 export function daysBetween(date1: Date, date2: Date): number {
   const oneDay = 24 * 60 * 60 * 1000;
@@ -126,21 +126,21 @@ export function daysBetween(date1: Date, date2: Date): number {
 }
 
 /**
- * Get deletion scheduled date (30 days from now)
+ * 削除予定日を取得（今日から30日後）
  */
 export function getDeletionScheduledDate(): Date {
   return addDays(new Date(), 30);
 }
 
 /**
- * Check if deletion grace period has expired
+ * 削除猶予期間が経過したかどうかをチェック
  */
 export function isDeletionGracePeriodExpired(scheduledDate: Date): boolean {
   return isPast(scheduledDate);
 }
 
 /**
- * Format date for Japanese locale
+ * 日本のロケールで日付をフォーマット
  */
 export function formatDateJP(date: Date): string {
   return date.toLocaleDateString("ja-JP", {
@@ -151,7 +151,7 @@ export function formatDateJP(date: Date): string {
 }
 
 /**
- * Format date time for Japanese locale
+ * 日本のロケールで日時をフォーマット
  */
 export function formatDateTimeJP(date: Date): string {
   return date.toLocaleString("ja-JP", {
@@ -164,7 +164,7 @@ export function formatDateTimeJP(date: Date): string {
 }
 
 /**
- * Parse ISO date string
+ * ISO 日付文字列をパース
  */
 export function parseISO(dateString: string): Date {
   const date = new Date(dateString);
@@ -175,7 +175,7 @@ export function parseISO(dateString: string): Date {
 }
 
 /**
- * Get period start date based on period type
+ * 期間タイプに基づいて期間の開始日を取得
  */
 export function getPeriodStartDate(period: "week" | "month" | "year" | "all"): Date {
   const now = new Date();
@@ -194,7 +194,7 @@ export function getPeriodStartDate(period: "week" | "month" | "year" | "all"): D
 }
 
 /**
- * Get retry delay with exponential backoff
+ * 指数バックオフでリトライ遅延を取得
  */
 export function getExponentialBackoffDelay(
   attempt: number,
@@ -206,7 +206,7 @@ export function getExponentialBackoffDelay(
 }
 
 /**
- * Get next retry time with exponential backoff
+ * 指数バックオフで次のリトライ時刻を取得
  */
 export function getNextRetryTime(
   attempt: number,

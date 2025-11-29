@@ -1,7 +1,7 @@
-/// Pose Overlay Widget
+/// 姿勢オーバーレイWidget
 ///
-/// Displays skeleton visualization over camera preview.
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
+/// カメラプレビューの上にスケルトン可視化を表示します。
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
 library;
 
 import 'package:flutter/material.dart';
@@ -14,7 +14,7 @@ import '../../pose/pose_session_controller.dart';
 import '../../camera/frame_rate_monitor.dart';
 import 'pose_painter.dart';
 
-/// Pose overlay configuration
+/// 姿勢オーバーレイ設定
 class PoseOverlayConfig {
   const PoseOverlayConfig({
     this.showSkeleton = true,
@@ -31,40 +31,40 @@ class PoseOverlayConfig {
     this.smoothingFactor = 0.3,
   });
 
-  /// Whether to show skeleton bones
+  /// スケルトンボーンを表示するか
   final bool showSkeleton;
 
-  /// Whether to show landmark points
+  /// ランドマークポイントを表示するか
   final bool showLandmarks;
 
-  /// Whether to show confidence indicators
+  /// 信頼度インジケーターを表示するか
   final bool showConfidence;
 
-  /// Whether to show debug information (FPS, processing time)
+  /// デバッグ情報を表示するか（FPS、処理時間）
   final bool showDebugInfo;
 
-  /// Radius of landmark circles
+  /// ランドマーク円の半径
   final double landmarkRadius;
 
-  /// Width of bone lines
+  /// ボーン線の幅
   final double boneWidth;
 
-  /// Color for high confidence landmarks (>= 0.7)
+  /// 高信頼度ランドマークの色（>= 0.7）
   final Color highConfidenceColor;
 
-  /// Color for medium confidence landmarks (>= 0.5)
+  /// 中信頼度ランドマークの色（>= 0.5）
   final Color mediumConfidenceColor;
 
-  /// Color for low confidence landmarks (< 0.5)
+  /// 低信頼度ランドマークの色（< 0.5）
   final Color lowConfidenceColor;
 
-  /// Color for skeleton bones
+  /// スケルトンボーンの色
   final Color boneColor;
 
-  /// Whether to enable smoothing
+  /// スムージングを有効にするか
   final bool smoothingEnabled;
 
-  /// Smoothing factor (0-1, higher = more smoothing)
+  /// スムージング係数（0-1、高いほどスムージングが強い）
   final double smoothingFactor;
 
   PoseOverlayConfig copyWith({
@@ -98,18 +98,18 @@ class PoseOverlayConfig {
   }
 }
 
-/// Pose overlay configuration provider
+/// 姿勢オーバーレイ設定プロバイダー
 final poseOverlayConfigProvider = StateProvider<PoseOverlayConfig>((ref) {
   return const PoseOverlayConfig();
 });
 
-/// Simplified rendering mode provider (triggered by performance fallback)
+/// 簡易描画モードプロバイダー（パフォーマンスフォールバックでトリガー）
 final simplifiedRenderingProvider = StateProvider<bool>((ref) {
   final frameRateState = ref.watch(frameRateMonitorProvider);
   return frameRateState.fallbackLevel == FallbackLevel.simplifiedRendering;
 });
 
-/// Pose overlay widget that displays skeleton over camera preview
+/// カメラプレビューの上にスケルトンを表示する姿勢オーバーレイWidget
 class PoseOverlay extends ConsumerStatefulWidget {
   const PoseOverlay({
     required this.imageSize,
@@ -118,13 +118,13 @@ class PoseOverlay extends ConsumerStatefulWidget {
     super.key,
   });
 
-  /// Size of the camera image
+  /// カメラ画像のサイズ
   final Size imageSize;
 
-  /// Overlay configuration
+  /// オーバーレイ設定
   final PoseOverlayConfig config;
 
-  /// Callback when pose is detected
+  /// 姿勢が検出された時のコールバック
   final void Function(PoseFrame)? onPoseDetected;
 
   @override
@@ -132,10 +132,10 @@ class PoseOverlay extends ConsumerStatefulWidget {
 }
 
 class _PoseOverlayState extends ConsumerState<PoseOverlay> {
-  /// Previous pose for smoothing
+  /// スムージング用の前の姿勢
   Map<PoseLandmarkType, Offset>? _previousTransformedPose;
 
-  /// Coordinate transformer
+  /// 座標変換器
   CoordinateTransformer? _transformer;
 
   @override
@@ -144,7 +144,7 @@ class _PoseOverlayState extends ConsumerState<PoseOverlay> {
     final frameRateState = ref.watch(frameRateMonitorProvider);
     final isSimplified = ref.watch(simplifiedRenderingProvider);
 
-    // Get effective config (simplified if needed)
+    // 有効な設定を取得（必要に応じて簡略化）
     final effectiveConfig = isSimplified
         ? widget.config.copyWith(
             showConfidence: false,
@@ -157,7 +157,7 @@ class _PoseOverlayState extends ConsumerState<PoseOverlay> {
       builder: (context, constraints) {
         final screenSize = Size(constraints.maxWidth, constraints.maxHeight);
 
-        // Update transformer if needed
+        // 必要に応じてトランスフォーマーを更新
         _transformer = CoordinateTransformer(
           imageSize: widget.imageSize,
           screenSize: screenSize,
@@ -165,14 +165,14 @@ class _PoseOverlayState extends ConsumerState<PoseOverlay> {
 
         final currentPose = sessionState.currentPose;
 
-        // Notify callback
+        // コールバックに通知
         if (currentPose != null && widget.onPoseDetected != null) {
           widget.onPoseDetected!(currentPose);
         }
 
         return Stack(
           children: [
-            // Skeleton overlay
+            // スケルトンオーバーレイ
             if (currentPose != null && currentPose.isPoseDetected)
               CustomPaint(
                 size: screenSize,
@@ -189,7 +189,7 @@ class _PoseOverlayState extends ConsumerState<PoseOverlay> {
                 ),
               ),
 
-            // Debug info overlay
+            // デバッグ情報オーバーレイ
             if (effectiveConfig.showDebugInfo)
               Positioned(
                 top: 8,
@@ -286,7 +286,7 @@ class _PoseOverlayState extends ConsumerState<PoseOverlay> {
   }
 }
 
-/// Simplified pose overlay for low-performance situations
+/// 低パフォーマンス状況用の簡易姿勢オーバーレイ
 class SimplePoseOverlay extends StatelessWidget {
   const SimplePoseOverlay({
     required this.pose,
@@ -313,7 +313,7 @@ class SimplePoseOverlay extends StatelessWidget {
   }
 }
 
-/// Simple pose painter for performance-critical situations
+/// パフォーマンスが重要な状況用の簡易姿勢ペインター
 class SimplePosePainter extends CustomPainter {
   SimplePosePainter({
     required this.pose,
@@ -332,19 +332,19 @@ class SimplePosePainter extends CustomPainter {
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    // Draw only essential bones
+    // 必須ボーンのみ描画
     final essentialBones = [
-      // Torso
+      // 胴体
       (PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder),
       (PoseLandmarkType.leftShoulder, PoseLandmarkType.leftHip),
       (PoseLandmarkType.rightShoulder, PoseLandmarkType.rightHip),
       (PoseLandmarkType.leftHip, PoseLandmarkType.rightHip),
-      // Arms
+      // 腕
       (PoseLandmarkType.leftShoulder, PoseLandmarkType.leftElbow),
       (PoseLandmarkType.leftElbow, PoseLandmarkType.leftWrist),
       (PoseLandmarkType.rightShoulder, PoseLandmarkType.rightElbow),
       (PoseLandmarkType.rightElbow, PoseLandmarkType.rightWrist),
-      // Legs
+      // 脚
       (PoseLandmarkType.leftHip, PoseLandmarkType.leftKnee),
       (PoseLandmarkType.leftKnee, PoseLandmarkType.leftAnkle),
       (PoseLandmarkType.rightHip, PoseLandmarkType.rightKnee),

@@ -1,18 +1,18 @@
 /**
- * Scheduled Functions Index
+ * スケジュール関数インデックス
  *
- * Time-based scheduled functions for the AI Fitness App.
- * These functions run on a schedule (cron) for maintenance tasks.
+ * AI Fitness App 用の時間ベースのスケジュール関数
+ * これらの関数はメンテナンスタスクのためにスケジュール（cron）で実行
  */
 
-// User deletion processing (30-day grace period)
+// ユーザー削除処理（30日間の猶予期間）
 // export * from "./userDeletion";
 
-// Rate limit cleanup
+// レート制限クリーンアップ
 // export * from "./rateLimitCleanup";
 
-// BigQuery DLQ processing
+// BigQuery DLQ 処理
 // export * from "./bigqueryDlq";
 
-// Daily usage reset (for free plan limits)
+// 日次使用量リセット（無料プラン制限用）
 // export * from "./usageReset";

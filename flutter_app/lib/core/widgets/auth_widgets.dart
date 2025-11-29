@@ -1,15 +1,15 @@
-/// Auth Form Widgets
-/// Reusable widgets for authentication screens
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// 認証フォームウィジェット
+// 認証画面用の再利用可能なウィジェット
+//
+// @version 1.0.0
+// @date 2025-11-26
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 
-/// Custom text field with validation
+/// バリデーション付きカスタムテキストフィールド
 class AuthTextField extends StatelessWidget {
   const AuthTextField({
     super.key,
@@ -62,7 +62,7 @@ class AuthTextField extends StatelessWidget {
   }
 }
 
-/// Password text field with visibility toggle
+/// 表示切替付きパスワードテキストフィールド
 class PasswordTextField extends StatefulWidget {
   const PasswordTextField({
     super.key,
@@ -123,7 +123,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
   }
 }
 
-/// Loading button with indicator
+/// インジケーター付きローディングボタン
 class LoadingButton extends StatelessWidget {
   const LoadingButton({
     super.key,
@@ -169,7 +169,7 @@ class LoadingButton extends StatelessWidget {
   }
 }
 
-/// Outlined loading button
+/// アウトライン付きローディングボタン
 class OutlinedLoadingButton extends StatelessWidget {
   const OutlinedLoadingButton({
     super.key,
@@ -215,7 +215,7 @@ class OutlinedLoadingButton extends StatelessWidget {
   }
 }
 
-/// Social sign-in button
+/// ソーシャルサインインボタン
 class SocialSignInButton extends StatelessWidget {
   const SocialSignInButton({
     super.key,
@@ -268,7 +268,7 @@ class SocialSignInButton extends StatelessWidget {
   }
 }
 
-/// Divider with text
+/// テキスト付き区切り線
 class DividerWithText extends StatelessWidget {
   const DividerWithText({
     super.key,
@@ -297,7 +297,7 @@ class DividerWithText extends StatelessWidget {
   }
 }
 
-/// Error message card
+/// エラーメッセージカード
 class ErrorMessageCard extends StatelessWidget {
   const ErrorMessageCard({
     super.key,
@@ -345,7 +345,7 @@ class ErrorMessageCard extends StatelessWidget {
   }
 }
 
-/// Success message card
+/// 成功メッセージカード
 class SuccessMessageCard extends StatelessWidget {
   const SuccessMessageCard({
     super.key,

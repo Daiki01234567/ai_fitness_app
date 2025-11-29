@@ -1,10 +1,10 @@
-/// Consent State Management
-///
-/// Riverpod-based state management for consent status.
-/// GDPR Article 7 compliant consent tracking.
-///
-/// @version 1.0.0
-/// @date 2025-11-27
+// 同意状態管理
+//
+// 同意ステータスのRiverpodベース状態管理。
+// GDPR第7条に準拠した同意追跡。
+//
+// @version 1.0.0
+// @date 2025-11-27
 
 import 'dart:async';
 
@@ -17,53 +17,53 @@ import 'consent_service.dart';
 
 part 'consent_state_notifier.freezed.dart';
 
-/// Current document versions
+/// 現在のドキュメントバージョン
 const String currentTosVersion = '3.2';
 const String currentPpVersion = '3.1';
 
-/// Consent state data class
+/// 同意状態データクラス
 @freezed
 class ConsentState with _$ConsentState {
   const factory ConsentState({
-    /// Loading state
+    /// ローディング状態
     @Default(true) bool isLoading,
 
-    /// Error message
+    /// エラーメッセージ
     String? error,
 
-    /// Success message
+    /// 成功メッセージ
     String? successMessage,
 
-    /// ToS accepted
+    /// 利用規約同意済み
     @Default(false) bool tosAccepted,
 
-    /// ToS accepted date
+    /// 利用規約同意日時
     DateTime? tosAcceptedAt,
 
-    /// ToS version
+    /// 利用規約バージョン
     String? tosVersion,
 
-    /// PP accepted
+    /// プライバシーポリシー同意済み
     @Default(false) bool ppAccepted,
 
-    /// PP accepted date
+    /// プライバシーポリシー同意日時
     DateTime? ppAcceptedAt,
 
-    /// PP version
+    /// プライバシーポリシーバージョン
     String? ppVersion,
 
-    /// Needs consent (either ToS or PP not accepted)
+    /// 同意が必要（利用規約またはプライバシーポリシーが未同意）
     @Default(true) bool needsConsent,
 
-    /// Needs update (version mismatch)
+    /// 更新が必要（バージョン不一致）
     @Default(false) bool needsUpdate,
 
-    /// Consent history
+    /// 同意履歴
     @Default([]) List<ConsentHistoryEntry> history,
   }) = _ConsentState;
 }
 
-/// Consent state notifier
+/// 同意状態Notifier
 class ConsentStateNotifier extends StateNotifier<ConsentState> {
   final ConsentService _consentService;
   final FirebaseFirestore _firestore;
@@ -81,29 +81,29 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     _init();
   }
 
-  /// Initialize consent state listener
+  /// 同意状態リスナーを初期化
   void _init() {
     final user = _auth.currentUser;
     if (user != null) {
       _listenToUserConsentState(user.uid);
     } else {
-      // No user logged in - set isLoading to false to allow router redirect
+      // ユーザーがログインしていない - ルーターのリダイレクトを許可するためisLoadingをfalseに設定
       state = state.copyWith(isLoading: false);
     }
 
-    // Listen for auth state changes
+    // 認証状態の変更をリッスン
     _auth.authStateChanges().listen((user) {
       if (user != null) {
         _listenToUserConsentState(user.uid);
       } else {
         _userSubscription?.cancel();
-        // Reset state with isLoading: false for unauthenticated users
+        // 未認証ユーザーのためにisLoading: falseで状態をリセット
         state = const ConsentState(isLoading: false);
       }
     });
   }
 
-  /// Listen to user consent state from Firestore
+  /// Firestoreからユーザーの同意状態をリッスン
   void _listenToUserConsentState(String userId) {
     _userSubscription?.cancel();
 
@@ -121,7 +121,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
           final tosVersion = data['tosVersion'] as String?;
           final ppVersion = data['ppVersion'] as String?;
 
-          // Check if update needed
+          // 更新が必要かチェック
           final tosNeedsUpdate =
               tosAccepted && tosVersion != currentTosVersion;
           final ppNeedsUpdate = ppAccepted && ppVersion != currentPpVersion;
@@ -154,7 +154,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     );
   }
 
-  /// Parse Firestore timestamp
+  /// Firestoreタイムスタンプをパース
   DateTime? _parseTimestamp(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
@@ -162,7 +162,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return null;
   }
 
-  /// Record consent for ToS
+  /// 利用規約の同意を記録
   Future<bool> acceptTermsOfService() async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -180,7 +180,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return result.success;
   }
 
-  /// Record consent for Privacy Policy
+  /// プライバシーポリシーの同意を記録
   Future<bool> acceptPrivacyPolicy() async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -198,7 +198,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return result.success;
   }
 
-  /// Record both consents at once
+  /// 両方の同意を一度に記録
   Future<bool> acceptAllConsents() async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -213,7 +213,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return result.success;
   }
 
-  /// Revoke consent for ToS
+  /// 利用規約の同意を撤回
   Future<ConsentResult> revokeTermsOfService({
     bool requestDataDeletion = false,
     String? reason,
@@ -234,7 +234,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return result;
   }
 
-  /// Revoke consent for Privacy Policy
+  /// プライバシーポリシーの同意を撤回
   Future<ConsentResult> revokePrivacyPolicy({
     bool requestDataDeletion = false,
     String? reason,
@@ -255,7 +255,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return result;
   }
 
-  /// Revoke all consents
+  /// すべての同意を撤回
   Future<ConsentResult> revokeAllConsents({
     bool requestDataDeletion = false,
     String? reason,
@@ -275,7 +275,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     return result;
   }
 
-  /// Load consent history
+  /// 同意履歴を読み込み
   Future<void> loadHistory({int limit = 20}) async {
     try {
       final history = await _consentService.getConsentHistory(limit: limit);
@@ -285,12 +285,12 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     }
   }
 
-  /// Clear error
+  /// エラーをクリア
   void clearError() {
     state = state.copyWith(error: null);
   }
 
-  /// Clear success message
+  /// 成功メッセージをクリア
   void clearSuccessMessage() {
     state = state.copyWith(successMessage: null);
   }
@@ -302,23 +302,23 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
   }
 }
 
-/// Consent state provider
+/// 同意状態プロバイダー
 final consentStateProvider =
     StateNotifierProvider<ConsentStateNotifier, ConsentState>(
   (ref) => ConsentStateNotifier(),
 );
 
-/// Needs consent provider
+/// 同意必要プロバイダー
 final needsConsentProvider = Provider<bool>((ref) {
   return ref.watch(consentStateProvider).needsConsent;
 });
 
-/// Needs update provider
+/// 同意更新必要プロバイダー
 final needsConsentUpdateProvider = Provider<bool>((ref) {
   return ref.watch(consentStateProvider).needsUpdate;
 });
 
-/// Consent service provider
+/// 同意サービスプロバイダー
 final consentServiceProvider = Provider<ConsentService>((ref) {
   return ConsentService();
 });

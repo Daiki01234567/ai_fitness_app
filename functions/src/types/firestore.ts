@@ -1,11 +1,11 @@
 /**
- * Firestore Data Model Type Definitions
- * Based on docs/specs/02_Firestoreデータベース設計書_v3_3.md
+ * Firestore データモデル型定義
+ * docs/specs/02_Firestoreデータベース設計書_v3_3.md に基づく
  */
 
 import { Timestamp } from "firebase-admin/firestore";
 
-// Exercise types supported by the app
+// アプリがサポートするエクササイズタイプ
 export type ExerciseType =
   | "squat"
   | "armcurl"
@@ -13,20 +13,20 @@ export type ExerciseType =
   | "shoulderpress"
   | "pushup";
 
-// Subscription plan types
+// サブスクリプションプランタイプ
 export type SubscriptionPlan = "free" | "premium" | "premium_annual";
 
-// Subscription status
+// サブスクリプションステータス
 export type SubscriptionStatus =
   | "active"
   | "expired"
   | "cancelled"
   | "grace_period";
 
-// Consent action types
+// 同意アクションタイプ
 export type ConsentAction = "accept" | "revoke" | "update";
 
-// Data deletion status
+// データ削除ステータス
 export type DeletionStatus =
   | "pending"
   | "in_progress"
@@ -34,13 +34,13 @@ export type DeletionStatus =
   | "cancelled"
   | "failed";
 
-// BigQuery sync status
+// BigQuery 同期ステータス
 export type SyncStatus = "pending" | "retrying" | "failed" | "dead_letter";
 
-// Security incident severity
+// セキュリティインシデント重大度
 export type IncidentSeverity = "low" | "medium" | "high" | "critical";
 
-// Security incident status
+// セキュリティインシデントステータス
 export type IncidentStatus =
   | "detected"
   | "investigating"
@@ -49,10 +49,10 @@ export type IncidentStatus =
   | "closed";
 
 /**
- * User document in /users/{userId}
+ * /users/{userId} のユーザードキュメント
  */
 export interface User {
-  // Profile information
+  // プロフィール情報
   nickname: string;
   email: string;
   photoURL?: string;
@@ -62,7 +62,7 @@ export interface User {
   weight?: number; // kg
   fitnessLevel?: "beginner" | "intermediate" | "advanced";
 
-  // Consent flags (read-only via client)
+  // 同意フラグ（クライアントからは読み取り専用）
   tosAccepted: boolean;
   tosAcceptedAt?: Timestamp;
   tosVersion?: string;
@@ -70,71 +70,71 @@ export interface User {
   ppAcceptedAt?: Timestamp;
   ppVersion?: string;
 
-  // Account status
+  // アカウントステータス
   deletionScheduled: boolean;
   scheduledDeletionDate?: Timestamp;
   forceLogoutAt?: Timestamp;
 
-  // Usage tracking (for free plan limits)
+  // 使用量追跡（無料プラン制限用）
   dailyUsageCount?: number;
   lastUsageResetDate?: Timestamp;
 
-  // Timestamps
+  // タイムスタンプ
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastLoginAt?: Timestamp;
 }
 
 /**
- * Training session document in /users/{userId}/sessions/{sessionId}
+ * /users/{userId}/sessions/{sessionId} のトレーニングセッションドキュメント
  */
 export interface Session {
-  // Session identification
+  // セッション識別情報
   exerciseType: ExerciseType;
   startTime: Timestamp;
   endTime?: Timestamp;
 
-  // Session results
+  // セッション結果
   repCount: number;
   totalScore: number;
   averageScore: number;
-  duration: number; // seconds
+  duration: number; // 秒
 
-  // Session metadata
+  // セッションメタデータ
   sessionMetadata: SessionMetadata;
 
-  // Status
+  // ステータス
   status: "in_progress" | "completed" | "abandoned";
 
-  // Timestamps
+  // タイムスタンプ
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 /**
- * Session metadata for performance tracking
+ * パフォーマンス追跡用セッションメタデータ
  */
 export interface SessionMetadata {
-  // Device information
+  // デバイス情報
   deviceInfo: DeviceInfo;
 
-  // Performance metrics
+  // パフォーマンスメトリクス
   averageFps: number;
   minFps: number;
   frameDropCount: number;
   totalFrames: number;
 
-  // Quality metrics
+  // 品質メトリクス
   poseConfidenceAverage: number;
   lightingCondition?: "good" | "poor" | "variable";
 
-  // App version
+  // アプリバージョン
   appVersion: string;
   mediaPipeVersion: string;
 }
 
 /**
- * Device information
+ * デバイス情報
  */
 export interface DeviceInfo {
   platform: "ios" | "android";
@@ -145,11 +145,11 @@ export interface DeviceInfo {
 }
 
 /**
- * Frame data in /users/{userId}/sessions/{sessionId}/frames/{frameId}
+ * /users/{userId}/sessions/{sessionId}/frames/{frameId} のフレームデータ
  */
 export interface Frame {
   frameNumber: number;
-  timestamp: number; // milliseconds from session start
+  timestamp: number; // セッション開始からのミリ秒
   poseData: PoseLandmark[];
   repState?: "down" | "up" | "transition";
   currentScore?: number;
@@ -157,80 +157,80 @@ export interface Frame {
 }
 
 /**
- * MediaPipe pose landmark (33 points)
+ * MediaPipe 姿勢ランドマーク（33点）
  */
 export interface PoseLandmark {
   index: number; // 0-32
-  x: number; // normalized 0-1
-  y: number; // normalized 0-1
-  z: number; // depth relative to hip
-  visibility: number; // confidence 0-1
+  x: number; // 正規化された値 0-1
+  y: number; // 正規化された値 0-1
+  z: number; // 腰を基準とした深度
+  visibility: number; // 信頼度 0-1
 }
 
 /**
- * Consent record in /consents/{consentId}
+ * /consents/{consentId} の同意レコード
  */
 export interface Consent {
   userId: string;
   action: ConsentAction;
   documentType: "tos" | "pp" | "marketing";
   documentVersion: string;
-  ipAddress?: string; // hashed
+  ipAddress?: string; // ハッシュ化済み
   userAgent?: string;
   timestamp: Timestamp;
 }
 
 /**
- * Subscription document in /users/{userId}/subscriptions/{subscriptionId}
+ * /users/{userId}/subscriptions/{subscriptionId} のサブスクリプションドキュメント
  */
 export interface Subscription {
-  // RevenueCat identifiers
+  // RevenueCat 識別子
   revenueCatId: string;
   productId: string;
 
-  // Subscription details
+  // サブスクリプション詳細
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
 
-  // Dates
+  // 日付
   startDate: Timestamp;
   expirationDate: Timestamp;
   cancelledAt?: Timestamp;
 
-  // Payment info
+  // 支払い情報
   store: "app_store" | "play_store";
   priceInYen?: number;
 
-  // Timestamps
+  // タイムスタンプ
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 /**
- * User settings in /users/{userId}/settings/{settingId}
+ * /users/{userId}/settings/{settingId} のユーザー設定
  */
 export interface UserSettings {
-  // Notification settings
+  // 通知設定
   notificationsEnabled: boolean;
-  reminderTime?: string; // HH:mm format
-  reminderDays?: number[]; // 0-6, Sunday = 0
+  reminderTime?: string; // HH:mm 形式
+  reminderDays?: number[]; // 0-6、日曜日 = 0
 
-  // Display settings
+  // 表示設定
   language: string; // ISO 639-1
   theme: "light" | "dark" | "system";
   units: "metric" | "imperial";
 
-  // Privacy settings
+  // プライバシー設定
   analyticsEnabled: boolean;
   crashReportingEnabled: boolean;
 
-  // Timestamps
+  // タイムスタンプ
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 /**
- * Notification document in /notifications/{notificationId}
+ * /notifications/{notificationId} の通知ドキュメント
  */
 export interface Notification {
   userId: string;
@@ -244,7 +244,7 @@ export interface Notification {
 }
 
 /**
- * Data deletion request in /dataDeletionRequests/{requestId}
+ * /dataDeletionRequests/{requestId} のデータ削除リクエスト
  */
 export interface DataDeletionRequest {
   userId: string;
@@ -259,60 +259,60 @@ export interface DataDeletionRequest {
 }
 
 /**
- * BigQuery sync failure in /bigquerySyncFailures/{failureId}
+ * /bigquerySyncFailures/{failureId} の BigQuery 同期失敗
  */
 export interface BigQuerySyncFailure {
-  // Source information
+  // ソース情報
   sourceCollection: string;
   sourceDocumentId: string;
   sourceData: Record<string, unknown>;
 
-  // Failure details
+  // 失敗の詳細
   status: SyncStatus;
   errorMessage: string;
   errorCode?: string;
 
-  // Retry tracking
+  // リトライ追跡
   retryCount: number;
   maxRetries: number;
   nextRetryAt?: Timestamp;
   lastRetryAt?: Timestamp;
 
-  // Timestamps
+  // タイムスタンプ
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 /**
- * Security incident in /securityIncidents/{incidentId}
+ * /securityIncidents/{incidentId} のセキュリティインシデント
  */
 export interface SecurityIncident {
-  // Incident identification
+  // インシデント識別情報
   incidentType: string;
   severity: IncidentSeverity;
   status: IncidentStatus;
 
-  // Details
+  // 詳細
   description: string;
-  affectedUsers?: string[]; // user IDs
+  affectedUsers?: string[]; // ユーザーID
   affectedUserCount?: number;
 
-  // Timeline
+  // タイムライン
   detectedAt: Timestamp;
   containedAt?: Timestamp;
   resolvedAt?: Timestamp;
 
-  // GDPR notification (72-hour requirement)
+  // GDPR 通知（72時間要件）
   notificationRequired: boolean;
   dpaNotifiedAt?: Timestamp;
   usersNotifiedAt?: Timestamp;
 
-  // Investigation
+  // 調査
   investigationNotes?: string;
   rootCause?: string;
   remediationActions?: string[];
 
-  // Timestamps
+  // タイムスタンプ
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

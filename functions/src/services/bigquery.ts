@@ -1,6 +1,6 @@
 /**
- * BigQuery Service
- * Handles data warehouse operations for analytics
+ * BigQuery サービス
+ * 分析用のデータウェアハウス操作を処理
  */
 
 import * as crypto from "crypto";
@@ -13,7 +13,7 @@ import { bigquerySyncFailuresCollection, serverTimestamp } from "../utils/firest
 import { logger } from "../utils/logger";
 
 /**
- * BigQuery configuration
+ * BigQuery 設定
  */
 const BQ_CONFIG = {
   datasetId: "fitness_analytics",
@@ -22,12 +22,12 @@ const BQ_CONFIG = {
     sessions: "training_sessions",
     exercises: "exercise_metrics",
   },
-  // Data retention: 2 years (GDPR compliant)
+  // データ保持期間: 2年（GDPR 準拠）
   retentionDays: 730,
 };
 
 /**
- * Anonymized user data for BigQuery
+ * BigQuery 用の匿名化されたユーザーデータ
  */
 interface AnonymizedUser {
   user_hash: string;
@@ -39,7 +39,7 @@ interface AnonymizedUser {
 }
 
 /**
- * Session data for BigQuery
+ * BigQuery 用のセッションデータ
  */
 interface SessionAnalytics {
   session_id: string;
@@ -57,7 +57,7 @@ interface SessionAnalytics {
 }
 
 /**
- * BigQuery Service class
+ * BigQuery サービスクラス
  */
 export class BigQueryService {
   private client: BigQuery;
@@ -69,14 +69,14 @@ export class BigQueryService {
   }
 
   /**
-   * Get table reference
+   * テーブル参照を取得
    */
   private getTable(tableName: string): Table {
     return this.client.dataset(BQ_CONFIG.datasetId).table(tableName);
   }
 
   /**
-   * Hash sensitive data for anonymization
+   * 匿名化のために機密データをハッシュ化
    */
   private hashData(data: string): string {
     return crypto
@@ -87,7 +87,7 @@ export class BigQueryService {
   }
 
   /**
-   * Get birth year range for anonymization
+   * 匿名化のために生年の範囲を取得
    */
   private getBirthYearRange(birthYear?: number): string {
     if (!birthYear) {
@@ -98,7 +98,7 @@ export class BigQueryService {
   }
 
   /**
-   * Anonymize user data
+   * ユーザーデータを匿名化
    */
   anonymizeUser(userId: string, user: User): AnonymizedUser {
     return {
@@ -107,12 +107,12 @@ export class BigQueryService {
       gender: user.gender ?? "unknown",
       fitness_level: user.fitnessLevel ?? "unknown",
       created_at: user.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
-      region: "JP", // Japan market only
+      region: "JP", // 日本市場のみ
     };
   }
 
   /**
-   * Transform session for analytics
+   * 分析用にセッションを変換
    */
   transformSession(
     userId: string,
@@ -136,7 +136,7 @@ export class BigQueryService {
   }
 
   /**
-   * Insert rows into BigQuery using streaming insert
+   * ストリーミングインサートを使用して BigQuery に行を挿入
    */
   async insertRows(
     tableName: string,
@@ -170,7 +170,7 @@ export class BigQueryService {
   }
 
   /**
-   * Sync user data to BigQuery
+   * ユーザーデータを BigQuery に同期
    */
   async syncUser(userId: string, user: User): Promise<void> {
     const anonymizedUser = this.anonymizeUser(userId, user);
@@ -179,7 +179,7 @@ export class BigQueryService {
   }
 
   /**
-   * Sync session data to BigQuery
+   * セッションデータを BigQuery に同期
    */
   async syncSession(
     userId: string,
@@ -192,7 +192,7 @@ export class BigQueryService {
   }
 
   /**
-   * Sync with retry and DLQ support
+   * リトライと DLQ サポート付きで同期
    */
   async syncWithRetry(
     collection: string,
@@ -222,12 +222,12 @@ export class BigQueryService {
         }, error as Error);
 
         if (attempt === maxRetries) {
-          // Send to DLQ
+          // DLQ に送信
           await this.sendToDeadLetterQueue(collection, documentId, data, error as Error);
           return false;
         }
 
-        // Wait before retry (exponential backoff)
+        // リトライ前に待機（指数バックオフ）
         await new Promise((resolve) =>
           setTimeout(resolve, Math.pow(2, attempt) * 1000),
         );
@@ -238,7 +238,7 @@ export class BigQueryService {
   }
 
   /**
-   * Send failed sync to Dead Letter Queue
+   * 失敗した同期を Dead Letter Queue に送信
    */
   private async sendToDeadLetterQueue(
     collection: string,
@@ -270,7 +270,7 @@ export class BigQueryService {
   }
 
   /**
-   * Process DLQ items (for scheduled function)
+   * DLQ アイテムを処理（スケジュール関数用）
    */
   async processDLQItems(limit = 100): Promise<number> {
     const snapshot = await bigquerySyncFailuresCollection()
@@ -288,7 +288,7 @@ export class BigQueryService {
       const failure = doc.data() as BigQuerySyncFailure;
 
       try {
-        // Try to sync again
+        // 再度同期を試行
         await this.insertRows(
           failure.sourceCollection === "users"
             ? BQ_CONFIG.tables.users
@@ -296,11 +296,11 @@ export class BigQueryService {
           [failure.sourceData],
         );
 
-        // Mark as completed
+        // 完了としてマーク
         await doc.ref.delete();
         processedCount++;
       } catch {
-        // Update retry count and next retry time
+        // リトライ回数と次回リトライ時間を更新
         await doc.ref.update({
           status: "failed",
           retryCount: admin.firestore.FieldValue.increment(1),
@@ -319,18 +319,18 @@ export class BigQueryService {
   }
 
   /**
-   * Delete user data from BigQuery (GDPR compliance)
+   * BigQuery からユーザーデータを削除（GDPR 準拠）
    */
   async deleteUserData(userId: string): Promise<void> {
     const userHash = this.hashData(userId);
 
-    // Delete from users table
+    // users テーブルから削除
     const deleteUserQuery = `
       DELETE FROM \`${this.projectId}.${BQ_CONFIG.datasetId}.${BQ_CONFIG.tables.users}\`
       WHERE user_hash = @userHash
     `;
 
-    // Delete from sessions table
+    // sessions テーブルから削除
     const deleteSessionsQuery = `
       DELETE FROM \`${this.projectId}.${BQ_CONFIG.datasetId}.${BQ_CONFIG.tables.sessions}\`
       WHERE user_hash = @userHash
@@ -358,7 +358,7 @@ export class BigQueryService {
   }
 
   /**
-   * Run analytics query
+   * 分析クエリを実行
    */
   async runQuery<T>(query: string, params?: Record<string, unknown>): Promise<T[]> {
     const options = {
@@ -371,7 +371,7 @@ export class BigQueryService {
   }
 
   /**
-   * Get aggregate statistics
+   * 集計統計を取得
    */
   async getAggregateStats(): Promise<{
     totalUsers: number;
@@ -431,5 +431,5 @@ export class BigQueryService {
   }
 }
 
-// Export singleton instance
+// シングルトンインスタンスをエクスポート
 export const bigQueryService = new BigQueryService();

@@ -8,7 +8,7 @@
 - `docs/specs/00_要件定義書_v3_3.md` (FR-002, FR-024)
 - `docs/specs/利用規約_v3_2.md`
 - `docs/specs/プライバシーポリシー_v3.1.md`
-- `docs/specs/06_データ処理記録_ROPA_v1_0.md`
+- `docs/specs/06_データ処理記録_ROPA_v1_0.md` (609 - 750)
 
 ## 概要
 GDPR準拠の同意管理機能を実装し、利用規約・プライバシーポリシーへの同意を適切に管理する。

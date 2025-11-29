@@ -23,7 +23,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
   },
   "compileOnSave": true,
   "include": [

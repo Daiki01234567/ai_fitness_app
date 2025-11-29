@@ -1,6 +1,6 @@
 /**
- * Firestore Helper Utilities
- * Common operations for Firestore database
+ * Firestore ヘルパーユーティリティ
+ * Firestore データベースの共通操作
  */
 
 import * as admin from "firebase-admin";
@@ -17,27 +17,27 @@ import {
 
 import { logger } from "./logger";
 
-// Initialize admin if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 /**
- * Get Firestore instance
+ * Firestore インスタンスを取得
  */
 export function getFirestore(): admin.firestore.Firestore {
   return admin.firestore();
 }
 
 /**
- * Get server timestamp
+ * サーバータイムスタンプを取得
  */
 export function serverTimestamp(): FieldValue {
   return FieldValue.serverTimestamp();
 }
 
 /**
- * Convert Firestore timestamp to ISO string
+ * Firestore タイムスタンプを ISO 文字列に変換
  */
 export function timestampToISOString(
   timestamp: admin.firestore.Timestamp | undefined | null,
@@ -49,14 +49,14 @@ export function timestampToISOString(
 }
 
 /**
- * Convert Date to Firestore timestamp
+ * Date を Firestore タイムスタンプに変換
  */
 export function dateToTimestamp(date: Date): admin.firestore.Timestamp {
   return admin.firestore.Timestamp.fromDate(date);
 }
 
 /**
- * Pagination result interface
+ * ページネーション結果インターフェース
  */
 export interface PaginationResult<T> {
   items: T[];
@@ -65,7 +65,7 @@ export interface PaginationResult<T> {
 }
 
 /**
- * Paginate query results
+ * クエリ結果をページネート
  */
 export async function paginateQuery<T>(
   query: Query<DocumentData>,
@@ -75,7 +75,7 @@ export async function paginateQuery<T>(
 ): Promise<PaginationResult<T>> {
   let paginatedQuery = query;
 
-  // Apply cursor if page token provided
+  // ページトークンが提供されている場合はカーソルを適用
   if (pageToken) {
     try {
       const cursorData = JSON.parse(Buffer.from(pageToken, "base64").toString()) as {
@@ -87,21 +87,21 @@ export async function paginateQuery<T>(
       }
     } catch (error) {
       logger.warn("Invalid page token", { pageToken }, error as Error);
-      // Continue without cursor
+      // カーソルなしで続行
     }
   }
 
-  // Get one extra to check if there are more
+  // 次があるかチェックするために1件余分に取得
   const snapshot = await paginatedQuery.limit(limit + 1).get();
   const docs = snapshot.docs;
   const hasMore = docs.length > limit;
 
-  // Remove extra document
+  // 余分なドキュメントを削除
   if (hasMore) {
     docs.pop();
   }
 
-  // Transform documents
+  // ドキュメントを変換
   const items = docs.map((doc) => {
     if (transform) {
       return transform(doc);
@@ -109,7 +109,7 @@ export async function paginateQuery<T>(
     return { id: doc.id, ...doc.data() } as T;
   });
 
-  // Generate next page token
+  // 次ページトークンを生成
   let nextPageToken: string | undefined;
   if (hasMore && docs.length > 0) {
     const lastDoc = docs[docs.length - 1];
@@ -122,7 +122,7 @@ export async function paginateQuery<T>(
 }
 
 /**
- * Batch write helper with automatic chunking (max 500 operations per batch)
+ * 自動チャンク分割付きバッチ書き込みヘルパー（バッチごとに最大500操作）
  */
 export async function batchWrite<T>(
   items: T[],
@@ -132,7 +132,7 @@ export async function batchWrite<T>(
   const db = getFirestore();
   let totalWrites = 0;
 
-  // Process in chunks
+  // チャンクごとに処理
   for (let i = 0; i < items.length; i += chunkSize) {
     const chunk = items.slice(i, i + chunkSize);
     const batch = db.batch();
@@ -154,7 +154,7 @@ export async function batchWrite<T>(
 }
 
 /**
- * Transaction helper with automatic retry
+ * 自動リトライ付きトランザクションヘルパー
  */
 export async function runTransaction<T>(
   operation: (transaction: Transaction) => Promise<T>,
@@ -174,7 +174,7 @@ export async function runTransaction<T>(
         break;
       }
 
-      // Exponential backoff
+      // 指数バックオフ
       await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 100));
     }
   }
@@ -183,7 +183,7 @@ export async function runTransaction<T>(
 }
 
 /**
- * Check if document exists
+ * ドキュメントが存在するかをチェック
  */
 export async function documentExists(ref: DocumentReference): Promise<boolean> {
   const doc = await ref.get();
@@ -191,7 +191,7 @@ export async function documentExists(ref: DocumentReference): Promise<boolean> {
 }
 
 /**
- * Get document with type safety
+ * 型安全にドキュメントを取得
  */
 export async function getDocument<T>(
   ref: DocumentReference,
@@ -204,7 +204,7 @@ export async function getDocument<T>(
 }
 
 /**
- * Get document or throw error
+ * ドキュメントを取得、なければエラーをスロー
  */
 export async function getDocumentOrThrow<T>(
   ref: DocumentReference,
@@ -218,7 +218,7 @@ export async function getDocumentOrThrow<T>(
 }
 
 /**
- * Create document with auto ID
+ * 自動 ID でドキュメントを作成
  */
 export async function createDocument<T extends DocumentData>(
   collection: CollectionReference,
@@ -233,7 +233,7 @@ export async function createDocument<T extends DocumentData>(
 }
 
 /**
- * Update document with timestamp
+ * タイムスタンプ付きでドキュメントを更新
  */
 export async function updateDocument(
   ref: DocumentReference,
@@ -246,7 +246,7 @@ export async function updateDocument(
 }
 
 /**
- * Delete document and its subcollections
+ * ドキュメントとそのサブコレクションを削除
  */
 export async function deleteDocumentWithSubcollections(
   ref: DocumentReference,
@@ -254,7 +254,7 @@ export async function deleteDocumentWithSubcollections(
 ): Promise<void> {
   const db = getFirestore();
 
-  // Delete subcollections first
+  // まずサブコレクションを削除
   for (const subcollectionName of subcollections) {
     const subcollectionRef = ref.collection(subcollectionName);
     const snapshot = await subcollectionRef.get();
@@ -266,12 +266,12 @@ export async function deleteDocumentWithSubcollections(
     }
   }
 
-  // Delete main document
+  // メインドキュメントを削除
   await ref.delete();
 }
 
 /**
- * Query helper with common filters
+ * 共通フィルター付きクエリヘルパー
  */
 export function queryBuilder<T extends DocumentData>(
   collection: CollectionReference<T>,
@@ -280,7 +280,7 @@ export function queryBuilder<T extends DocumentData>(
 }
 
 /**
- * Fluent query builder
+ * フルエントクエリビルダー
  */
 class QueryBuilder<T extends DocumentData> {
   private query: Query<T>;
@@ -336,49 +336,49 @@ class QueryBuilder<T extends DocumentData> {
 }
 
 /**
- * Users collection reference
+ * Users コレクション参照
  */
 export function usersCollection(): CollectionReference {
   return getFirestore().collection("users");
 }
 
 /**
- * User document reference
+ * User ドキュメント参照
  */
 export function userRef(userId: string): DocumentReference {
   return usersCollection().doc(userId);
 }
 
 /**
- * User sessions collection reference
+ * User sessions コレクション参照
  */
 export function sessionsCollection(userId: string): CollectionReference {
   return userRef(userId).collection("sessions");
 }
 
 /**
- * Session document reference
+ * Session ドキュメント参照
  */
 export function sessionRef(userId: string, sessionId: string): DocumentReference {
   return sessionsCollection(userId).doc(sessionId);
 }
 
 /**
- * Consents collection reference
+ * Consents コレクション参照
  */
 export function consentsCollection(): CollectionReference {
   return getFirestore().collection("consents");
 }
 
 /**
- * Data deletion requests collection reference
+ * データ削除リクエストコレクション参照
  */
 export function dataDeletionRequestsCollection(): CollectionReference {
   return getFirestore().collection("dataDeletionRequests");
 }
 
 /**
- * BigQuery sync failures collection reference
+ * BigQuery 同期失敗コレクション参照
  */
 export function bigquerySyncFailuresCollection(): CollectionReference {
   return getFirestore().collection("bigquerySyncFailures");

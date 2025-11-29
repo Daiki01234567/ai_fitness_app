@@ -1,10 +1,10 @@
 /**
- * Audit Log Service
+ * 監査ログサービス
  *
- * Provides audit logging functionality for security and compliance.
- * Records all significant user actions for GDPR compliance and security monitoring.
+ * セキュリティとコンプライアンスのための監査ログ機能を提供
+ * GDPR 準拠とセキュリティ監視のためにすべての重要なユーザーアクションを記録
  *
- * Based on: docs/specs/03_API設計書_Firebase_Functions_v3_3.md Section 13.3
+ * 参照: docs/specs/03_API設計書_Firebase_Functions_v3_3.md Section 13.3
  *
  * @version 1.0.0
  * @date 2025-11-26
@@ -15,7 +15,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { logger } from "../utils/logger";
 
-// Initialize admin SDK if not already initialized
+// Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -23,11 +23,11 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 // =============================================================================
-// Types
+// 型定義
 // =============================================================================
 
 /**
- * Audit log action types
+ * 監査ログアクションタイプ
  */
 export type AuditAction =
   | "profile_update"
@@ -50,43 +50,43 @@ export type AuditAction =
   | "security_event";
 
 /**
- * Audit log entry interface
+ * 監査ログエントリーインターフェース
  */
 export interface AuditLogEntry {
-  /** User ID (hashed for privacy) */
+  /** ユーザー ID（プライバシーのためハッシュ化） */
   userId: string;
-  /** Action type */
+  /** アクションタイプ */
   action: AuditAction;
-  /** Resource type being acted upon */
+  /** 操作対象のリソースタイプ */
   resourceType: string;
-  /** Resource ID (if applicable) */
+  /** リソース ID（該当する場合） */
   resourceId?: string;
-  /** Previous values (for updates) */
+  /** 以前の値（更新の場合） */
   previousValues?: Record<string, unknown>;
-  /** New values (for creates/updates) */
+  /** 新しい値（作成/更新の場合） */
   newValues?: Record<string, unknown>;
-  /** Changed fields (for updates) */
+  /** 変更されたフィールド（更新の場合） */
   changedFields?: string[];
-  /** IP address (hashed) */
+  /** IP アドレス（ハッシュ化） */
   ipAddressHash?: string;
-  /** User agent */
+  /** ユーザーエージェント */
   userAgent?: string;
-  /** Request metadata */
+  /** リクエストメタデータ */
   metadata?: Record<string, unknown>;
-  /** Timestamp */
+  /** タイムスタンプ */
   timestamp: FieldValue;
-  /** Success indicator */
+  /** 成功インジケーター */
   success: boolean;
-  /** Error message (if failed) */
+  /** エラーメッセージ（失敗の場合） */
   errorMessage?: string;
 }
 
 // =============================================================================
-// Helper Functions
+// ヘルパー関数
 // =============================================================================
 
 /**
- * Hash sensitive data for privacy
+ * プライバシーのために機密データをハッシュ化
  */
 function hashForPrivacy(data: string): string {
   const crypto = require("crypto");
@@ -99,7 +99,7 @@ function hashForPrivacy(data: string): string {
 }
 
 /**
- * Sanitize values for logging (remove sensitive data)
+ * ログ用に値をサニタイズ（機密データを削除）
  */
 function sanitizeForLog(data: Record<string, unknown>): Record<string, unknown> {
   const sensitiveFields = [
@@ -127,7 +127,7 @@ function sanitizeForLog(data: Record<string, unknown>): Record<string, unknown> 
 }
 
 /**
- * Get changed fields between old and new data
+ * 古いデータと新しいデータ間の変更されたフィールドを取得
  */
 function getChangedFields(
   oldData: Record<string, unknown>,
@@ -145,14 +145,14 @@ function getChangedFields(
 }
 
 // =============================================================================
-// Main Functions
+// メイン関数
 // =============================================================================
 
 /**
- * Create an audit log entry
+ * 監査ログエントリーを作成
  *
- * @param entry - The audit log entry to create
- * @returns The created document ID
+ * @param entry - 作成する監査ログエントリー
+ * @returns 作成されたドキュメント ID
  */
 export async function createAuditLog(
   entry: Omit<AuditLogEntry, "timestamp">,
@@ -160,9 +160,9 @@ export async function createAuditLog(
   try {
     const logEntry: AuditLogEntry = {
       ...entry,
-      // Hash user ID for privacy
+      // プライバシーのためにユーザー ID をハッシュ化
       userId: hashForPrivacy(entry.userId),
-      // Sanitize values
+      // 値をサニタイズ
       previousValues: entry.previousValues
         ? sanitizeForLog(entry.previousValues)
         : undefined,
@@ -183,19 +183,19 @@ export async function createAuditLog(
 
     return docRef.id;
   } catch (error) {
-    // Log error but don't fail the main operation
+    // エラーをログ出力するがメイン操作は失敗させない
     logger.error("Failed to create audit log", error as Error, {
       action: entry.action,
       resourceType: entry.resourceType,
     });
 
-    // Return empty string to indicate failure
+    // 失敗を示す空文字列を返す
     return "";
   }
 }
 
 /**
- * Log a profile update action
+ * プロフィール更新アクションをログ
  */
 export async function logProfileUpdate(params: {
   userId: string;
@@ -224,7 +224,7 @@ export async function logProfileUpdate(params: {
 }
 
 /**
- * Log a consent action
+ * 同意アクションをログ
  */
 export async function logConsentAction(params: {
   userId: string;
@@ -250,7 +250,7 @@ export async function logConsentAction(params: {
 }
 
 /**
- * Log an authentication action
+ * 認証アクションをログ
  */
 export async function logAuthAction(params: {
   userId: string;
@@ -274,7 +274,7 @@ export async function logAuthAction(params: {
 }
 
 /**
- * Log a security event
+ * セキュリティイベントをログ
  */
 export async function logSecurityEvent(params: {
   userId: string;
@@ -300,7 +300,7 @@ export async function logSecurityEvent(params: {
 }
 
 /**
- * Log admin action
+ * 管理者アクションをログ
  */
 export async function logAdminAction(params: {
   adminUserId: string;

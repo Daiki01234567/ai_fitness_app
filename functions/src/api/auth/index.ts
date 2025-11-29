@@ -1,13 +1,13 @@
 /**
- * Auth API Functions Index
+ * 認証 API Functions インデックス
  *
- * Authentication-related callable functions
+ * 認証関連の callable 関数
  *
  * @version 1.0.0
  * @date 2025-11-26
  */
 
-// User Registration
+// ユーザー登録
 // eslint-disable-next-line camelcase
 export { auth_signUp } from "./register";
 

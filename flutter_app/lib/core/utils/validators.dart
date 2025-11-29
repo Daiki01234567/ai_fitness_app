@@ -1,16 +1,16 @@
-/// Form Validators
-/// Validation utilities for authentication and user input
-///
-/// @version 1.0.0
-/// @date 2025-11-26
+// フォームバリデーター
+// 認証およびユーザー入力用のバリデーションユーティリティ
+//
+// @version 1.0.0
+// @date 2025-11-26
 
-/// Email validator
+/// メールバリデーター
 class EmailValidator {
   static final _emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
   );
 
-  /// Validate email format
+  /// メール形式を検証
   static String? validate(String? value) {
     if (value == null || value.isEmpty) {
       return 'メールアドレスを入力してください';
@@ -22,12 +22,12 @@ class EmailValidator {
   }
 }
 
-/// Password validator
+/// パスワードバリデーター
 class PasswordValidator {
-  /// Minimum password length (per requirements document)
+  /// 最小パスワード長（要件定義書に基づく）
   static const minLength = 8;
 
-  /// Validate password
+  /// パスワードを検証
   static String? validate(String? value) {
     if (value == null || value.isEmpty) {
       return 'パスワードを入力してください';
@@ -38,7 +38,7 @@ class PasswordValidator {
     return null;
   }
 
-  /// Validate password strength (for registration)
+  /// パスワード強度を検証（新規登録用）
   static String? validateStrength(String? value) {
     if (value == null || value.isEmpty) {
       return 'パスワードを入力してください';
@@ -46,18 +46,18 @@ class PasswordValidator {
     if (value.length < minLength) {
       return 'パスワードは$minLength文字以上で入力してください';
     }
-    // Check for at least one number
+    // 少なくとも1つの数字をチェック
     if (!RegExp(r'[0-9]').hasMatch(value)) {
       return 'パスワードには数字を含めてください';
     }
-    // Check for at least one letter
+    // 少なくとも1つの英字をチェック
     if (!RegExp(r'[a-zA-Z]').hasMatch(value)) {
       return 'パスワードには英字を含めてください';
     }
     return null;
   }
 
-  /// Validate password confirmation
+  /// パスワード確認を検証
   static String? validateConfirmation(String? value, String password) {
     if (value == null || value.isEmpty) {
       return 'パスワード（確認）を入力してください';
@@ -69,12 +69,12 @@ class PasswordValidator {
   }
 }
 
-/// Name validator
+/// 名前バリデーター
 class NameValidator {
   static const minLength = 1;
   static const maxLength = 20;
 
-  /// Validate name
+  /// 名前を検証
   static String? validate(String? value) {
     if (value == null || value.isEmpty) {
       return '名前を入力してください';
@@ -89,12 +89,12 @@ class NameValidator {
   }
 }
 
-/// Height validator (cm)
+/// 身長バリデーター（cm）
 class HeightValidator {
   static const minHeight = 100.0;
   static const maxHeight = 250.0;
 
-  /// Validate height
+  /// 身長を検証
   static String? validate(String? value) {
     if (value == null || value.isEmpty) {
       return '身長を入力してください';
@@ -110,12 +110,12 @@ class HeightValidator {
   }
 }
 
-/// Weight validator (kg)
+/// 体重バリデーター（kg）
 class WeightValidator {
   static const minWeight = 30.0;
   static const maxWeight = 200.0;
 
-  /// Validate weight
+  /// 体重を検証
   static String? validate(String? value) {
     if (value == null || value.isEmpty) {
       return '体重を入力してください';
@@ -131,12 +131,12 @@ class WeightValidator {
   }
 }
 
-/// Age validator (Japan: 13+)
+/// 年齢バリデーター（日本: 13歳以上）
 class AgeValidator {
   static const minAge = 13;
   static const maxAge = 120;
 
-  /// Validate age from birthdate
+  /// 生年月日から年齢を検証
   static String? validateBirthdate(DateTime? value) {
     if (value == null) {
       return '生年月日を選択してください';
@@ -157,9 +157,9 @@ class AgeValidator {
   }
 }
 
-/// Required field validator
+/// 必須フィールドバリデーター
 class RequiredValidator {
-  /// Validate required field
+  /// 必須フィールドを検証
   static String? validate(String? value, [String? fieldName]) {
     if (value == null || value.isEmpty) {
       return fieldName != null ? '$fieldNameを入力してください' : '入力してください';

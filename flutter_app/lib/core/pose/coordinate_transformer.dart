@@ -1,8 +1,8 @@
-/// Coordinate Transformer
+/// 座標変換器
 ///
-/// Transforms pose landmark coordinates between coordinate systems.
-/// Handles camera-to-screen conversion, mirroring, and rotation.
-/// Reference: docs/specs/08_README_form_validation_logic_v3_3.md
+/// 姿勢ランドマーク座標を座標系間で変換します。
+/// カメラから画面への変換、ミラーリング、回転を処理します。
+/// 参照: docs/specs/08_README_form_validation_logic_v3_3.md
 library;
 
 import 'dart:math' as math;
@@ -13,7 +13,7 @@ import 'package:flutter/painting.dart';
 import 'pose_data.dart';
 import 'pose_landmark_type.dart';
 
-/// Coordinate transformer for pose landmarks
+/// 姿勢ランドマーク用の座標変換器
 class CoordinateTransformer {
   const CoordinateTransformer({
     required this.imageSize,
@@ -23,25 +23,25 @@ class CoordinateTransformer {
     this.sensorOrientation = 90,
   });
 
-  /// Original image size from camera
+  /// カメラからの元の画像サイズ
   final Size imageSize;
 
-  /// Target screen size for display
+  /// 表示用のターゲット画面サイズ
   final Size screenSize;
 
-  /// Camera lens direction (front/back)
+  /// カメラレンズの向き（前面/背面）
   final CameraLensDirection cameraLensDirection;
 
-  /// Current device orientation
+  /// 現在のデバイスの向き
   final DeviceOrientation deviceOrientation;
 
-  /// Camera sensor orientation in degrees
+  /// カメラセンサーの向き（度数）
   final int sensorOrientation;
 
-  /// Whether to mirror coordinates (for front camera)
+  /// 座標をミラーリングするか（前面カメラ用）
   bool get shouldMirror => cameraLensDirection == CameraLensDirection.front;
 
-  /// Get rotation angle based on device and sensor orientation
+  /// デバイスとセンサーの向きに基づいて回転角度を取得
   int get rotationAngle {
     final deviceRotation = _deviceOrientationToDegrees(deviceOrientation);
 
@@ -52,27 +52,27 @@ class CoordinateTransformer {
     }
   }
 
-  /// Transform a single landmark to screen coordinates
+  /// 単一のランドマークを画面座標に変換
   Offset transformLandmark(PoseLandmark landmark) {
-    // Normalized coordinates are already 0.0-1.0
+    // 正規化座標は既に0.0-1.0
     var x = landmark.x;
     var y = landmark.y;
 
-    // Apply rotation if needed
+    // 必要に応じて回転を適用
     final rotatedPoint = _rotatePoint(x, y, rotationAngle);
     x = rotatedPoint.dx;
     y = rotatedPoint.dy;
 
-    // Mirror for front camera
+    // 前面カメラ用にミラーリング
     if (shouldMirror) {
       x = 1.0 - x;
     }
 
-    // Scale to screen size
+    // 画面サイズにスケール
     return Offset(x * screenSize.width, y * screenSize.height);
   }
 
-  /// Transform all landmarks in a pose frame
+  /// 姿勢フレーム内のすべてのランドマークを変換
   Map<PoseLandmarkType, Offset> transformPoseFrame(PoseFrame frame) {
     final transformed = <PoseLandmarkType, Offset>{};
 
@@ -83,7 +83,7 @@ class CoordinateTransformer {
     return transformed;
   }
 
-  /// Get the bounding box containing all landmarks
+  /// すべてのランドマークを含むバウンディングボックスを取得
   Rect? getBoundingBox(PoseFrame frame, {double padding = 0.1}) {
     if (frame.landmarks.isEmpty) return null;
 
@@ -102,7 +102,7 @@ class CoordinateTransformer {
       maxY = math.max(maxY, point.dy);
     }
 
-    // Add padding
+    // パディングを追加
     final paddingX = (maxX - minX) * padding;
     final paddingY = (maxY - minY) * padding;
 
@@ -114,7 +114,7 @@ class CoordinateTransformer {
     );
   }
 
-  /// Calculate aspect ratio fit for camera preview
+  /// カメラプレビュー用のアスペクト比フィットを計算
   Size getPreviewSize({BoxFit fit = BoxFit.cover}) {
     final imageAspectRatio = imageSize.width / imageSize.height;
     final screenAspectRatio = screenSize.width / screenSize.height;
@@ -149,7 +149,7 @@ class CoordinateTransformer {
     }
   }
 
-  /// Create a copy with updated parameters
+  /// 更新されたパラメータでコピーを作成
   CoordinateTransformer copyWith({
     Size? imageSize,
     Size? screenSize,
@@ -166,11 +166,11 @@ class CoordinateTransformer {
     );
   }
 
-  /// Rotate a point by the given angle
+  /// 指定された角度でポイントを回転
   Offset _rotatePoint(double x, double y, int angleDegrees) {
     if (angleDegrees == 0) return Offset(x, y);
 
-    // Center the coordinates around 0.5, 0.5
+    // 座標を0.5, 0.5を中心に配置
     final cx = x - 0.5;
     final cy = y - 0.5;
 
@@ -178,15 +178,15 @@ class CoordinateTransformer {
     final cosA = math.cos(radians);
     final sinA = math.sin(radians);
 
-    // Rotate
+    // 回転
     final newX = cx * cosA - cy * sinA;
     final newY = cx * sinA + cy * cosA;
 
-    // Move back
+    // 元に戻す
     return Offset(newX + 0.5, newY + 0.5);
   }
 
-  /// Convert DeviceOrientation to degrees
+  /// DeviceOrientationを度数に変換
   int _deviceOrientationToDegrees(DeviceOrientation orientation) {
     switch (orientation) {
       case DeviceOrientation.portraitUp:
@@ -201,7 +201,7 @@ class CoordinateTransformer {
   }
 }
 
-/// Device orientation enum
+/// デバイスの向き列挙型
 enum DeviceOrientation {
   portraitUp,
   landscapeLeft,
@@ -209,9 +209,9 @@ enum DeviceOrientation {
   landscapeRight,
 }
 
-/// Extension for angle calculations
+/// 角度計算用の拡張
 extension AngleExtension on CoordinateTransformer {
-  /// Calculate angle between three landmarks (in degrees)
+  /// 3つのランドマーク間の角度を計算（度数）
   double? calculateAngle(
     PoseFrame frame,
     PoseLandmarkType point1,
@@ -229,11 +229,11 @@ extension AngleExtension on CoordinateTransformer {
       return null;
     }
 
-    // Calculate vectors
+    // ベクトルを計算
     final v1 = Offset(p1.x - v.x, p1.y - v.y);
     final v2 = Offset(p2.x - v.x, p2.y - v.y);
 
-    // Calculate angle using dot product
+    // 内積を使用して角度を計算
     final dot = v1.dx * v2.dx + v1.dy * v2.dy;
     final mag1 = math.sqrt(v1.dx * v1.dx + v1.dy * v1.dy);
     final mag2 = math.sqrt(v2.dx * v2.dx + v2.dy * v2.dy);
@@ -247,7 +247,7 @@ extension AngleExtension on CoordinateTransformer {
     return angleRadians * 180 / math.pi;
   }
 
-  /// Calculate distance between two landmarks (normalized)
+  /// 2つのランドマーク間の距離を計算（正規化）
   double? calculateDistance(
     PoseFrame frame,
     PoseLandmarkType point1,
@@ -264,7 +264,7 @@ extension AngleExtension on CoordinateTransformer {
     return math.sqrt(dx * dx + dy * dy);
   }
 
-  /// Check if a landmark is above another (smaller y value)
+  /// ランドマークが別のランドマークより上にあるかチェック（y値が小さい）
   bool? isAbove(
     PoseFrame frame,
     PoseLandmarkType upper,
@@ -279,7 +279,7 @@ extension AngleExtension on CoordinateTransformer {
     return p1.y < p2.y;
   }
 
-  /// Calculate midpoint between two landmarks
+  /// 2つのランドマーク間の中点を計算
   Offset? getMidpoint(
     PoseFrame frame,
     PoseLandmarkType point1,

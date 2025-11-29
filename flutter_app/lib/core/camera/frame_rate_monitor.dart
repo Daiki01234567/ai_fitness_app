@@ -1,12 +1,12 @@
-/// Frame Rate Monitor
+/// フレームレートモニター
 ///
-/// Monitors frame processing rate and triggers fallback when performance degrades.
-/// Reference: docs/specs/00_要件定義書_v3_3.md (NFR-035)
+/// フレーム処理レートを監視し、パフォーマンス低下時にフォールバックをトリガーします。
+/// 参照: docs/specs/00_要件定義書_v3_3.md (NFR-035)
 ///
-/// Implementation:
-/// - 30-frame moving average for FPS calculation
-/// - Warning at < 20fps
-/// - 3-stage fallback: Resolution -> FPS -> Simplified rendering
+/// 実装:
+/// - FPS計算用の30フレーム移動平均
+/// - 20fps未満で警告
+/// - 3段階フォールバック: 解像度 -> FPS -> 簡易描画
 library;
 
 import 'dart:collection';
@@ -14,13 +14,13 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Frame rate monitor provider
+/// フレームレートモニタープロバイダー
 final frameRateMonitorProvider =
     StateNotifierProvider<FrameRateMonitorNotifier, FrameRateState>((ref) {
   return FrameRateMonitorNotifier();
 });
 
-/// Frame rate state
+/// フレームレート状態
 class FrameRateState {
   const FrameRateState({
     this.currentFps = 0.0,
@@ -34,34 +34,34 @@ class FrameRateState {
     this.lastWarningTime,
   });
 
-  /// Current instantaneous FPS
+  /// 現在の瞬間FPS
   final double currentFps;
 
-  /// 30-frame moving average FPS
+  /// 30フレーム移動平均FPS
   final double averageFps;
 
-  /// Minimum FPS recorded
+  /// 記録された最小FPS
   final double minFps;
 
-  /// Maximum FPS recorded
+  /// 記録された最大FPS
   final double maxFps;
 
-  /// Current performance status
+  /// 現在のパフォーマンス状態
   final FrameRateStatus status;
 
-  /// Current fallback level
+  /// 現在のフォールバックレベル
   final FallbackLevel fallbackLevel;
 
-  /// Total frames processed
+  /// 処理された総フレーム数
   final int frameCount;
 
-  /// Number of dropped frames
+  /// ドロップされたフレーム数
   final int droppedFrames;
 
-  /// Last time a performance warning was issued
+  /// パフォーマンス警告が最後に発行された時刻
   final DateTime? lastWarningTime;
 
-  /// Get drop rate percentage
+  /// ドロップ率のパーセンテージを取得
   double get dropRate {
     if (frameCount == 0) return 0.0;
     return (droppedFrames / frameCount) * 100;
@@ -92,65 +92,65 @@ class FrameRateState {
   }
 }
 
-/// Frame rate performance status
+/// フレームレートパフォーマンス状態
 enum FrameRateStatus {
-  /// FPS >= 25, performance is good
+  /// FPS >= 25、パフォーマンスは良好
   good,
 
-  /// 20 <= FPS < 25, performance is acceptable
+  /// 20 <= FPS < 25、パフォーマンスは許容範囲
   acceptable,
 
-  /// 15 <= FPS < 20, performance is degraded
+  /// 15 <= FPS < 20、パフォーマンスは低下
   warning,
 
-  /// FPS < 15, performance is critical
+  /// FPS < 15、パフォーマンスは危機的
   critical,
 }
 
-/// Fallback level for performance optimization
+/// パフォーマンス最適化のためのフォールバックレベル
 enum FallbackLevel {
-  /// No fallback applied, full quality
+  /// フォールバックなし、フル品質
   none,
 
-  /// Level 1: Reduced resolution (720p -> 480p)
+  /// レベル1: 解像度低下 (720p -> 480p)
   reducedResolution,
 
-  /// Level 2: Reduced FPS (30fps -> 24fps)
+  /// レベル2: FPS低下 (30fps -> 24fps)
   reducedFps,
 
-  /// Level 3: Simplified rendering (skip pose overlay)
+  /// レベル3: 簡易描画（姿勢オーバーレイをスキップ）
   simplifiedRendering,
 }
 
-/// Frame rate monitor state notifier
+/// フレームレートモニター状態Notifier
 class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
   FrameRateMonitorNotifier() : super(const FrameRateState());
 
-  /// Moving average window size (30 frames per spec)
+  /// 移動平均ウィンドウサイズ（仕様に従い30フレーム）
   static const int _windowSize = 30;
 
-  /// Warning threshold FPS
+  /// 警告閾値FPS
   static const double _warningFps = 20.0;
 
-  /// Critical threshold FPS
+  /// 危機的閾値FPS
   static const double _criticalFps = 15.0;
 
-  /// Minimum interval between fallback applications (5 seconds)
+  /// フォールバック適用間の最小間隔（5秒）
   static const Duration _fallbackCooldown = Duration(seconds: 5);
 
-  /// Queue for moving average calculation
+  /// 移動平均計算用キュー
   final Queue<double> _fpsHistory = Queue<double>();
 
-  /// Last frame timestamp
+  /// 最後のフレームタイムスタンプ
   int? _lastFrameTimestamp;
 
-  /// Last fallback time
+  /// 最後のフォールバック時刻
   DateTime? _lastFallbackTime;
 
-  /// Callback for when fallback is needed
+  /// フォールバックが必要な時のコールバック
   void Function(FallbackLevel)? onFallbackNeeded;
 
-  /// Record a frame being processed
+  /// 処理されたフレームを記録
   void recordFrame(int timestampMs) {
     final now = timestampMs;
 
@@ -165,34 +165,34 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
     _lastFrameTimestamp = now;
   }
 
-  /// Record a dropped frame
+  /// ドロップされたフレームを記録
   void recordDroppedFrame() {
     state = state.copyWith(
       droppedFrames: state.droppedFrames + 1,
     );
   }
 
-  /// Add FPS reading and update state
+  /// FPS読み取り値を追加し状態を更新
   void _addFpsReading(double fps) {
-    // Add to history
+    // 履歴に追加
     _fpsHistory.addLast(fps);
     if (_fpsHistory.length > _windowSize) {
       _fpsHistory.removeFirst();
     }
 
-    // Calculate moving average
+    // 移動平均を計算
     final averageFps = _fpsHistory.isEmpty
         ? 0.0
         : _fpsHistory.reduce((a, b) => a + b) / _fpsHistory.length;
 
-    // Update min/max
+    // 最小/最大を更新
     final minFps = fps < state.minFps ? fps : state.minFps;
     final maxFps = fps > state.maxFps ? fps : state.maxFps;
 
-    // Determine status
+    // 状態を判定
     final status = _determineStatus(averageFps);
 
-    // Check if fallback is needed
+    // フォールバックが必要かチェック
     _checkFallbackNeeded(status, averageFps);
 
     state = state.copyWith(
@@ -205,7 +205,7 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
     );
   }
 
-  /// Determine performance status based on FPS
+  /// FPSに基づいてパフォーマンス状態を判定
   FrameRateStatus _determineStatus(double fps) {
     if (fps >= 25) return FrameRateStatus.good;
     if (fps >= _warningFps) return FrameRateStatus.acceptable;
@@ -213,18 +213,18 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
     return FrameRateStatus.critical;
   }
 
-  /// Check if fallback should be applied
+  /// フォールバックを適用すべきかチェック
   void _checkFallbackNeeded(FrameRateStatus status, double averageFps) {
-    // Only check after we have enough samples
+    // 十分なサンプルが集まった後のみチェック
     if (_fpsHistory.length < _windowSize ~/ 2) return;
 
-    // Check cooldown
+    // クールダウンをチェック
     if (_lastFallbackTime != null) {
       final timeSinceLastFallback = DateTime.now().difference(_lastFallbackTime!);
       if (timeSinceLastFallback < _fallbackCooldown) return;
     }
 
-    // Determine if fallback is needed
+    // フォールバックが必要か判定
     if (status == FrameRateStatus.warning || status == FrameRateStatus.critical) {
       final nextLevel = _getNextFallbackLevel();
       if (nextLevel != null && nextLevel != state.fallbackLevel) {
@@ -237,13 +237,13 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
           lastWarningTime: DateTime.now(),
         );
 
-        // Notify callback
+        // コールバックに通知
         onFallbackNeeded?.call(nextLevel);
       }
     }
   }
 
-  /// Get next fallback level
+  /// 次のフォールバックレベルを取得
   FallbackLevel? _getNextFallbackLevel() {
     switch (state.fallbackLevel) {
       case FallbackLevel.none:
@@ -253,11 +253,11 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
       case FallbackLevel.reducedFps:
         return FallbackLevel.simplifiedRendering;
       case FallbackLevel.simplifiedRendering:
-        return null; // Already at maximum fallback
+        return null; // 既に最大フォールバック
     }
   }
 
-  /// Reset monitor state
+  /// モニター状態をリセット
   void reset() {
     _fpsHistory.clear();
     _lastFrameTimestamp = null;
@@ -265,7 +265,7 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
     state = const FrameRateState();
   }
 
-  /// Get performance summary
+  /// パフォーマンスサマリーを取得
   String getPerformanceSummary() {
     return '''
 Frame Rate Summary:

@@ -28,6 +28,7 @@ firebase-export-*/
 .env.development
 .env.staging
 .env.production
+!env.example
 firebase-adminsdk-*.json
 google-services.json
 GoogleService-Info.plist

@@ -1,6 +1,6 @@
 /**
- * Validation Middleware
- * Request validation utilities for Cloud Functions
+ * バリデーションミドルウェア
+ * Cloud Functions 用リクエストバリデーションユーティリティ
  */
 
 import { CallableRequest } from "firebase-functions/v2/https";
@@ -8,7 +8,7 @@ import { CallableRequest } from "firebase-functions/v2/https";
 import { ValidationError } from "../utils/errors";
 
 /**
- * Schema definition for validation
+ * バリデーション用のスキーマ定義
  */
 export interface SchemaField {
   type: "string" | "number" | "boolean" | "object" | "array";
@@ -28,7 +28,7 @@ export interface SchemaField {
 export type Schema = Record<string, SchemaField>;
 
 /**
- * Validate request data against schema
+ * スキーマに対してリクエストデータをバリデート
  */
 export function validateSchema<T>(data: unknown, schema: Schema): T {
   if (typeof data !== "object" || data === null) {
@@ -41,17 +41,17 @@ export function validateSchema<T>(data: unknown, schema: Schema): T {
   for (const [fieldName, fieldSchema] of Object.entries(schema)) {
     const value = dataObj[fieldName];
 
-    // Check required
+    // 必須チェック
     if (fieldSchema.required && (value === undefined || value === null)) {
       throw ValidationError.required(fieldName);
     }
 
-    // Skip optional undefined values
+    // オプショナルな未定義値をスキップ
     if (value === undefined || value === null) {
       continue;
     }
 
-    // Validate and add to result
+    // バリデートして結果に追加
     result[fieldName] = validateField(fieldName, value, fieldSchema);
   }
 
@@ -59,20 +59,20 @@ export function validateSchema<T>(data: unknown, schema: Schema): T {
 }
 
 /**
- * Validate individual field
+ * 個別フィールドをバリデート
  */
 function validateField(
   fieldName: string,
   value: unknown,
   schema: SchemaField,
 ): unknown {
-  // Type validation
+  // 型バリデーション
   const actualType = Array.isArray(value) ? "array" : typeof value;
   if (actualType !== schema.type) {
     throw ValidationError.invalidType(fieldName, schema.type);
   }
 
-  // String validations
+  // 文字列バリデーション
   if (schema.type === "string" && typeof value === "string") {
     if (schema.minLength !== undefined && value.length < schema.minLength) {
       throw ValidationError.outOfRange(
@@ -96,7 +96,7 @@ function validateField(
     }
   }
 
-  // Number validations
+  // 数値バリデーション
   if (schema.type === "number" && typeof value === "number") {
     if (schema.min !== undefined && value < schema.min) {
       throw ValidationError.outOfRange(fieldName, schema.min, schema.max);
@@ -106,7 +106,7 @@ function validateField(
     }
   }
 
-  // Enum validation
+  // Enum バリデーション
   if (schema.enum && !schema.enum.includes(value)) {
     throw new ValidationError(
       `${fieldName}の値が不正です。有効な値: ${schema.enum.join(", ")}`,
@@ -117,7 +117,7 @@ function validateField(
     );
   }
 
-  // Array validation
+  // 配列バリデーション
   if (schema.type === "array" && Array.isArray(value)) {
     if (schema.items) {
       return value.map((item, index) =>
@@ -126,7 +126,7 @@ function validateField(
     }
   }
 
-  // Object validation
+  // オブジェクトバリデーション
   if (schema.type === "object" && typeof value === "object" && value !== null) {
     if (schema.properties) {
       const objResult: Record<string, unknown> = {};
@@ -147,7 +147,7 @@ function validateField(
     }
   }
 
-  // Custom validation
+  // カスタムバリデーション
   if (schema.custom && !schema.custom(value)) {
     throw new ValidationError(
       schema.customMessage ?? `${fieldName}のバリデーションに失敗しました`,
@@ -159,7 +159,7 @@ function validateField(
 }
 
 /**
- * Get validated data from callable request
+ * Callable リクエストからバリデート済みデータを取得
  */
 export function getValidatedData<T>(
   request: CallableRequest,
@@ -169,10 +169,10 @@ export function getValidatedData<T>(
 }
 
 /**
- * Common schemas for reuse
+ * 再利用のための共通スキーマ
  */
 export const CommonSchemas = {
-  // Pagination
+  // ページネーション
   pagination: {
     limit: {
       type: "number" as const,
@@ -185,7 +185,7 @@ export const CommonSchemas = {
     },
   },
 
-  // User profile update
+  // ユーザープロフィール更新
   profileUpdate: {
     nickname: {
       type: "string" as const,
@@ -217,7 +217,7 @@ export const CommonSchemas = {
     },
   },
 
-  // Device info
+  // デバイス情報
   deviceInfo: {
     platform: {
       type: "string" as const,
@@ -246,14 +246,14 @@ export const CommonSchemas = {
     },
   },
 
-  // Exercise type
+  // エクササイズタイプ
   exerciseType: {
     type: "string" as const,
     required: true,
     enum: ["squat", "armcurl", "sideraise", "shoulderpress", "pushup"],
   },
 
-  // Statistics period
+  // 統計期間
   statisticsPeriod: {
     type: "string" as const,
     required: true,
@@ -262,7 +262,7 @@ export const CommonSchemas = {
 };
 
 /**
- * Validate request has required fields
+ * リクエストに必須フィールドがあるかバリデート
  */
 export function requireFields(
   data: Record<string, unknown>,
@@ -276,14 +276,14 @@ export function requireFields(
 }
 
 /**
- * Sanitize string input
+ * 文字列入力をサニタイズ
  */
 export function sanitizeString(value: string): string {
   return value.trim();
 }
 
 /**
- * Sanitize and validate email
+ * メールアドレスをサニタイズしてバリデート
  */
 export function sanitizeEmail(value: string): string {
   const email = value.trim().toLowerCase();
