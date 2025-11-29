@@ -9,15 +9,33 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/form_analyzer/form_analyzer.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../home/home_screen.dart';
 
 /// Exercise selection screen
 class ExerciseSelectionScreen extends ConsumerWidget {
   const ExerciseSelectionScreen({super.key});
+
+  void _navigateToTab(BuildContext context, WidgetRef ref, int index) {
+    ref.read(bottomNavIndexProvider.notifier).state = index;
+    switch (index) {
+      case 0:
+        context.goToHome();
+        break;
+      case 1:
+        // Already on training tab
+        break;
+      case 2:
+        context.goToHistory();
+        break;
+      case 3:
+        context.goToProfile();
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,7 +43,7 @@ class ExerciseSelectionScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(AppRoutes.home),
+          onPressed: () => context.goToHome(),
         ),
         title: const Text('種目選択'),
       ),
@@ -55,6 +73,32 @@ class ExerciseSelectionScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: 1, // Training tab is selected
+        onDestinationSelected: (index) => _navigateToTab(context, ref, index),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'ホーム',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.fitness_center_outlined),
+            selectedIcon: Icon(Icons.fitness_center),
+            label: 'トレーニング',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
+            label: '履歴',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'プロフィール',
+          ),
+        ],
       ),
     );
   }
@@ -115,7 +159,8 @@ class _ExerciseCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(
         onTap: () {
-          context.goToTrainingSetup(exerciseType);
+          // Navigate to exercise detail screen instead of directly to setup
+          context.goToExerciseDetail(exerciseType);
         },
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(

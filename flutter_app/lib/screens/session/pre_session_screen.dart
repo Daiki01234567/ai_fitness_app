@@ -18,9 +18,9 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/camera/camera_service.dart';
+import '../../core/router/app_router.dart';
 import '../../core/pose/coordinate_transformer.dart';
 import '../../core/pose/pose_session_controller.dart';
 import '../../core/session/session_state.dart';
@@ -102,7 +102,7 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
 
   void _navigateToActiveSession() {
     ref.read(trainingSessionProvider.notifier).startActiveSession();
-    context.go('/training/active');
+    context.goToActiveTraining();
   }
 
   void _handleChecklistChange(String itemId, bool checked) {
@@ -129,7 +129,8 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
           onPressed: () {
             ref.read(poseSessionControllerProvider.notifier).stopSession();
             ref.read(trainingSessionProvider.notifier).resetSession();
-            context.pop();
+            // Use goToTraining instead of pop to avoid GoError when navigation stack is empty
+            context.goToTraining();
           },
         ),
         title: const Text('カメラ設定'),

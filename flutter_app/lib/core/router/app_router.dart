@@ -22,6 +22,7 @@ import '../../screens/session/pre_session_screen.dart';
 import '../../screens/session/active_session_screen.dart';
 import '../../screens/session/session_result_screen.dart';
 import '../../screens/session/exercise_selection_screen.dart';
+import '../../screens/session/exercise_detail_screen.dart';
 import '../../screens/history/history_screen.dart';
 import '../../screens/analytics/analytics_screen.dart';
 
@@ -35,6 +36,7 @@ class AppRoutes {
   static const passwordReset = '/password-reset';
   static const home = '/home';
   static const training = '/training';
+  static const trainingDetail = '/training/detail';
   static const trainingSetup = '/training/setup';
   static const trainingActive = '/training/active';
   static const trainingResult = '/training/result';
@@ -163,6 +165,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ExerciseSelectionScreen(),
       ),
       GoRoute(
+        path: AppRoutes.trainingDetail,
+        builder: (context, state) {
+          final exerciseTypeStr = state.uri.queryParameters['exercise'];
+          final exerciseType = exerciseTypeStr != null
+              ? ExerciseType.values.firstWhere(
+                  (e) => e.name == exerciseTypeStr,
+                  orElse: () => ExerciseType.squat,
+                )
+              : ExerciseType.squat;
+          return ExerciseDetailScreen(exerciseType: exerciseType);
+        },
+      ),
+      GoRoute(
         path: AppRoutes.trainingSetup,
         builder: (context, state) {
           final exerciseTypeStr = state.uri.queryParameters['exercise'];
@@ -263,6 +278,10 @@ extension GoRouterExtension on BuildContext {
 
   /// トレーニング（種目選択）に移動
   void goToTraining() => GoRouter.of(this).go(AppRoutes.training);
+
+  /// 種目詳細画面に移動
+  void goToExerciseDetail(ExerciseType exerciseType) =>
+      GoRouter.of(this).go('${AppRoutes.trainingDetail}?exercise=${exerciseType.name}');
 
   /// 種目タイプ付きでトレーニングセットアップに移動
   void goToTrainingSetup(ExerciseType exerciseType) =>
