@@ -407,6 +407,7 @@ function isAdmin() { return request.auth.token.admin == true; }
 | `devops-engineer` | CI/CD自動化エンジニア | デプロイパイプライン、自動化設定 |
 | `mcp-developer` | MCPスペシャリスト | MCP サーバー開発、ツール統合 |
 | `error-detective` | エラー分析・解決エキスパート | デバッグ、エラー調査、根本原因分析 |
+| `business-analyst` | ビジネスアナリスト | 要件定義、プロセス改善、ROI分析、ステークホルダー管理 |
 
 ### 全サブエージェント共通ルール
 
