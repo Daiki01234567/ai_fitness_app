@@ -1,9 +1,9 @@
 {
   "projects": {
-    "default": "ai-fitness-c38f0",
-    "dev": "ai-fitness-c38f0",
-    "staging": "ai-fitness-c38f0",
-    "production": "ai-fitness-c38f0"
+    "default": "tokyo-list-478804-e5",
+    "dev": "tokyo-list-478804-e5",
+    "staging": "tokyo-list-478804-e5",
+    "production": "tokyo-list-478804-e5"
   },
   "targets": {},
   "etags": {}
