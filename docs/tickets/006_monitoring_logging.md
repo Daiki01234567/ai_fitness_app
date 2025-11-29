@@ -4,7 +4,9 @@
 **期間**: Week 2
 **優先度**: 高
 **ステータス**: 完了 ✅
-**完了日**: 2025-11-28
+**前回完了日**: 2025-11-28
+**再設定完了日**: 2025-11-29
+**再設定理由**: プロジェクトID変更 (`ai-fitness-c38f0` → `tokyo-list-478804-e5`)
 **関連仕様書**:
 - `docs/specs/01_システムアーキテクチャ設計書_v3_2.md`
 - `docs/specs/07_セキュリティポリシー_v1_0.md`
@@ -200,3 +202,45 @@ Cloud Logging、Cloud Monitoring、Error Reportingを活用した包括的な監
 - [Cloud Logging](https://cloud.google.com/logging/docs)
 - [Cloud Monitoring](https://cloud.google.com/monitoring/docs)
 - [Firebase Crashlytics](https://firebase.google.com/docs/crashlytics)
+
+---
+
+## 再設定履歴 (2025-11-29)
+
+### 問題
+- 元のFirebaseプロジェクト `ai-fitness-c38f0` が `DELETE_REQUESTED` 状態でアクセス不可
+
+### 解決
+- 既存GCPプロジェクト `tokyo-list-478804-e5` にFirebaseを有効化
+- 全ての設定ファイルを新しいプロジェクトIDに更新
+
+### 更新されたファイル
+| ファイル | 変更内容 |
+|----------|----------|
+| `CLAUDE.md` | プロジェクトID更新 |
+| `.firebaserc` | 全環境エイリアス更新 |
+| `monitoring/budget-alerts.yaml` | プロジェクト参照更新 |
+| `monitoring/alert-policies.yaml` | 新規作成（7ポリシー） |
+| `monitoring/notification-channels.yaml` | 新規作成 |
+| `monitoring/dashboards/system-overview.json` | 新規作成（14ウィジェット） |
+| `monitoring/setup-monitoring.sh` | 新規作成 |
+
+### 有効化されたAPI
+- Cloud Monitoring API ✅
+- Cloud Logging API ✅
+- Cloud Trace API ✅
+- Error Reporting API ✅
+
+### 作成されたリソース
+- ダッシュボード: "AI Fitness App - System Overview" (ID: `8a2de184-6f3e-4205-9fa7-e373a5456db4`)
+
+### 手動設定が必要な項目
+1. 通知チャネル: https://console.cloud.google.com/monitoring/alerting/notifications?project=tokyo-list-478804-e5
+2. アラートポリシー: https://console.cloud.google.com/monitoring/alerting?project=tokyo-list-478804-e5
+3. 予算アラート: Cloud Billing コンソール
+
+### Flutter設定更新（必要に応じて）
+```bash
+cd flutter_app
+flutterfire configure
+```
