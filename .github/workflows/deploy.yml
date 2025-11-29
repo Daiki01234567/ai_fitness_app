@@ -52,9 +52,9 @@ jobs:
 
           # Firebase project mapping
           if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.event.inputs.environment }}" == "production" ]; then
-            echo "firebase_project=ai-fitness-c38f0" >> $GITHUB_OUTPUT
+            echo "firebase_project=tokyo-list-478804-e5" >> $GITHUB_OUTPUT
           else
-            echo "firebase_project=ai-fitness-c38f0" >> $GITHUB_OUTPUT
+            echo "firebase_project=tokyo-list-478804-e5" >> $GITHUB_OUTPUT
           fi
 
   # Cloud Functions デプロイ

@@ -132,11 +132,11 @@ jobs:
 
       - name: Validate Firestore rules
         run: |
-          firebase --project=ai-fitness-c38f0 firestore:rules:validate firebase/firestore.rules
+          firebase --project=tokyo-list-478804-e5 firestore:rules:validate firebase/firestore.rules
 
       - name: Validate Storage rules
         run: |
-          firebase --project=ai-fitness-c38f0 storage:rules:validate firebase/storage.rules
+          firebase --project=tokyo-list-478804-e5 storage:rules:validate firebase/storage.rules
 
   # 全ジョブのサマリー
   summary:

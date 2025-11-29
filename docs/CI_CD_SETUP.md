@@ -32,9 +32,9 @@ mainまたはdevelopブランチへのプッシュ時に自動実行されます
 **環境マッピング:**
 | ブランチ | 環境 | Firebase Project |
 |---------|------|------------------|
-| main | production | ai-fitness-c38f0 |
-| develop | staging | ai-fitness-c38f0 |
-| feature/* | development | ai-fitness-c38f0 |
+| main | production | tokyo-list-478804-e5 |
+| develop | staging | tokyo-list-478804-e5 |
+| feature/* | development | tokyo-list-478804-e5 |
 
 **デプロイ対象:**
 - Cloud Functions
@@ -138,28 +138,28 @@ Settings > Environments で以下の環境を作成してください：
 
 ```bash
 # プロジェクトを設定
-gcloud config set project ai-fitness-c38f0
+gcloud config set project tokyo-list-478804-e5
 
 # サービスアカウント作成
 gcloud iam service-accounts create github-actions \
     --display-name="GitHub Actions Deploy"
 
 # 必要な権限を付与
-gcloud projects add-iam-policy-binding ai-fitness-c38f0 \
-    --member="serviceAccount:github-actions@ai-fitness-c38f0.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding tokyo-list-478804-e5 \
+    --member="serviceAccount:github-actions@tokyo-list-478804-e5.iam.gserviceaccount.com" \
     --role="roles/firebase.admin"
 
-gcloud projects add-iam-policy-binding ai-fitness-c38f0 \
-    --member="serviceAccount:github-actions@ai-fitness-c38f0.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding tokyo-list-478804-e5 \
+    --member="serviceAccount:github-actions@tokyo-list-478804-e5.iam.gserviceaccount.com" \
     --role="roles/cloudfunctions.developer"
 
-gcloud projects add-iam-policy-binding ai-fitness-c38f0 \
-    --member="serviceAccount:github-actions@ai-fitness-c38f0.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding tokyo-list-478804-e5 \
+    --member="serviceAccount:github-actions@tokyo-list-478804-e5.iam.gserviceaccount.com" \
     --role="roles/iam.serviceAccountUser"
 
 # キーを作成
 gcloud iam service-accounts keys create github-actions-key.json \
-    --iam-account=github-actions@ai-fitness-c38f0.iam.gserviceaccount.com
+    --iam-account=github-actions@tokyo-list-478804-e5.iam.gserviceaccount.com
 ```
 
 ### 2. GitHubシークレットに登録
@@ -276,10 +276,10 @@ firebase deploy --only functions
 
 ```bash
 # ルール履歴確認
-firebase firestore:rules:list --project ai-fitness-c38f0
+firebase firestore:rules:list --project tokyo-list-478804-e5
 
 # 以前のルールを適用
-firebase firestore:rules:release <ruleset-name> --project ai-fitness-c38f0
+firebase firestore:rules:release <ruleset-name> --project tokyo-list-478804-e5
 ```
 
 ### アプリ

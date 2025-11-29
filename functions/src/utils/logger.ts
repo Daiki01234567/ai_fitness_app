@@ -183,8 +183,90 @@ class Logger {
   /**
    * セキュリティイベントをログ出力
    */
-  security(event: string, data?: Record<string, unknown>): void {
-    this.warn(`Security Event: ${event}`, data);
+  security(
+    eventOrData: string | { eventType: string; severity: string; description: string; sourceIp?: string; indicators?: Record<string, unknown> },
+    data?: Record<string, unknown>,
+  ): void {
+    if (typeof eventOrData === "string") {
+      this.warn(`Security Event: ${eventOrData}`, data);
+    } else {
+      this.warn(`Security Event: ${eventOrData.eventType}`, {
+        severity: eventOrData.severity,
+        description: eventOrData.description,
+        sourceIp: eventOrData.sourceIp,
+        indicators: eventOrData.indicators,
+      });
+    }
+  }
+
+  /**
+   * クリティカルレベルログ
+   */
+  critical(message: string, error?: Error, data?: Record<string, unknown>): void {
+    const entry = this.formatEntry("error", `[CRITICAL] ${message}`, data, error);
+    functions.logger.error(entry);
+  }
+
+  /**
+   * ブルートフォース検知をログ出力
+   */
+  bruteForceDetected(sourceIp: string, attemptCount: number, userId?: string): void {
+    this.warn("Brute force attack detected", {
+      sourceIp,
+      attemptCount,
+      userId,
+    });
+  }
+
+  /**
+   * レート制限超過をログ出力
+   */
+  rateLimitExceeded(
+    identifier: string,
+    endpoint: string,
+    count: number,
+    windowSeconds: number,
+  ): void {
+    this.warn("Rate limit exceeded", {
+      identifier,
+      endpoint,
+      count,
+      windowSeconds,
+    });
+  }
+
+  /**
+   * 大量データダウンロードをログ出力
+   */
+  massDataDownload(
+    userId: string,
+    recordCount: number,
+    resourceType: string,
+    sourceIp?: string,
+  ): void {
+    this.warn("Mass data download detected", {
+      userId,
+      recordCount,
+      resourceType,
+      sourceIp,
+    });
+  }
+
+  /**
+   * 不正アクセス試行をログ出力
+   */
+  unauthorizedAccessAttempt(
+    userId: string,
+    targetResource: string,
+    requestedPermission: string,
+    sourceIp?: string,
+  ): void {
+    this.warn("Unauthorized access attempt", {
+      userId,
+      targetResource,
+      requestedPermission,
+      sourceIp,
+    });
   }
 
   /**
