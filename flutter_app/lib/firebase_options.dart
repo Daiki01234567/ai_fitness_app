@@ -41,51 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC3k1gIssSR6pxYLvtQawlk9ESYdt1RQ7E',
-    appId: '1:126634552368:web:3a6c598fb46e1a162a91f5',
-    messagingSenderId: '126634552368',
-    projectId: 'ai-fitness-c38f0',
-    authDomain: 'ai-fitness-c38f0.firebaseapp.com',
-    storageBucket: 'ai-fitness-c38f0.firebasestorage.app',
-    measurementId: 'G-PEJSHZ2CCF',
+    apiKey: 'AIzaSyChLgQ1cX__COAhAnSHK5ShPzTYTJVjxXY',
+    appId: '1:895851221884:web:45b4df28930a7922cb8af9',
+    messagingSenderId: '895851221884',
+    projectId: 'tokyo-list-478804-e5',
+    authDomain: 'tokyo-list-478804-e5.firebaseapp.com',
+    storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAnIXQRxE5f5K7x7LnSjBiT4fCIpWYiD1c',
-    appId: '1:126634552368:android:815923c1eaeb7c252a91f5',
-    messagingSenderId: '126634552368',
-    projectId: 'ai-fitness-c38f0',
-    storageBucket: 'ai-fitness-c38f0.firebasestorage.app',
+    apiKey: 'AIzaSyD3Ib3TvO98qOIBmSVT7GVBaqDJpnvpls0',
+    appId: '1:895851221884:android:69a794cec56d3b1dcb8af9',
+    messagingSenderId: '895851221884',
+    projectId: 'tokyo-list-478804-e5',
+    storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDyTv-wH8_VncVxprsfw-tOKuyeOJ_xpfc',
-    appId: '1:126634552368:ios:3dfaf0ce9578790e2a91f5',
-    messagingSenderId: '126634552368',
-    projectId: 'ai-fitness-c38f0',
-    storageBucket: 'ai-fitness-c38f0.firebasestorage.app',
-    iosClientId: '126634552368-d5r65aol9mruvhjpstvlmim8p4clbhoq.apps.googleusercontent.com',
+    apiKey: 'AIzaSyAasuKG52jZzT2rLh9vaPj_nGqgZ7W-myw',
+    appId: '1:895851221884:ios:f30b4eb0204f5ab1cb8af9',
+    messagingSenderId: '895851221884',
+    projectId: 'tokyo-list-478804-e5',
+    storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
+    iosClientId: '895851221884-90cbim4om84oc32tl1hsllu2rc8pmra9.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDyTv-wH8_VncVxprsfw-tOKuyeOJ_xpfc',
-    appId: '1:126634552368:ios:3dfaf0ce9578790e2a91f5',
-    messagingSenderId: '126634552368',
-    projectId: 'ai-fitness-c38f0',
-    storageBucket: 'ai-fitness-c38f0.firebasestorage.app',
-    iosClientId: '126634552368-d5r65aol9mruvhjpstvlmim8p4clbhoq.apps.googleusercontent.com',
+    apiKey: 'AIzaSyAasuKG52jZzT2rLh9vaPj_nGqgZ7W-myw',
+    appId: '1:895851221884:ios:f30b4eb0204f5ab1cb8af9',
+    messagingSenderId: '895851221884',
+    projectId: 'tokyo-list-478804-e5',
+    storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
+    iosClientId: '895851221884-90cbim4om84oc32tl1hsllu2rc8pmra9.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC3k1gIssSR6pxYLvtQawlk9ESYdt1RQ7E',
-    appId: '1:126634552368:web:9a8b7e9f69fc4e1c2a91f5',
-    messagingSenderId: '126634552368',
-    projectId: 'ai-fitness-c38f0',
-    authDomain: 'ai-fitness-c38f0.firebaseapp.com',
-    storageBucket: 'ai-fitness-c38f0.firebasestorage.app',
-    measurementId: 'G-R5D1L30S72',
+    apiKey: 'AIzaSyChLgQ1cX__COAhAnSHK5ShPzTYTJVjxXY',
+    appId: '1:895851221884:web:07a9f4a94f794b9ecb8af9',
+    messagingSenderId: '895851221884',
+    projectId: 'tokyo-list-478804-e5',
+    authDomain: 'tokyo-list-478804-e5.firebaseapp.com',
+    storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
   );
 
 }
