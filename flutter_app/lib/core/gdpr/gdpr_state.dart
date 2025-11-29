@@ -330,3 +330,201 @@ final deletionRequestNotifierProvider =
   final service = ref.watch(gdprServiceProvider);
   return DeletionRequestNotifier(service);
 });
+
+/// Account recovery state
+class AccountRecoveryState {
+  final bool isLoading;
+  final String? error;
+  final String? email;
+  final bool codeSent;
+  final DateTime? recoveryDeadline;
+  final DateTime? codeExpiresAt;
+  final bool isRecovered;
+
+  const AccountRecoveryState({
+    this.isLoading = false,
+    this.error,
+    this.email,
+    this.codeSent = false,
+    this.recoveryDeadline,
+    this.codeExpiresAt,
+    this.isRecovered = false,
+  });
+
+  AccountRecoveryState copyWith({
+    bool? isLoading,
+    String? error,
+    String? email,
+    bool? codeSent,
+    DateTime? recoveryDeadline,
+    DateTime? codeExpiresAt,
+    bool? isRecovered,
+  }) {
+    return AccountRecoveryState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      email: email ?? this.email,
+      codeSent: codeSent ?? this.codeSent,
+      recoveryDeadline: recoveryDeadline ?? this.recoveryDeadline,
+      codeExpiresAt: codeExpiresAt ?? this.codeExpiresAt,
+      isRecovered: isRecovered ?? this.isRecovered,
+    );
+  }
+
+  /// Check if the recovery code has expired
+  bool get isCodeExpired {
+    if (codeExpiresAt == null) return false;
+    return DateTime.now().isAfter(codeExpiresAt!);
+  }
+
+  /// Check if recovery is still possible
+  bool get canStillRecover {
+    if (recoveryDeadline == null) return true;
+    return DateTime.now().isBefore(recoveryDeadline!);
+  }
+
+  /// Days remaining until recovery deadline
+  int get daysRemaining {
+    if (recoveryDeadline == null) return 0;
+    final diff = recoveryDeadline!.difference(DateTime.now()).inDays;
+    return diff < 0 ? 0 : diff;
+  }
+}
+
+/// Account recovery state notifier
+class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
+  final GdprService _service;
+
+  AccountRecoveryNotifier(this._service) : super(const AccountRecoveryState());
+
+  /// Request recovery code via email
+  ///
+  /// Returns RecoveryInfo if successful, null otherwise.
+  Future<RecoveryInfo?> requestRecoveryCode(String email) async {
+    if (state.isLoading) return null;
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      email: email,
+    );
+
+    try {
+      // Try Cloud Functions first, fallback to local
+      RecoveryInfo? info;
+      try {
+        info = await _service.requestRecoveryCode(email);
+      } catch (_) {
+        // Fallback to local implementation
+        info = await _service.requestRecoveryCodeLocally(email);
+      }
+
+      if (info != null) {
+        state = state.copyWith(
+          isLoading: false,
+          codeSent: true,
+          recoveryDeadline: info.recoveryDeadline,
+          codeExpiresAt: info.codeExpiresAt,
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: '復元コードの送信に失敗しました',
+        );
+      }
+
+      return info;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+      return null;
+    }
+  }
+
+  /// Recover account with verification code
+  ///
+  /// Returns true if recovery was successful.
+  Future<bool> recoverAccount({
+    required String email,
+    required String code,
+  }) async {
+    if (state.isLoading) return false;
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+    );
+
+    try {
+      // Try Cloud Functions first, fallback to local
+      bool success;
+      try {
+        success = await _service.recoverAccount(email: email, code: code);
+      } catch (_) {
+        // Fallback to local implementation
+        success = await _service.recoverAccountLocally(email: email, code: code);
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        isRecovered: success,
+      );
+
+      return success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  /// Check if account is eligible for recovery
+  Future<RecoveryEligibility> checkEligibility(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final eligibility = await _service.checkRecoveryEligibility(email);
+
+      state = state.copyWith(
+        isLoading: false,
+        recoveryDeadline: eligibility.recoveryDeadline,
+      );
+
+      if (!eligibility.isEligible) {
+        state = state.copyWith(error: eligibility.reason);
+      }
+
+      return eligibility;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+      return RecoveryEligibility(
+        isEligible: false,
+        reason: e.toString(),
+      );
+    }
+  }
+
+  /// Clear error
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+
+  /// Reset to initial state
+  void reset() {
+    state = const AccountRecoveryState();
+  }
+}
+
+/// Account recovery notifier provider
+final accountRecoveryNotifierProvider =
+    StateNotifierProvider<AccountRecoveryNotifier, AccountRecoveryState>((ref) {
+  final service = ref.watch(gdprServiceProvider);
+  return AccountRecoveryNotifier(service);
+});

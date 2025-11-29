@@ -167,3 +167,39 @@ class RequiredValidator {
     return null;
   }
 }
+
+/// 統合バリデーター（便利なアクセス用）
+class Validators {
+  Validators._();
+
+  /// メールアドレスを検証
+  static String? email(String? value) => EmailValidator.validate(value);
+
+  /// パスワードを検証
+  static String? password(String? value) => PasswordValidator.validate(value);
+
+  /// パスワード強度を検証（新規登録用）
+  static String? passwordStrength(String? value) =>
+      PasswordValidator.validateStrength(value);
+
+  /// パスワード確認を検証
+  static String? passwordConfirmation(String? value, String password) =>
+      PasswordValidator.validateConfirmation(value, password);
+
+  /// 名前を検証
+  static String? name(String? value) => NameValidator.validate(value);
+
+  /// 身長を検証
+  static String? height(String? value) => HeightValidator.validate(value);
+
+  /// 体重を検証
+  static String? weight(String? value) => WeightValidator.validate(value);
+
+  /// 生年月日を検証
+  static String? birthdate(DateTime? value) =>
+      AgeValidator.validateBirthdate(value);
+
+  /// 必須フィールドを検証
+  static String? required(String? value, [String? fieldName]) =>
+      RequiredValidator.validate(value, fieldName);
+}

@@ -54,6 +54,9 @@ export const RateLimits = {
   // GDPR
   GDPR_DATA_EXPORT: { maxRequests: 3, windowSeconds: 86400 }, // 3/日
   GDPR_DELETE_REQUEST: { maxRequests: 3, windowSeconds: 86400 }, // 3/日
+  GDPR_RECOVERY_CODE: { maxRequests: 3, windowSeconds: 3600 }, // 3/時間
+  GDPR_RECOVERY_VERIFY: { maxRequests: 10, windowSeconds: 3600 }, // 10/時間
+  GDPR_RECOVER_ACCOUNT: { maxRequests: 5, windowSeconds: 86400 }, // 5/日
 
   // 設定
   SETTINGS_UPDATE: { maxRequests: 30, windowSeconds: 3600 }, // 30/時間

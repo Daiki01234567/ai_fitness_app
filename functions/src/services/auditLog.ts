@@ -41,6 +41,7 @@ export type AuditAction =
   | "account_deletion_request"
   | "account_deletion_cancel"
   | "account_deleted"
+  | "account_recovered"
   | "data_export_request"
   | "session_create"
   | "session_complete"

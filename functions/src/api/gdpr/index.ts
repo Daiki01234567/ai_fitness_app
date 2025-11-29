@@ -4,6 +4,7 @@
  * GDPR 準拠機能のエントリーポイント
  * - データエクスポート (Article 20: データポータビリティ権)
  * - データ削除 (Article 17: 削除権)
+ * - アカウント復元 (削除猶予期間内の復元機能)
  *
  * 参照: docs/specs/06_データ処理記録_ROPA_v1_0.md
  * 参照: docs/tickets/015_data_export_deletion.md
@@ -25,3 +26,10 @@ export {
   gdpr_processDataDeletion,
   gdpr_getDeletionRequests,
 } from "./deleteData";
+
+// アカウント復元 API
+export {
+  gdpr_requestRecoveryCode,
+  gdpr_verifyRecoveryCode,
+  gdpr_recoverAccount,
+} from "./recoverData";

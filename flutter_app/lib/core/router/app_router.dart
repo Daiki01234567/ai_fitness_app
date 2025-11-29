@@ -27,6 +27,7 @@ import '../../screens/history/history_screen.dart';
 import '../../screens/analytics/analytics_screen.dart';
 import '../../screens/settings/data_export_screen.dart';
 import '../../screens/settings/account_deletion_screen.dart';
+import '../../screens/auth/recovery_screen.dart';
 
 /// ルートパス
 class AppRoutes {
@@ -49,6 +50,7 @@ class AppRoutes {
   static const settingsExport = '/settings/export';
   static const settingsDeletion = '/settings/deletion';
   static const consent = '/consent';
+  static const recovery = '/auth/recovery';
 }
 
 /// ルータープロバイダー
@@ -67,7 +69,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final needsConsent = consentState.needsConsent;
       final isOnAuthPage = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register ||
-          state.matchedLocation == AppRoutes.passwordReset;
+          state.matchedLocation == AppRoutes.passwordReset ||
+          state.matchedLocation == AppRoutes.recovery;
       final isOnSplash = state.matchedLocation == AppRoutes.splash;
       final isOnConsent = state.matchedLocation == AppRoutes.consent;
 
@@ -145,6 +148,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.passwordReset,
         builder: (context, state) => const PasswordResetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.recovery,
+        builder: (context, state) => const RecoveryScreen(),
       ),
 
       // 同意画面
@@ -318,4 +325,7 @@ extension GoRouterExtension on BuildContext {
 
   /// アカウント削除に移動
   void goToAccountDeletion() => GoRouter.of(this).go(AppRoutes.settingsDeletion);
+
+  /// アカウント復元に移動
+  void goToAccountRecovery() => GoRouter.of(this).go(AppRoutes.recovery);
 }

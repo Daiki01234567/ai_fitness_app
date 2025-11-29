@@ -398,6 +398,284 @@ class GdprService {
     });
   }
 
+  /// Request account recovery code
+  ///
+  /// Sends a recovery code to the email address associated with the
+  /// deletion-scheduled account. Returns recovery info if successful.
+  ///
+  /// Rate limit: 3 requests per hour (enforced by Cloud Functions)
+  Future<RecoveryInfo?> requestRecoveryCode(String email) async {
+    try {
+      // Call Cloud Function to send recovery code
+      final callable = _functions.httpsCallable('requestAccountRecoveryCode');
+      final result = await callable.call<Map<String, dynamic>>({
+        'email': email,
+      });
+
+      final data = result.data;
+
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? '復元コードの送信に失敗しました');
+      }
+
+      return RecoveryInfo(
+        email: email,
+        recoveryDeadline: data['recoveryDeadline'] != null
+            ? DateTime.parse(data['recoveryDeadline'] as String)
+            : DateTime.now().add(const Duration(days: 30)),
+        codeExpiresAt: data['codeExpiresAt'] != null
+            ? DateTime.parse(data['codeExpiresAt'] as String)
+            : DateTime.now().add(const Duration(hours: 24)),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      throw _handleFunctionsError(e, '復元コード送信');
+    }
+  }
+
+  /// Request recovery code locally (fallback for Cloud Functions)
+  ///
+  /// This is a fallback method when Cloud Functions are not available.
+  /// Checks if the account is eligible for recovery and simulates code sending.
+  Future<RecoveryInfo?> requestRecoveryCodeLocally(String email) async {
+    try {
+      // Find user by email
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        throw Exception('このメールアドレスのアカウントは見つかりません');
+      }
+
+      final userData = querySnapshot.docs.first.data();
+      final userId = querySnapshot.docs.first.id;
+
+      // Check if account is scheduled for deletion
+      if (userData['deletionScheduled'] != true) {
+        throw Exception('このアカウントは削除予定ではありません');
+      }
+
+      // Check if recovery deadline has passed
+      final scheduledDeletionDate = userData['scheduledDeletionDate'];
+      if (scheduledDeletionDate != null) {
+        final deletionDate = (scheduledDeletionDate as Timestamp).toDate();
+        if (DateTime.now().isAfter(deletionDate)) {
+          throw Exception('復元期限が過ぎています。このアカウントは復元できません');
+        }
+      }
+
+      // Create recovery request in Firestore
+      final recoveryCode = _generateRecoveryCode();
+      final codeExpiresAt = DateTime.now().add(const Duration(hours: 24));
+
+      await _firestore.collection('accountRecoveryRequests').add({
+        'userId': userId,
+        'email': email,
+        'code': recoveryCode,
+        'createdAt': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromDate(codeExpiresAt),
+        'verified': false,
+        'attempts': 0,
+      });
+
+      // In production, Cloud Functions would send the email
+      // For development, log the code (remove in production)
+      // ignore: avoid_print
+      print('[DEV] Recovery code for $email: $recoveryCode');
+
+      final recoveryDeadline = scheduledDeletionDate != null
+          ? (scheduledDeletionDate as Timestamp).toDate()
+          : DateTime.now().add(const Duration(days: 30));
+
+      return RecoveryInfo(
+        email: email,
+        recoveryDeadline: recoveryDeadline,
+        codeExpiresAt: codeExpiresAt,
+      );
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('復元コードの送信に失敗しました: $e');
+    }
+  }
+
+  /// Generate a 6-digit recovery code
+  String _generateRecoveryCode() {
+    final random = DateTime.now().millisecondsSinceEpoch;
+    return ((random % 900000) + 100000).toString();
+  }
+
+  /// Recover account with verification code
+  ///
+  /// Verifies the recovery code and cancels the deletion request.
+  /// Returns true if recovery was successful.
+  Future<bool> recoverAccount({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      // Call Cloud Function to verify code and recover account
+      final callable = _functions.httpsCallable('recoverAccount');
+      final result = await callable.call<Map<String, dynamic>>({
+        'email': email,
+        'code': code,
+      });
+
+      final data = result.data;
+
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? 'アカウント復元に失敗しました');
+      }
+
+      return true;
+    } on FirebaseFunctionsException catch (e) {
+      throw _handleFunctionsError(e, 'アカウント復元');
+    }
+  }
+
+  /// Recover account locally (fallback for Cloud Functions)
+  ///
+  /// This is a fallback method when Cloud Functions are not available.
+  /// Verifies the code and updates Firestore directly.
+  Future<bool> recoverAccountLocally({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      // Find recovery request
+      final querySnapshot = await _firestore
+          .collection('accountRecoveryRequests')
+          .where('email', isEqualTo: email)
+          .where('verified', isEqualTo: false)
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        throw Exception('復元リクエストが見つかりません。再度コードを送信してください');
+      }
+
+      final recoveryDoc = querySnapshot.docs.first;
+      final recoveryData = recoveryDoc.data();
+
+      // Check attempts
+      final attempts = recoveryData['attempts'] ?? 0;
+      if (attempts >= 5) {
+        throw Exception('試行回数が上限に達しました。新しいコードを送信してください');
+      }
+
+      // Check expiration
+      final expiresAt = recoveryData['expiresAt'] as Timestamp?;
+      if (expiresAt != null && DateTime.now().isAfter(expiresAt.toDate())) {
+        throw Exception('復元コードの有効期限が切れています。新しいコードを送信してください');
+      }
+
+      // Verify code
+      if (recoveryData['code'] != code) {
+        // Increment attempts
+        await recoveryDoc.reference.update({
+          'attempts': FieldValue.increment(1),
+        });
+        throw Exception('復元コードが正しくありません');
+      }
+
+      // Mark recovery request as verified
+      await recoveryDoc.reference.update({
+        'verified': true,
+        'verifiedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Find and update user
+      final userId = recoveryData['userId'] as String;
+
+      // Cancel deletion requests
+      final deletionRequests = await _firestore
+          .collection('dataDeletionRequests')
+          .where('userId', isEqualTo: userId)
+          .where('status', whereIn: ['pending', 'scheduled'])
+          .get();
+
+      for (final doc in deletionRequests.docs) {
+        await doc.reference.update({
+          'status': 'cancelled',
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledReason': 'user_recovery',
+        });
+      }
+
+      // Update user document
+      await _firestore.collection('users').doc(userId).update({
+        'deletionScheduled': false,
+        'deletionScheduledAt': null,
+        'scheduledDeletionDate': null,
+        'recoveredAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      return true;
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('アカウント復元に失敗しました: $e');
+    }
+  }
+
+  /// Check if account is eligible for recovery
+  Future<RecoveryEligibility> checkRecoveryEligibility(String email) async {
+    try {
+      // Find user by email
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return RecoveryEligibility(
+          isEligible: false,
+          reason: 'アカウントが見つかりません',
+        );
+      }
+
+      final userData = querySnapshot.docs.first.data();
+
+      // Check if deletion is scheduled
+      if (userData['deletionScheduled'] != true) {
+        return RecoveryEligibility(
+          isEligible: false,
+          reason: 'このアカウントは削除予定ではありません',
+        );
+      }
+
+      // Check recovery deadline
+      final scheduledDeletionDate = userData['scheduledDeletionDate'];
+      if (scheduledDeletionDate != null) {
+        final deletionDate = (scheduledDeletionDate as Timestamp).toDate();
+        if (DateTime.now().isAfter(deletionDate)) {
+          return RecoveryEligibility(
+            isEligible: false,
+            reason: '復元期限が過ぎています',
+          );
+        }
+
+        return RecoveryEligibility(
+          isEligible: true,
+          recoveryDeadline: deletionDate,
+          daysRemaining: deletionDate.difference(DateTime.now()).inDays,
+        );
+      }
+
+      return RecoveryEligibility(
+        isEligible: true,
+      );
+    } catch (e) {
+      return RecoveryEligibility(
+        isEligible: false,
+        reason: '確認中にエラーが発生しました',
+      );
+    }
+  }
+
   /// Handle Cloud Functions errors
   Exception _handleFunctionsError(
     FirebaseFunctionsException e,
@@ -416,8 +694,40 @@ class GdprService {
         return Exception('既に処理中のリクエストがあります');
       case 'invalid-argument':
         return Exception('入力内容が不正です');
+      case 'deadline-exceeded':
+        return Exception('復元コードの有効期限が切れています');
+      case 'failed-precondition':
+        return Exception('復元の条件を満たしていません');
       default:
         return Exception('$operationに失敗しました: ${e.message}');
     }
   }
+}
+
+/// Recovery information returned after requesting a recovery code
+class RecoveryInfo {
+  final String email;
+  final DateTime recoveryDeadline;
+  final DateTime codeExpiresAt;
+
+  const RecoveryInfo({
+    required this.email,
+    required this.recoveryDeadline,
+    required this.codeExpiresAt,
+  });
+}
+
+/// Recovery eligibility check result
+class RecoveryEligibility {
+  final bool isEligible;
+  final String? reason;
+  final DateTime? recoveryDeadline;
+  final int? daysRemaining;
+
+  const RecoveryEligibility({
+    required this.isEligible,
+    this.reason,
+    this.recoveryDeadline,
+    this.daysRemaining,
+  });
 }

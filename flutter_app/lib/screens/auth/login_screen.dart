@@ -208,6 +208,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: AppSpacing.sm),
+
+                    // Account recovery link
+                    TextButton.icon(
+                      onPressed: authState.isLoading
+                          ? null
+                          : () => context.goToAccountRecovery(),
+                      icon: const Icon(Icons.restore, size: 18),
+                      label: const Text('削除したアカウントを復元する'),
+                    ),
                   ],
                 ),
               ),

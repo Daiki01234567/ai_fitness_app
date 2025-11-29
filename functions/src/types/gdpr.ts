@@ -333,6 +333,96 @@ export interface GetDeletionStatusApiResponse {
 }
 
 // =============================================================================
+// アカウント復元関連型
+// =============================================================================
+
+/**
+ * 復元コードステータス
+ */
+export type RecoveryCodeStatus = "pending" | "verified" | "used" | "expired" | "invalidated";
+
+/**
+ * /recoveryCodes/{codeId} の復元コードドキュメント
+ */
+export interface RecoveryCode {
+  /** ユーザー ID */
+  userId: string;
+  /** メールアドレス */
+  email: string;
+  /** 復元コード（6桁数字） */
+  code: string;
+  /** ステータス */
+  status: RecoveryCodeStatus;
+  /** 作成日時 */
+  createdAt: Timestamp;
+  /** 有効期限 */
+  expiresAt: Timestamp;
+  /** 試行回数 */
+  attempts: number;
+  /** 最大試行回数 */
+  maxAttempts: number;
+  /** 関連する削除リクエスト ID */
+  deletionRequestId?: string;
+  /** 使用日時 */
+  usedAt?: Timestamp;
+  /** IP アドレスハッシュ（セキュリティ用） */
+  ipAddressHash?: string;
+}
+
+/**
+ * 復元コードリクエスト API リクエスト
+ */
+export interface RecoveryCodeRequest {
+  email: string;
+}
+
+/**
+ * 復元コードリクエスト API レスポンス
+ */
+export interface RecoveryCodeResponse {
+  success: boolean;
+  message: string;
+  expiresAt?: string; // ISO8601
+}
+
+/**
+ * 復元コード検証 API リクエスト
+ */
+export interface VerifyCodeRequest {
+  email: string;
+  code: string;
+}
+
+/**
+ * 復元コード検証 API レスポンス
+ */
+export interface VerifyCodeResponse {
+  valid: boolean;
+  remainingAttempts?: number;
+  deletionInfo?: {
+    requestId: string;
+    scheduledAt: string;
+    daysRemaining: number;
+  };
+}
+
+/**
+ * アカウント復元実行 API リクエスト
+ */
+export interface RecoverAccountRequest {
+  email: string;
+  code: string;
+}
+
+/**
+ * アカウント復元実行 API レスポンス
+ */
+export interface RecoverAccountResponse {
+  success: boolean;
+  message: string;
+}
+
+// =============================================================================
 // 定数
 // =============================================================================
 
@@ -350,4 +440,12 @@ export const GDPR_CONSTANTS = {
   EXPORT_RATE_LIMIT_HOURS: 24,
   /** 削除リクエスト間隔制限（日数） */
   DELETION_RATE_LIMIT_DAYS: 1,
+  /** 復元コード有効期限（時間） */
+  RECOVERY_CODE_EXPIRY_HOURS: 24,
+  /** 復元コード最大試行回数 */
+  RECOVERY_CODE_MAX_ATTEMPTS: 5,
+  /** 復元コードリクエスト間隔制限（時間） */
+  RECOVERY_CODE_RATE_LIMIT_HOURS: 1,
+  /** 復元コードリクエスト回数制限 */
+  RECOVERY_CODE_RATE_LIMIT_COUNT: 3,
 } as const;
