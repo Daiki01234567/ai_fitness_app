@@ -25,6 +25,8 @@ import '../../screens/session/exercise_selection_screen.dart';
 import '../../screens/session/exercise_detail_screen.dart';
 import '../../screens/history/history_screen.dart';
 import '../../screens/analytics/analytics_screen.dart';
+import '../../screens/settings/data_export_screen.dart';
+import '../../screens/settings/account_deletion_screen.dart';
 
 /// ルートパス
 class AppRoutes {
@@ -44,6 +46,8 @@ class AppRoutes {
   static const analytics = '/analytics';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const settingsExport = '/settings/export';
+  static const settingsDeletion = '/settings/deletion';
   static const consent = '/consent';
 }
 
@@ -208,6 +212,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.analytics,
         builder: (context, state) => const AnalyticsScreen(),
       ),
+
+      // 設定ルート（GDPR対応）
+      GoRoute(
+        path: AppRoutes.settingsExport,
+        builder: (context, state) => const DataExportScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsDeletion,
+        builder: (context, state) => const AccountDeletionScreen(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -298,4 +312,10 @@ extension GoRouterExtension on BuildContext {
 
   /// 分析に移動
   void goToAnalytics() => GoRouter.of(this).go(AppRoutes.analytics);
+
+  /// データエクスポートに移動
+  void goToDataExport() => GoRouter.of(this).go(AppRoutes.settingsExport);
+
+  /// アカウント削除に移動
+  void goToAccountDeletion() => GoRouter.of(this).go(AppRoutes.settingsDeletion);
 }

@@ -1,8 +1,8 @@
 // Profile Screen
 // User profile and settings screen with consent management
 //
-// @version 1.0.0
-// @date 2025-11-27
+// @version 1.1.0
+// @date 2025-11-29
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -168,7 +168,7 @@ class ProfileScreen extends ConsumerWidget {
               const ConsentManagementSection(),
               const SizedBox(height: AppSpacing.lg),
 
-              // Data management section
+              // Data management section (GDPR)
               _buildSectionTitle(context, 'データ管理'),
               Card(
                 child: Column(
@@ -178,12 +178,7 @@ class ProfileScreen extends ConsumerWidget {
                       title: const Text('データエクスポート'),
                       subtitle: const Text('あなたのデータをダウンロード'),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        // TODO: Implement data export
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('開発中です')),
-                        );
-                      },
+                      onTap: () => context.goToDataExport(),
                     ),
                     const Divider(height: 1),
                     ListTile(
@@ -199,7 +194,7 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       subtitle: const Text('30日後に完全削除されます'),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _showDeleteAccountDialog(context, ref),
+                      onTap: () => context.goToAccountDeletion(),
                     ),
                   ],
                 ),
@@ -256,83 +251,4 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showDeleteAccountDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('アカウント削除'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('アカウントを削除すると、以下のデータが30日後に完全に削除されます：'),
-            SizedBox(height: 12),
-            Text('• プロフィール情報'),
-            Text('• トレーニング履歴'),
-            Text('• 設定とカスタマイズ'),
-            SizedBox(height: 16),
-            Text(
-              '本当にアカウントを削除しますか？',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('削除する'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      // Request account deletion
-      try {
-        await ref.read(authStateProvider.notifier).requestAccountDeletion();
-
-        // Close loading
-        if (context.mounted) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('アカウント削除をリクエストしました。30日後に削除されます。'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        // Close loading
-        if (context.mounted) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('アカウント削除のリクエストに失敗しました: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
 }

@@ -6,5 +6,6 @@
 export * from "./auditLog";
 export * from "./bigquery";
 export * from "./cloudTasks";
+export * from "./gdprService";
 export * from "./monitoring";
 export * from "./securityMonitoring";

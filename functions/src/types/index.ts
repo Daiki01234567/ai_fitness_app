@@ -6,3 +6,4 @@
 export * from "./firestore";
 export * from "./api";
 export * from "./errors";
+export * from "./gdpr";

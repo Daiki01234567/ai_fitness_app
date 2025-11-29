@@ -3,7 +3,7 @@
 **Phase**: Phase 2 (機能実装)
 **期間**: Week 10
 **優先度**: 高
-**ステータス**: なし
+**ステータス**: 進行中
 **関連仕様書**:
 - `docs/specs/00_要件定義書_v3_3.md` (FR-025～FR-027)
 - `docs/specs/06_データ処理記録_ROPA_v1_0.md`
@@ -16,54 +16,86 @@ GDPR要件に準拠したデータエクスポート（ポータビリティ）�
 
 ### データエクスポート機能
 
-#### ExportScreen (`screens/settings/export_screen.dart`)
-- [ ] エクスポートリクエスト画面
-  - [ ] エクスポート範囲選択
-    - [ ] 全データ
-    - [ ] 期間指定
+#### GDPRモデル (`lib/core/gdpr/gdpr_models.dart`)
+- [x] ExportRequest: エクスポートリクエストモデル
+- [x] DeletionRequest: 削除リクエストモデル
+- [x] ExportScope, DeletionScope: スコープ設定
+
+#### GDPRサービス (`lib/core/gdpr/gdpr_service.dart`)
+- [x] requestDataExport: エクスポートリクエスト
+- [x] getExportStatus: ステータス取得
+- [x] getExportRequests: リクエスト一覧
+- [x] requestAccountDeletion: 削除リクエスト
+- [x] cancelDeletion: 削除キャンセル
+- [x] getDeletionStatus: 削除ステータス
+
+#### GDPR状態管理 (`lib/core/gdpr/gdpr_state.dart`)
+- [x] exportRequestsProvider: エクスポートリクエスト一覧
+- [x] deletionStatusProvider: 削除ステータス
+- [x] gdprServiceProvider: サービスインスタンス
+- [x] ExportRequestNotifier: エクスポート状態管理
+- [x] DeletionRequestNotifier: 削除状態管理
+
+#### DataExportScreen (`screens/settings/data_export_screen.dart`)
+- [x] エクスポートリクエスト画面
+  - [x] エクスポート範囲選択
+    - [x] 全データ
+    - [x] 期間指定
     - [ ] データタイプ選択
-  - [ ] フォーマット選択
-    - [ ] JSON
-    - [ ] CSV
+  - [x] フォーマット選択
+    - [x] JSON
+    - [x] CSV
     - [ ] PDF（人間可読形式）
   - [ ] 配信方法
     - [ ] メール送信
-    - [ ] アプリ内ダウンロード
+    - [x] アプリ内ダウンロード
     - [ ] クラウドストレージ連携
-- [ ] リクエスト確認
+- [x] リクエスト確認
   - [ ] 本人確認（再認証）
-  - [ ] 処理時間の説明
-  - [ ] プライバシー注意事項
-
-#### ExportStatusScreen (`screens/settings/export_status_screen.dart`)
-- [ ] リクエスト履歴表示
-  - [ ] ステータス（処理中/完了/失敗）
-  - [ ] リクエスト日時
-  - [ ] 有効期限
-- [ ] ダウンロードリンク
-  - [ ] 一時URLの表示
-  - [ ] 有効期限表示（48時間）
-  - [ ] 再ダウンロードボタン
-- [ ] キャンセル機能
+  - [x] 処理時間の説明
+  - [x] プライバシー注意事項
+- [x] リクエスト履歴表示（ExportStatusと統合）
+  - [x] ステータス（処理中/完了/失敗）
+  - [x] リクエスト日時
+  - [x] 有効期限
+- [x] ダウンロードリンク
+  - [x] 一時URLの表示
+  - [x] 有効期限表示（48時間）
+  - [x] 再ダウンロードボタン
+- [x] ボトムナビゲーション
 
 ### データ削除機能
 
 #### AccountDeletionScreen (`screens/settings/account_deletion_screen.dart`)
-- [ ] 削除オプション選択
-  - [ ] アカウント完全削除
-  - [ ] データのみ削除
+- [x] 削除オプション選択
+  - [x] アカウント完全削除（即時削除）
+  - [x] 30日後に削除（復元可能）
   - [ ] 特定データタイプ削除
-- [ ] 削除影響の説明
-  - [ ] 削除されるデータリスト
+- [x] 削除影響の説明
+  - [x] 削除されるデータリスト
   - [ ] 削除されないデータ（法的保存義務）
-  - [ ] 復元不可の警告
-- [ ] 猶予期間の説明
-  - [ ] 30日間の回復可能期間
-  - [ ] 即時削除オプション
-- [ ] 最終確認
+  - [x] 復元不可の警告
+- [x] 猶予期間の説明
+  - [x] 30日間の回復可能期間
+  - [x] 即時削除オプション
+- [x] 最終確認
   - [ ] パスワード再入力
-  - [ ] 削除理由（オプション）
-  - [ ] 確認チェックボックス
+  - [x] 削除理由（オプション）
+  - [x] 確認チェックボックス
+- [x] 復元機能（削除予定中）
+  - [x] キャンセルボタン
+  - [x] 残り日数表示
+- [x] ボトムナビゲーション
+
+#### ルーティング更新 (`lib/core/router/app_router.dart`)
+- [x] /settings/export: データエクスポート画面
+- [x] /settings/deletion: アカウント削除画面
+- [x] goToDataExport(): 拡張関数
+- [x] goToAccountDeletion(): 拡張関数
+
+#### プロフィール画面更新 (`lib/screens/profile/profile_screen.dart`)
+- [x] データエクスポートへのリンク
+- [x] アカウント削除へのリンク
 
 #### RecoveryScreen (`screens/auth/recovery_screen.dart`)
 - [ ] アカウント復元画面

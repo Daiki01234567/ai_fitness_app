@@ -24,7 +24,7 @@ export * from "./consent";
 // export * from "./training";
 
 // GDPR 準拠
-// export * from "./gdpr";
+export * from "./gdpr";
 
 // ユーザー設定
 // export * from "./settings";
