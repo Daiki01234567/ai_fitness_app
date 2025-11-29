@@ -313,7 +313,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
             title: const Text('30日後に削除（復元可能）'),
             subtitle: const Text('猶予期間中はいつでもキャンセル可能'),
             value: DeletionType.soft,
+            // ignore: deprecated_member_use
             groupValue: state.selectedType,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
                 ref
@@ -337,7 +339,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
               ),
             ),
             value: DeletionType.hard,
+            // ignore: deprecated_member_use
             groupValue: state.selectedType,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
                 ref

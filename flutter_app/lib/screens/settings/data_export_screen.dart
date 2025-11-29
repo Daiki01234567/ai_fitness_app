@@ -198,7 +198,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             title: const Text('JSON (推奨)'),
             subtitle: const Text('プログラムで処理しやすい形式'),
             value: ExportFormat.json,
+            // ignore: deprecated_member_use
             groupValue: state.selectedFormat,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
                 ref.read(exportRequestNotifierProvider.notifier).setFormat(value);
@@ -210,7 +212,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             title: const Text('CSV'),
             subtitle: const Text('表計算ソフトで開ける形式'),
             value: ExportFormat.csv,
+            // ignore: deprecated_member_use
             groupValue: state.selectedFormat,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
                 ref.read(exportRequestNotifierProvider.notifier).setFormat(value);
@@ -233,7 +237,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             title: const Text('全データ'),
             subtitle: const Text('すべてのトレーニング記録をエクスポート'),
             value: ExportScopeType.all,
+            // ignore: deprecated_member_use
             groupValue: state.selectedScopeType,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
                 ref.read(exportRequestNotifierProvider.notifier).setScopeType(value);
@@ -245,7 +251,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             title: const Text('期間指定'),
             subtitle: const Text('指定した期間のデータのみ'),
             value: ExportScopeType.dateRange,
+            // ignore: deprecated_member_use
             groupValue: state.selectedScopeType,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
                 ref.read(exportRequestNotifierProvider.notifier).setScopeType(value);

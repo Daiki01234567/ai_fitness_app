@@ -348,7 +348,7 @@ void main() {
       });
 
       test('previousPeriodがweeklyビューで7日戻る', () async {
-        final today = DateTime.now();
+
         await notifier.setViewMode(HistoryViewMode.weekly);
         final beforeDate = notifier.state.selectedDate;
 

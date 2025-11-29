@@ -26,8 +26,6 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:flutter_app/screens/history/history_screen.dart';
 import 'package:flutter_app/core/history/history_service.dart';
-import 'package:flutter_app/core/history/history_state.dart';
-import 'package:flutter_app/core/history/history_models.dart';
 import 'package:flutter_app/core/form_analyzer/form_analyzer.dart';
 import 'package:flutter_app/core/auth/auth_state_notifier.dart';
 import 'package:flutter_app/core/consent/consent_state_notifier.dart';

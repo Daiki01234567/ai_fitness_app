@@ -100,7 +100,7 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
 
       // Load daily summaries for calendar (current month)
       final startOfMonth = DateTime(today.year, today.month, 1);
-      final endOfMonth = DateTime(today.year, today.month + 1, 0);
+      final endOfMonth = DateTime(today.year, today.month + 1, 1);
       final dailySummaries = await _historyService.fetchDailySummaries(
         userId: _userId,
         startDate: startOfMonth,
@@ -318,7 +318,7 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
 
     // Load sessions for the month
     final startOfMonth = DateTime(date.year, date.month, 1);
-    final endOfMonth = DateTime(date.year, date.month + 1, 0);
+    final endOfMonth = DateTime(date.year, date.month + 1, 1);
     final sessions = await _historyService.fetchSessions(
       userId: _userId,
       filter: HistoryFilter(

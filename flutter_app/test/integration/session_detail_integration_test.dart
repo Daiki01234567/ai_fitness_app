@@ -797,7 +797,6 @@ void main() {
     testWidgets('戻るボタンをタップすると画面が閉じる', (tester) async {
       final session = createTestSession();
 
-      var navigatedBack = false;
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
