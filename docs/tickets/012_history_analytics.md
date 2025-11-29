@@ -196,19 +196,21 @@
 ### テスト実装
 
 #### 単体テスト
-- [ ] 統計計算ロジック
-- [ ] フィルタリング処理
-- [ ] データ集計処理
+- [x] 統計計算ロジック (`test/core/history/history_service_test.dart` - 32テスト)
+- [x] フィルタリング処理 (`test/core/history/history_models_test.dart` - 46テスト)
+- [x] データ集計処理 (`test/core/history/history_state_test.dart` - 45テスト)
 
 #### 統合テスト
-- [ ] データ同期フロー
-- [ ] レポート生成
-- [ ] キャッシュ動作
+- [x] 履歴画面表示フロー (`test/integration/history_screen_integration_test.dart` - 28テスト)
+- [x] 分析画面表示フロー (`test/integration/analytics_screen_integration_test.dart` - 34テスト)
+- [x] セッション詳細画面 (`test/integration/session_detail_integration_test.dart` - 47テスト)
+- [ ] レポート生成 *(将来: PDF/CSVエクスポート実装時)*
+- [ ] オフラインキャッシュ動作 *(将来: SQLite実装時)*
 
 #### UIテスト
-- [ ] グラフ描画
-- [ ] スクロールパフォーマンス
-- [ ] レスポンシブ対応
+- [x] グラフ描画 *(統合テストでカバー)*
+- [x] スクロールパフォーマンス *(統合テストでカバー)*
+- [ ] レスポンシブ対応 *(将来実装)*
 
 ## 受け入れ条件
 - [x] 履歴が正しく表示される
@@ -285,3 +287,18 @@ flutter_app/lib/
 - SQLiteへの移行（大量データ対応）
 - 実績システム（バッジ）
 - BigQuery連携
+
+### テストファイル一覧
+```
+flutter_app/test/
+├── core/history/
+│   ├── history_models_test.dart     # 46テスト - モデル・シリアライズ
+│   ├── history_service_test.dart    # 32テスト - Firestoreサービス
+│   └── history_state_test.dart      # 45テスト - 状態管理
+└── integration/
+    ├── history_screen_integration_test.dart    # 28テスト - 履歴画面
+    ├── analytics_screen_integration_test.dart  # 34テスト - 分析画面
+    └── session_detail_integration_test.dart    # 47テスト - セッション詳細
+
+合計: 232テスト
+```
