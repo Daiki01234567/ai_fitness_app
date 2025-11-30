@@ -5,8 +5,10 @@
  * - 30日間の猶予期間
  * - キャンセル/復元機能
  * - 完全削除と部分削除
+ * - セキュリティ強化（アクセスログ、再認証チェック）
  *
  * 参照: docs/specs/06_データ処理記録_ROPA_v1_0.md
+ * 参照: docs/specs/07_セキュリティポリシー_v1_0.md
  * 参照: docs/tickets/015_data_export_deletion.md
  */
 
@@ -16,6 +18,12 @@ import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 
 import { rateLimiter } from "../../middleware/rateLimiter";
+import { checkReauthRequired } from "../../middleware/reauth";
+import {
+  logDeletionRequest,
+  logDeletionCancel,
+  extractRequestMetadata,
+} from "../../services/accessLog";
 import { createAuditLog } from "../../services/auditLog";
 import { cloudTasks } from "../../services/cloudTasks";
 import {
@@ -126,6 +134,11 @@ function calculateRecoverDeadline(scheduledDate: Date): Date {
  * @description
  * ユーザーのアカウント削除リクエストを作成。
  * デフォルトで30日間の猶予期間が設定される。
+ *
+ * セキュリティ強化:
+ * - 再認証チェック（警告レベル）
+ * - アクセスログ記録
+ * - IP アドレス記録（ハッシュ化）
  */
 export const gdpr_requestAccountDeletion = onCall(
   {
@@ -146,9 +159,59 @@ export const gdpr_requestAccountDeletion = onCall(
     const userId = request.auth.uid;
     const data = request.data || {};
 
-    logger.info("Account deletion request received", { userId });
+    // リクエストメタデータを抽出（IP アドレス、ユーザーエージェント）
+    const requestMetadata = extractRequestMetadata(request);
+
+    logger.info("Account deletion request received", {
+      userId,
+      ipAddressHash: requestMetadata.ipAddressHash,
+    });
+
+    // 入力を検証（ログ用に事前に実行）
+    let type: DeletionType;
+    let scope: DeletionScope[];
+    let requestId = "";
 
     try {
+      type = validateDeletionType(data.type);
+      scope = validateDeletionScope(type, data.scope);
+    } catch (error) {
+      // アクセスログを記録（失敗）
+      await logDeletionRequest({
+        userId,
+        requestId: "validation_failed",
+        deletionType: data.type || "unknown",
+        scope: data.scope || [],
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "バリデーションエラー",
+      });
+
+      if (error instanceof ValidationError) {
+        throw new HttpsError("invalid-argument", error.message);
+      }
+      throw error;
+    }
+
+    try {
+      // 再認証チェック（重要操作 - 削除は特に厳格）
+      const reauthResult = await checkReauthRequired(request, "account_deletion");
+      if (!reauthResult.valid) {
+        logger.warn("Deletion request without recent auth", {
+          userId,
+          lastAuthTime: reauthResult.lastAuthTime,
+        });
+        // 現在はブロックせず警告のみ（将来的にブロックする場合はここでエラーをスロー）
+        // 即時削除の場合は特に警告を強化
+        if (type === "hard") {
+          logger.security("Hard deletion requested without recent auth", {
+            userId,
+            lastAuthTime: reauthResult.lastAuthTime,
+          });
+        }
+      }
+
       // レート制限チェック
       await rateLimiter.check("GDPR_DELETE_REQUEST", userId);
 
@@ -161,17 +224,13 @@ export const gdpr_requestAccountDeletion = onCall(
         );
       }
 
-      // 入力を検証
-      const type = validateDeletionType(data.type);
-      const scope = validateDeletionScope(type, data.scope);
-
       // 日付を計算
       const scheduledDate = calculateScheduledDeletionDate(type);
       const recoverDeadline = type === "soft" ? calculateRecoverDeadline(scheduledDate) : undefined;
       const canRecover = type === "soft";
 
       // リクエスト ID を生成
-      const requestId = `deletion_${userId}_${Date.now()}`;
+      requestId = `deletion_${userId}_${Date.now()}`;
 
       // 削除リクエストを作成
       const deletionRequest: DeletionRequest = {
@@ -215,6 +274,17 @@ export const gdpr_requestAccountDeletion = onCall(
       // Cloud Tasks で削除処理をスケジュール
       await cloudTasks.createDataDeletionTask(userId, requestId, scheduledDate);
 
+      // アクセスログを記録（成功）
+      await logDeletionRequest({
+        userId,
+        requestId,
+        deletionType: type,
+        scope,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: true,
+      });
+
       // 監査ログを作成
       await createAuditLog({
         userId,
@@ -227,6 +297,8 @@ export const gdpr_requestAccountDeletion = onCall(
           scheduledAt: scheduledDate.toISOString(),
           canRecover,
         },
+        ipAddressHash: requestMetadata.ipAddressHash,
+        userAgent: requestMetadata.userAgent,
         success: true,
       });
 
@@ -253,6 +325,18 @@ export const gdpr_requestAccountDeletion = onCall(
     } catch (error) {
       logger.error("Account deletion request failed", error as Error, { userId });
 
+      // アクセスログを記録（失敗）
+      await logDeletionRequest({
+        userId,
+        requestId: requestId || "failed",
+        deletionType: type,
+        scope,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "不明なエラー",
+      });
+
       if (error instanceof HttpsError) {
         throw error;
       }
@@ -267,6 +351,10 @@ export const gdpr_requestAccountDeletion = onCall(
 
 /**
  * 削除リクエストをキャンセル
+ *
+ * セキュリティ強化:
+ * - アクセスログ記録
+ * - IP アドレス記録（ハッシュ化）
  */
 export const gdpr_cancelDeletion = onCall(
   {
@@ -285,11 +373,18 @@ export const gdpr_cancelDeletion = onCall(
     const userId = request.auth.uid;
     const { requestId, reason } = request.data || {};
 
+    // リクエストメタデータを抽出
+    const requestMetadata = extractRequestMetadata(request);
+
     if (!requestId) {
       throw new HttpsError("invalid-argument", "リクエストIDが必要です");
     }
 
-    logger.info("Deletion cancellation request received", { userId, requestId });
+    logger.info("Deletion cancellation request received", {
+      userId,
+      requestId,
+      ipAddressHash: requestMetadata.ipAddressHash,
+    });
 
     try {
       const docRef = deletionRequestsCollection().doc(requestId);
@@ -339,6 +434,16 @@ export const gdpr_cancelDeletion = onCall(
       // ユーザーの削除予定フラグを解除
       await setUserDeletionScheduled(userId, false);
 
+      // アクセスログを記録（成功）
+      await logDeletionCancel({
+        userId,
+        requestId,
+        reason,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: true,
+      });
+
       // 監査ログを作成
       await createAuditLog({
         userId,
@@ -348,6 +453,8 @@ export const gdpr_cancelDeletion = onCall(
         newValues: {
           reason,
         },
+        ipAddressHash: requestMetadata.ipAddressHash,
+        userAgent: requestMetadata.userAgent,
         success: true,
       });
 
@@ -360,6 +467,17 @@ export const gdpr_cancelDeletion = onCall(
       };
     } catch (error) {
       logger.error("Deletion cancellation failed", error as Error, { userId, requestId });
+
+      // アクセスログを記録（失敗）
+      await logDeletionCancel({
+        userId,
+        requestId,
+        reason,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "不明なエラー",
+      });
 
       if (error instanceof HttpsError) {
         throw error;
