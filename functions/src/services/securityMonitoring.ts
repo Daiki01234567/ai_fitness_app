@@ -11,7 +11,9 @@
  */
 
 import * as admin from "firebase-admin";
+
 import { logger } from "../utils/logger";
+
 import { metricsService, errorReportingService } from "./monitoring";
 
 // =============================================================================
@@ -216,7 +218,7 @@ class SecurityMonitoringService {
     const key = `login:${identifier}`;
     const existing = this.failedLoginAttempts.get(key);
 
-    if (!existing) return false;
+    if (!existing) {return false;}
 
     const now = Date.now();
     const windowMs = this.config.bruteForce.windowSeconds * 1000;
@@ -608,7 +610,7 @@ class SecurityMonitoringService {
         const data = doc.data() as SecurityEvent;
         byType[data.type] = (byType[data.type] || 0) + 1;
         bySeverity[data.severity] = (bySeverity[data.severity] || 0) + 1;
-        if (!data.resolved) unresolvedCount++;
+        if (!data.resolved) {unresolvedCount++;}
       });
 
       return {

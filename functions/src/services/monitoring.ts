@@ -210,7 +210,7 @@ class MetricsService {
    * Note: 本番環境ではCloud Monitoring APIを使用
    */
   flush(): void {
-    if (this.metricsBuffer.length === 0) return;
+    if (this.metricsBuffer.length === 0) {return;}
 
     const metrics = [...this.metricsBuffer];
     this.metricsBuffer = [];
@@ -237,9 +237,9 @@ class MetricsService {
    * スコアをバケットに分類
    */
   private getScoreBucket(score: number): string {
-    if (score >= 90) return "excellent";
-    if (score >= 70) return "good";
-    if (score >= 50) return "fair";
+    if (score >= 90) {return "excellent";}
+    if (score >= 70) {return "good";}
+    if (score >= 50) {return "fair";}
     return "needs_improvement";
   }
 
@@ -247,9 +247,9 @@ class MetricsService {
    * FPSをバケットに分類
    */
   private getFpsBucket(fps: number): string {
-    if (fps >= 30) return "optimal";
-    if (fps >= 24) return "good";
-    if (fps >= 15) return "acceptable";
+    if (fps >= 30) {return "optimal";}
+    if (fps >= 24) {return "good";}
+    if (fps >= 15) {return "acceptable";}
     return "low";
   }
 }
@@ -348,7 +348,7 @@ class ErrorReportingService {
   private sanitizeContext(
     context?: Record<string, unknown>,
   ): Record<string, unknown> {
-    if (!context) return {};
+    if (!context) {return {};}
 
     const sanitized: Record<string, unknown> = {};
     const sensitiveKeys = [
