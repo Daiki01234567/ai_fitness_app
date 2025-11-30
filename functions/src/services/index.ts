@@ -3,6 +3,7 @@
  * すべてのサービスを再エクスポート
  */
 
+export * from "./accessLog";
 export * from "./auditLog";
 export * from "./bigquery";
 export * from "./cloudTasks";
