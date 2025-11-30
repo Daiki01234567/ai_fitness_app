@@ -212,30 +212,30 @@ GDPR要件に準拠したデータエクスポート（ポータビリティ）�
   }
   ```
 
-##### 削除実行 (`functions/deletion/execute.ts`)
-- [ ] Firestore削除
-  - [ ] コレクション毎の削除
-  - [ ] サブコレクション再帰削除
-  - [ ] バッチ処理（500件単位）
-- [ ] Storage削除
-  - [ ] ユーザーフォルダ削除
-  - [ ] 共有データの確認
-- [ ] BigQuery削除
-  - [ ] DELETE文実行
-  - [ ] パーティション削除
-- [ ] Auth削除
-  - [ ] Firebase Auth ユーザー削除
-  - [ ] カスタムクレーム削除
+##### 削除実行 (`functions/src/api/gdpr/deleteData.ts`, `functions/src/services/gdprService.ts`)
+- [x] Firestore削除
+  - [x] コレクション毎の削除
+  - [x] サブコレクション再帰削除
+  - [x] バッチ処理（500件単位）
+- [x] Storage削除
+  - [x] ユーザーフォルダ削除 (`deleteUserStorage()`)
+  - [x] 共有データの確認 (`verifyStorageDeletion()`)
+- [x] BigQuery削除
+  - [x] DELETE文実行 (`deleteUserFromBigQuery()`)
+  - [x] パーティション削除（user_hash ベース）
+- [x] Auth削除
+  - [x] Firebase Auth ユーザー削除
+  - [x] カスタムクレーム削除（Auth削除時に自動削除）
 
-##### 削除検証 (`functions/deletion/verify.ts`)
-- [ ] 削除完了確認
-  - [ ] 各サービス確認
-  - [ ] ログ記録
-  - [ ] 監査証跡
-- [ ] 残存データチェック
-  - [ ] 法的保存義務データ
-  - [ ] 匿名化データ
-  - [ ] バックアップ処理
+##### 削除検証 (`functions/src/services/gdprService.ts`)
+- [x] 削除完了確認
+  - [x] 各サービス確認（Firestore, Storage, BigQuery, Auth）
+  - [x] ログ記録（詳細な監査ログ）
+  - [x] 監査証跡（auditLogsコレクションに記録）
+- [x] 残存データチェック
+  - [x] 法的保存義務データ（証明書に記載）
+  - [x] 匿名化データ（BigQuery検証）
+  - [ ] バックアップ処理（将来実装）
 
 ##### 復元処理 (`functions/src/api/gdpr/recoverData.ts`)
 - [x] データ復元
@@ -323,13 +323,17 @@ interface DeletionRequest {
 - [ ] 72時間以内の対応
 - [ ] 無料提供
 - [ ] 機械可読形式
-- [ ] 完全削除の保証
-- [ ] 削除証明書発行
+- [x] 完全削除の保証（verifyCompleteDeletion()で検証）
+- [x] 削除証明書発行（generateDeletionCertificate()で実装）
+  - [x] 証明書ID生成
+  - [x] HMAC-SHA256署名
+  - [x] deletionCertificatesコレクションに保存
+  - [x] gdpr_getDeletionCertificate APIで取得可能
 
 #### 監査証跡
-- [ ] 全操作のログ記録
-- [ ] タイムスタンプ
-- [ ] 変更不可能な記録
+- [x] 全操作のログ記録（auditLogサービス使用）
+- [x] タイムスタンプ（serverTimestamp使用）
+- [x] 変更不可能な記録（Firestoreに保存）
 - [ ] 定期監査レポート
 
 ### テスト実装
