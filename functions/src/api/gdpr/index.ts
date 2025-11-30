@@ -25,6 +25,7 @@ export {
   gdpr_getDeletionStatus,
   gdpr_processDataDeletion,
   gdpr_getDeletionRequests,
+  gdpr_getDeletionCertificate,
 } from "./deleteData";
 
 // アカウント復元 API
