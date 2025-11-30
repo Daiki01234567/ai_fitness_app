@@ -43,6 +43,8 @@ export type AuditAction =
   | "account_deleted"
   | "account_recovered"
   | "data_export_request"
+  | "data_export_completed"
+  | "data_export_failed"
   | "session_create"
   | "session_complete"
   | "settings_update"
