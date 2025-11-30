@@ -198,13 +198,15 @@ GDPR要件に準拠したデータエクスポート（ポータビリティ）�
 
 #### データ削除API
 
-##### 削除リクエスト (`api/deletion/request.ts`)
-- [ ] エンドポイント実装
-- [ ] 削除タイプ処理
-  - [ ] soft_delete（30日猶予）
-  - [ ] hard_delete（即時）
-  - [ ] partial_delete（部分削除）
-- [ ] スケジュール作成
+##### 削除リクエスト (`functions/src/api/gdpr/deleteData.ts`)
+- [x] エンドポイント実装 (`gdpr_requestAccountDeletion`)
+- [x] 削除タイプ処理
+  - [x] soft_delete（30日猶予）
+  - [x] hard_delete（即時）
+  - [x] partial_delete（部分削除）
+- [x] スケジュール作成（Cloud Tasks連携）
+- [x] キャンセル機能 (`gdpr_cancelDeletion`)
+- [x] ステータス取得 (`gdpr_getDeletionStatus`)
   ```typescript
   interface DeletionRequest {
     userId: string;
