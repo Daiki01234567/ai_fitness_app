@@ -20,11 +20,17 @@ import { createAuditLog } from "../../services/auditLog";
 import { cloudTasks } from "../../services/cloudTasks";
 import {
   collectUserData,
-  transformToExportFormat,
-  uploadExportFile,
   hasRecentExportRequest,
   countUserRecords,
+  collectStorageData,
+  collectBigQueryData,
+  getProfileImageBuffer,
+  createExportArchive,
+  uploadExportArchive,
+  sendExportCompletionNotification,
+  sendExportFailureNotification,
 } from "../../services/gdprService";
+import { User } from "../../types/firestore";
 import {
   ExportRequest,
   ExportStatus,
@@ -328,6 +334,8 @@ export const gdpr_getExportStatus = onCall(
 
 /**
  * エクスポートジョブを処理（Cloud Tasks トリガー）
+ *
+ * 強化版: Storage データ収集、BigQuery データ抽出、ZIP 圧縮、完了通知を含む
  */
 export const gdpr_processDataExport = onTaskDispatched(
   {
@@ -340,16 +348,17 @@ export const gdpr_processDataExport = onTaskDispatched(
       maxConcurrentDispatches: 10,
     },
     region: "asia-northeast1",
-    memory: "512MiB",
-    timeoutSeconds: 540, // 9分
+    memory: "1GiB", // Increased for ZIP processing
+    timeoutSeconds: 540, // 9 minutes
   },
   async (req) => {
     const { userId, requestId } = req.data as { userId: string; requestId: string };
     const startTime = Date.now();
 
-    logger.info("Processing data export job", { userId, requestId });
+    logger.info("Processing data export job (enhanced)", { userId, requestId });
 
     const docRef = exportRequestsCollection().doc(requestId);
+    let userEmail: string | undefined;
 
     try {
       // リクエストを取得
@@ -373,18 +382,57 @@ export const gdpr_processDataExport = onTaskDispatched(
         processingStartedAt: FieldValue.serverTimestamp(),
       });
 
-      // ユーザーデータを収集
+      // ユーザーのメールアドレスを取得（通知用）
+      try {
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data() as User;
+          userEmail = userData.email;
+        }
+      } catch {
+        logger.warn("Failed to get user email for notification", { userId });
+      }
+
+      // Step 1: Firestore ユーザーデータを収集
+      logger.info("Step 1: Collecting Firestore user data", { userId, requestId });
       const exportData = await collectUserData(userId, exportRequest.scope);
 
-      // フォーマットに変換
-      const content = transformToExportFormat(exportData, exportRequest.format);
+      // Step 2: Storage データを収集（プロフィール画像等）
+      logger.info("Step 2: Collecting Storage data", { userId, requestId });
+      const storageData = await collectStorageData(userId);
+      const hasMediaFiles = storageData.mediaFiles && storageData.mediaFiles.length > 0;
+      if (storageData.profileImage || hasMediaFiles) {
+        exportData.storage = storageData;
+      }
 
-      // Cloud Storage にアップロード
-      const { downloadUrl, expiresAt, fileSizeBytes } = await uploadExportFile(
+      // Step 3: BigQuery 分析データを抽出
+      logger.info("Step 3: Collecting BigQuery analytics data", { userId, requestId });
+      const analyticsData = await collectBigQueryData(userId);
+      if (analyticsData) {
+        exportData.analytics = analyticsData;
+      }
+
+      // Step 4: プロフィール画像のバイナリを取得（ZIP に含める）
+      logger.info("Step 4: Getting profile image buffer", { userId, requestId });
+      const profileImageBuffer = await getProfileImageBuffer(userId);
+
+      // Step 5: ZIP アーカイブを作成
+      logger.info("Step 5: Creating ZIP archive", { userId, requestId });
+      const archiveBuffer = await createExportArchive({
         userId,
         requestId,
-        content,
-        exportRequest.format,
+        data: exportData,
+        format: exportRequest.format,
+        profileImageBuffer,
+        includeReadme: true,
+      });
+
+      // Step 6: Cloud Storage にアップロード
+      logger.info("Step 6: Uploading archive to Cloud Storage", { userId, requestId });
+      const { downloadUrl, expiresAt, fileSizeBytes } = await uploadExportArchive(
+        userId,
+        requestId,
+        archiveBuffer,
       );
 
       // レコード数をカウント
@@ -400,17 +448,41 @@ export const gdpr_processDataExport = onTaskDispatched(
         recordCount,
       });
 
-      logger.info("Data export completed", {
+      logger.info("Data export completed successfully", {
         userId,
         requestId,
         format: exportRequest.format,
         fileSizeBytes,
         recordCount,
+        hasStorageData: !!exportData.storage,
+        hasAnalyticsData: !!exportData.analytics,
+        hasProfileImage: !!profileImageBuffer,
         durationMs: Date.now() - startTime,
       });
 
-      // TODO: ユーザーに通知を送信
-      // await sendExportCompletedNotification(userId, requestId, downloadUrl);
+      // Step 7: 完了通知を送信
+      if (userEmail) {
+        logger.info("Step 7: Sending completion notification", { userId, requestId, userEmail });
+        await sendExportCompletionNotification(userId, userEmail, downloadUrl, expiresAt);
+      } else {
+        logger.warn("Skipping completion notification - no email address", { userId, requestId });
+      }
+
+      // 監査ログを作成
+      await createAuditLog({
+        userId,
+        action: "data_export_completed",
+        resourceType: "export",
+        resourceId: requestId,
+        newValues: {
+          format: exportRequest.format,
+          fileSizeBytes,
+          recordCount,
+          hasStorageData: !!exportData.storage,
+          hasAnalyticsData: !!exportData.analytics,
+        },
+        success: true,
+      });
     } catch (error) {
       logger.error("Data export processing failed", error as Error, { userId, requestId });
 
@@ -418,6 +490,27 @@ export const gdpr_processDataExport = onTaskDispatched(
       await docRef.update({
         status: "failed" as ExportStatus,
         error: error instanceof Error ? error.message : "不明なエラーが発生しました",
+      });
+
+      // 失敗通知を送信
+      if (userEmail) {
+        await sendExportFailureNotification(
+          userId,
+          userEmail,
+          error instanceof Error ? error.message : undefined,
+        );
+      }
+
+      // 監査ログを作成
+      await createAuditLog({
+        userId,
+        action: "data_export_failed",
+        resourceType: "export",
+        resourceId: requestId,
+        newValues: {
+          error: error instanceof Error ? error.message : "不明なエラー",
+        },
+        success: false,
       });
 
       throw error; // リトライのために再スロー
