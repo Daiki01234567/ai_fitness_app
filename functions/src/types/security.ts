@@ -304,6 +304,7 @@ export const ADMIN_PERMISSIONS: Record<AdminLevel, AdminActionType[]> = {
     "force_logout",
     "view_audit_logs",
   ],
+  // eslint-disable-next-line camelcase -- Firebase Auth custom claim naming convention
   super_admin: [
     "view_user_data",
     "export_user_data",
