@@ -237,6 +237,113 @@ export interface ExportData {
   consents?: ExportConsentData[];
   settings?: ExportSettingsData;
   subscriptions?: ExportSubscriptionData[];
+  storage?: StorageExportData;
+  analytics?: BigQueryExportData;
+}
+
+// =============================================================================
+// Storage エクスポート関連型
+// =============================================================================
+
+/**
+ * Storage エクスポート用メディアファイル
+ */
+export interface StorageMediaFile {
+  /** ファイル名 */
+  fileName: string;
+  /** ファイルパス */
+  path: string;
+  /** コンテンツタイプ */
+  contentType: string;
+  /** ファイルサイズ（バイト） */
+  size: number;
+}
+
+/**
+ * Storage エクスポートデータ
+ */
+export interface StorageExportData {
+  /** プロフィール画像 */
+  profileImage?: {
+    /** ファイル名 */
+    fileName: string;
+    /** コンテンツタイプ */
+    contentType: string;
+    /** ファイルサイズ（バイト） */
+    size: number;
+    /** Base64エンコードデータ */
+    base64Data: string;
+  };
+  /** メディアファイル一覧（メタデータのみ、データはZIPに含む） */
+  mediaFiles?: StorageMediaFile[];
+}
+
+// =============================================================================
+// BigQuery エクスポート関連型
+// =============================================================================
+
+/**
+ * 週間進捗データ
+ */
+export interface WeeklyProgress {
+  /** 週（YYYY-WW 形式） */
+  week: string;
+  /** セッション数 */
+  sessions: number;
+  /** 平均スコア */
+  avgScore: number;
+}
+
+/**
+ * 月間トレンドデータ
+ */
+export interface MonthlyTrend {
+  /** 月（YYYY-MM 形式） */
+  month: string;
+  /** セッション数 */
+  sessions: number;
+  /** 平均スコア */
+  avgScore: number;
+}
+
+/**
+ * BigQuery エクスポートデータ（分析結果）
+ */
+export interface BigQueryExportData {
+  /** 総セッション数 */
+  totalSessions: number;
+  /** 総レップ数 */
+  totalReps: number;
+  /** 全体平均スコア */
+  averageScore: number;
+  /** 種目別内訳 */
+  exerciseBreakdown: Record<string, number>;
+  /** 週間進捗 */
+  weeklyProgress: WeeklyProgress[];
+  /** 月間トレンド */
+  monthlyTrends: MonthlyTrend[];
+}
+
+// =============================================================================
+// ZIP アーカイブ関連型
+// =============================================================================
+
+/**
+ * エクスポートアーカイブオプション
+ */
+export interface ExportArchiveOptions {
+  /** ユーザー ID */
+  userId: string;
+  /** リクエスト ID */
+  requestId: string;
+  /** エクスポートデータ */
+  data: ExportData;
+  /** エクスポートフォーマット */
+  format: ExportFormat;
+  /** プロフィール画像バイナリ（ZIPに含める場合） */
+  profileImageBuffer?: Buffer;
+  /** README を含めるか */
+  includeReadme?: boolean;
 }
 
 // =============================================================================
