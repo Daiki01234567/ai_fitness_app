@@ -43,3 +43,23 @@ service-account-*.json
 
 # MCP
 .mcp.json
+
+# Backup files
+*.bak
+*.backup
+*.original
+*.patch
+
+# Emulator data
+emulator-data/
+
+# Coverage reports (generated)
+functions/coverage/
+
+# Temporary scripts
+functions/fix_tests.sh
+
+# Old report files
+functions/*.md
+!functions/README.md
+
