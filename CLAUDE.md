@@ -408,10 +408,16 @@ function isAdmin() { return request.auth.token.admin == true; }
 | `mcp-developer` | MCPスペシャリスト | MCP サーバー開発、ツール統合 |
 | `error-detective` | エラー分析・解決エキスパート | デバッグ、エラー調査、根本原因分析 |
 | `business-analyst` | ビジネスアナリスト | 要件定義、プロセス改善、ROI分析、ステークホルダー管理 |
+| `search-specialist` | 高度な情報検索専門家 | 複雑なコード検索、ドキュメント調査、パターン発見 |
+| `security-auditor` | セキュリティ監査専門家 | 脆弱性スキャン、セキュリティレビュー、OWASP対応 |
+| `competitive-analyst` | 競合分析専門家 | 市場調査、競合比較、戦略分析 |
+| `documentation-engineer` | 技術ドキュメント専門家 | API文書、README作成、仕様書整備 |
+| `refactoring-specialist` | リファクタリング専門家 | コード品質改善、設計パターン適用、技術的負債解消 |
+| `compliance-auditor` | コンプライアンス監査専門家 | GDPR準拠、法令遵守、規制対応、監査証跡 |
 
 ### 全サブエージェント共通ルール
 
-1. **タスク開始時**: 必ず関連する仕様書を確認すること
+1. **タスク開始時**: 必ず関連する仕様書とCLAUDE.mdを確認すること
 2. **仕様との整合性**: 実装中は常に仕様との整合性を検証すること
 3. **完了報告**: サマリーのみ報告（詳細な仕様内容は含めない）
 4. **不明点対応**: 仕様書を再確認してからメインに質問すること
