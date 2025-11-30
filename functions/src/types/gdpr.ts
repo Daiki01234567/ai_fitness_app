@@ -423,6 +423,98 @@ export interface RecoverAccountResponse {
 }
 
 // =============================================================================
+// 削除検証・証明書関連型
+// =============================================================================
+
+/**
+ * 削除検証結果
+ */
+export interface DeletionVerificationResult {
+  /** Firestore 削除確認 */
+  firestore: boolean;
+  /** Storage 削除確認 */
+  storage: boolean;
+  /** BigQuery 削除確認 */
+  bigquery: boolean;
+  /** Firebase Auth 削除確認 */
+  auth: boolean;
+}
+
+/**
+ * 削除証明書
+ */
+export interface DeletionCertificate {
+  /** 証明書 ID */
+  certificateId: string;
+  /** ユーザー ID（ハッシュ化） */
+  userIdHash: string;
+  /** 削除日時 */
+  deletedAt: string;
+  /** 削除リクエスト ID */
+  deletionRequestId: string;
+  /** 削除されたデータ */
+  deletedData: {
+    /** Firestore コレクション */
+    firestoreCollections: string[];
+    /** Storage ファイル数 */
+    storageFilesCount: number;
+    /** BigQuery 削除行数 */
+    bigqueryRowsDeleted: number;
+    /** Auth 削除確認 */
+    authDeleted: boolean;
+  };
+  /** 検証結果 */
+  verificationResult: DeletionVerificationResult;
+  /** 法的保存データ（残存データの説明） */
+  legalRetentionData?: {
+    /** データタイプ */
+    dataType: string;
+    /** 保存理由 */
+    reason: string;
+    /** 保存期限 */
+    retentionUntil: string;
+  }[];
+  /** 電子署名 */
+  signature: string;
+  /** 署名アルゴリズム */
+  signatureAlgorithm: string;
+  /** 発行日時 */
+  issuedAt: string;
+  /** 発行者 */
+  issuedBy: string;
+}
+
+/**
+ * Storage 削除結果
+ */
+export interface StorageDeletionResult {
+  /** 削除成功 */
+  deleted: boolean;
+  /** 削除されたファイルパス */
+  files: string[];
+  /** 削除されたファイル数 */
+  filesCount: number;
+  /** 削除されたサイズ（バイト） */
+  totalSizeBytes: number;
+  /** エラーメッセージ */
+  error?: string;
+}
+
+/**
+ * BigQuery 削除結果
+ */
+export interface BigQueryDeletionResult {
+  /** 削除成功 */
+  deleted: boolean;
+  /** 削除された行数 */
+  rowsAffected: number;
+  /** 削除されたテーブル */
+  tablesAffected: string[];
+  /** エラーメッセージ */
+  error?: string;
+}
+
+// =============================================================================
 // 定数
 // =============================================================================
 
