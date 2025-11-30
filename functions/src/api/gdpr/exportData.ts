@@ -5,8 +5,10 @@
  * - 24時間に1回の制限
  * - 72時間以内の処理完了
  * - JSON/CSV形式でのエクスポート
+ * - セキュリティ強化（アクセスログ、再認証チェック）
  *
  * 参照: docs/specs/06_データ処理記録_ROPA_v1_0.md
+ * 参照: docs/specs/07_セキュリティポリシー_v1_0.md
  * 参照: docs/tickets/015_data_export_deletion.md
  */
 
@@ -16,6 +18,12 @@ import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 
 import { rateLimiter } from "../../middleware/rateLimiter";
+import { checkReauthRequired } from "../../middleware/reauth";
+import {
+  logExportRequest,
+  logExportDownload,
+  extractRequestMetadata,
+} from "../../services/accessLog";
 import { createAuditLog } from "../../services/auditLog";
 import { cloudTasks } from "../../services/cloudTasks";
 import {
@@ -169,6 +177,11 @@ function calculateEstimatedCompletionTime(): string {
  * @description
  * ユーザーのデータエクスポートリクエストを作成し、バックグラウンド処理をスケジュール。
  * 24時間に1回の制限あり。
+ *
+ * セキュリティ強化:
+ * - 再認証チェック（オプション）
+ * - アクセスログ記録
+ * - IP アドレス記録（ハッシュ化）
  */
 export const gdpr_requestDataExport = onCall(
   {
@@ -189,9 +202,52 @@ export const gdpr_requestDataExport = onCall(
     const userId = request.auth.uid;
     const data = request.data || {};
 
-    logger.info("Data export request received", { userId });
+    // リクエストメタデータを抽出（IP アドレス、ユーザーエージェント）
+    const requestMetadata = extractRequestMetadata(request);
+
+    logger.info("Data export request received", {
+      userId,
+      ipAddressHash: requestMetadata.ipAddressHash,
+    });
+
+    // 入力を検証（ログ用に事前に実行）
+    let format: ExportFormat;
+    let scope: ExportScope;
+    let requestId = "";
 
     try {
+      format = validateFormat(data.format);
+      scope = validateScope(data.scope);
+    } catch (error) {
+      // アクセスログを記録（失敗）
+      await logExportRequest({
+        userId,
+        requestId: "validation_failed",
+        format: data.format || "unknown",
+        scopeType: data.scope?.type || "unknown",
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "バリデーションエラー",
+      });
+
+      if (error instanceof ValidationError) {
+        throw new HttpsError("invalid-argument", error.message);
+      }
+      throw error;
+    }
+
+    try {
+      // 再認証チェック（オプション - 認証から5分以上経過している場合は警告ログ）
+      const reauthResult = await checkReauthRequired(request, "data_export");
+      if (!reauthResult.valid) {
+        logger.warn("Export request without recent auth", {
+          userId,
+          lastAuthTime: reauthResult.lastAuthTime,
+        });
+        // 現在はブロックせず警告のみ（将来的にブロックする場合はここでエラーをスロー）
+      }
+
       // レート制限チェック
       await rateLimiter.check("GDPR_DATA_EXPORT", userId);
 
@@ -203,12 +259,8 @@ export const gdpr_requestDataExport = onCall(
         );
       }
 
-      // 入力を検証
-      const format = validateFormat(data.format);
-      const scope = validateScope(data.scope);
-
       // リクエスト ID を生成
-      const requestId = `export_${userId}_${Date.now()}`;
+      requestId = `export_${userId}_${Date.now()}`;
 
       // エクスポートリクエストを作成
       const exportRequest: ExportRequest = {
@@ -226,6 +278,17 @@ export const gdpr_requestDataExport = onCall(
       // Cloud Tasks でバックグラウンド処理をスケジュール
       await cloudTasks.createDataExportTask(userId, requestId);
 
+      // アクセスログを記録（成功）
+      await logExportRequest({
+        userId,
+        requestId,
+        format,
+        scopeType: scope.type,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: true,
+      });
+
       // 監査ログを作成
       await createAuditLog({
         userId,
@@ -236,6 +299,8 @@ export const gdpr_requestDataExport = onCall(
           format,
           scopeType: scope.type,
         },
+        ipAddressHash: requestMetadata.ipAddressHash,
+        userAgent: requestMetadata.userAgent,
         success: true,
       });
 
@@ -256,6 +321,18 @@ export const gdpr_requestDataExport = onCall(
     } catch (error) {
       logger.error("Data export request failed", error as Error, { userId });
 
+      // アクセスログを記録（失敗）
+      await logExportRequest({
+        userId,
+        requestId: requestId || "failed",
+        format,
+        scopeType: scope.type,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "不明なエラー",
+      });
+
       if (error instanceof HttpsError) {
         throw error;
       }
@@ -273,6 +350,8 @@ export const gdpr_requestDataExport = onCall(
 
 /**
  * エクスポートステータスを取得
+ *
+ * ダウンロード URL を返す場合はアクセスログを記録
  */
 export const gdpr_getExportStatus = onCall(
   {
@@ -288,6 +367,9 @@ export const gdpr_getExportStatus = onCall(
 
     const userId = request.auth.uid;
     const { requestId } = request.data || {};
+
+    // リクエストメタデータを抽出
+    const requestMetadata = extractRequestMetadata(request);
 
     if (!requestId) {
       throw new HttpsError("invalid-argument", "リクエストIDが必要です");
@@ -308,6 +390,17 @@ export const gdpr_getExportStatus = onCall(
         throw new HttpsError("permission-denied", "このリクエストにアクセスする権限がありません");
       }
 
+      // ダウンロード URL がある場合はアクセスログを記録
+      if (exportRequest.downloadUrl && exportRequest.status === "completed") {
+        await logExportDownload({
+          userId,
+          requestId,
+          ipAddress: requestMetadata.ipAddress,
+          userAgent: requestMetadata.userAgent,
+          success: true,
+        });
+      }
+
       return {
         requestId: exportRequest.requestId,
         status: exportRequest.status,
@@ -319,6 +412,16 @@ export const gdpr_getExportStatus = onCall(
       };
     } catch (error) {
       logger.error("Get export status failed", error as Error, { userId, requestId });
+
+      // 失敗時もアクセスログを記録
+      await logExportDownload({
+        userId,
+        requestId,
+        ipAddress: requestMetadata.ipAddress,
+        userAgent: requestMetadata.userAgent,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "不明なエラー",
+      });
 
       if (error instanceof HttpsError) {
         throw error;
