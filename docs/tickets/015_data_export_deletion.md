@@ -109,85 +109,92 @@ GDPR要件に準拠したデータエクスポート（ポータビリティ）�
 
 #### データエクスポートAPI
 
-##### リクエスト作成 (`api/export/request.ts`)
-- [ ] エンドポイント実装
-- [ ] リクエスト検証
-  - [ ] ユーザー認証
-  - [ ] レート制限（24時間に1回）
-  - [ ] 同時リクエスト防止
-- [ ] ジョブ作成
-  ```typescript
-  interface ExportRequest {
-    userId: string;
-    requestId: string;
-    format: 'json' | 'csv' | 'pdf';
-    scope: 'all' | 'dateRange' | 'specific';
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    requestedAt: Timestamp;
-    completedAt?: Timestamp;
-    downloadUrl?: string;
-    expiresAt?: Timestamp;
-  }
-  ```
+##### リクエスト作成 (`functions/src/api/gdpr/exportData.ts`)
+- [x] エンドポイント実装 (`gdpr_requestDataExport`)
+- [x] リクエスト検証
+  - [x] ユーザー認証（Firebase Auth）
+  - [x] レート制限（24時間に1回）
+  - [x] 入力バリデーション（format, scope）
+- [x] ジョブ作成
+  - [x] Firestoreにエクスポートリクエスト保存
+  - [x] Cloud Tasksでバックグラウンド処理スケジュール
+  - [x] 監査ログ記録
+- [x] 処理実行 (`gdpr_processDataExport` - Cloud Tasks トリガー)
+  - [x] 全データ収集（Firestore, Storage, BigQuery）
+  - [x] ZIPアーカイブ作成
+  - [x] Cloud Storageアップロード
+  - [x] 完了/失敗通知送信
+  - [x] 監査ログ記録
 
-##### データ収集 (`functions/export/collect.ts`)
-- [ ] Firestoreデータ取得
-  - [ ] Users コレクション
-  - [ ] Sessions コレクション
-  - [ ] TrainingResults コレクション
-  - [ ] Consents コレクション
-- [ ] Storage データ収集
-  - [ ] プロフィール画像
-  - [ ] トレーニング動画（該当する場合）
-- [ ] BigQueryデータ抽出
-  - [ ] 集計データ
-  - [ ] 分析結果
+##### データ収集 (`functions/src/services/gdprService.ts`)
+- [x] Firestoreデータ取得 (`collectUserData()`)
+  - [x] Users コレクション
+  - [x] Sessions コレクション
+  - [x] Consents コレクション
+  - [x] Settings コレクション
+  - [x] Subscriptions コレクション
+- [x] Storage データ収集 (`collectStorageData()`)
+  - [x] プロフィール画像（base64エンコード）
+  - [x] メディアファイルメタデータ収集
+- [x] BigQueryデータ抽出 (`collectBigQueryData()`)
+  - [x] 集計データ（総セッション、総レップ、平均スコア）
+  - [x] 種目別内訳
+  - [x] 週間進捗（過去12週）
+  - [x] 月間トレンド（過去12ヶ月）
 
-##### データ変換 (`functions/export/transform.ts`)
-- [ ] フォーマット変換
-  ```typescript
-  function transformToJSON(data: ExportData): string {
-    return JSON.stringify(data, null, 2);
-  }
+##### データ変換 (`functions/src/services/gdprService.ts`)
+- [x] フォーマット変換
+  - [x] `transformToExportFormat()` - JSON/CSV変換
+  - [x] `convertProfileToCSV()` - プロフィールCSV変換
+  - [x] `convertSessionsToCSV()` - セッションCSV変換
+  - [x] `convertConsentsToCSV()` - 同意CSV変換
+  - [x] `convertSettingsToCSV()` - 設定CSV変換
+  - [x] `convertSubscriptionsToCSV()` - サブスクリプションCSV変換
+  - [x] `convertAnalyticsToCSV()` - 分析データCSV変換
+  - [ ] PDF生成（将来実装）
+- [x] データサニタイズ
+  - [x] ユーザーIDの部分マスキング（README内）
+  - [x] CSVエスケープ処理（`escapeCSV()`）
 
-  function transformToCSV(data: ExportData): string {
-    // フラット化してCSV変換
-  }
-
-  function transformToPDF(data: ExportData): Buffer {
-    // PDFレポート生成
-  }
-  ```
-- [ ] データサニタイズ
-  - [ ] 内部IDの除外
-  - [ ] システム情報の除外
-  - [ ] 機密情報のマスキング
-
-##### ファイル生成 (`functions/export/generate.ts`)
-- [ ] アーカイブ作成
-  - [ ] ZIP圧縮
-  - [ ] パスワード保護（オプション）
-  - [ ] ファイル構造
+##### ファイル生成 (`functions/src/services/gdprService.ts`)
+- [x] アーカイブ作成 (`createExportArchive()`)
+  - [x] ZIP圧縮（archiver パッケージ使用、最大圧縮レベル9）
+  - [ ] パスワード保護（将来実装）
+  - [x] ファイル構造
     ```
     export_YYYYMMDD_HHMMSS/
-    ├── profile.json
-    ├── sessions/
-    ├── training_results/
-    ├── consents/
-    └── README.txt
+    ├── README.txt（GDPR説明、データ内容説明）
+    ├── profile.json (or .csv)
+    ├── sessions.json (or .csv)
+    ├── consents.json (or .csv)
+    ├── settings.json (or .csv)
+    ├── subscriptions.json (or .csv)
+    ├── analytics.json (or .csv)
+    └── media/
+        └── profile_image.jpg (存在する場合)
     ```
-- [ ] Cloud Storage アップロード
-  - [ ] 一時バケット使用
-  - [ ] 署名付きURL生成
-  - [ ] 自動削除設定（48時間）
+- [x] README生成 (`generateReadmeContent()`)
+  - [x] エクスポート情報（日時、フォーマット）
+  - [x] 含まれるデータの説明
+  - [x] GDPR/個人情報保護法に関する説明
+  - [x] データ取り扱い注意事項
+  - [x] 問い合わせ先
+- [x] Cloud Storage アップロード (`uploadExportArchive()`)
+  - [x] GDPR専用バケット使用
+  - [x] 署名付きURL生成（48時間有効）
+  - [x] メタデータ設定（userId, requestId, exportedAt）
 
-##### 通知 (`functions/export/notify.ts`)
-- [ ] メール送信
-  - [ ] 完了通知
-  - [ ] ダウンロードリンク
-  - [ ] セキュリティ注意事項
-- [ ] プッシュ通知
-- [ ] アプリ内通知
+##### 通知 (`functions/src/services/gdprService.ts`)
+- [x] メール送信
+  - [x] 完了通知 (`sendExportCompletionNotification()`)
+    - [x] ダウンロードリンク
+    - [x] 有効期限（日本時間表示）
+    - [x] セキュリティ注意事項
+  - [x] 失敗通知 (`sendExportFailureNotification()`)
+  - [x] 開発環境ではログ出力のみ
+  - [ ] 本番環境メール送信（SendGrid導入後）
+- [ ] プッシュ通知（将来実装）
+- [ ] アプリ内通知（将来実装）
 
 #### データ削除API
 
