@@ -14,6 +14,12 @@ import {
   isPositiveNumber,
   isValidEmail,
   isValidExerciseType,
+  isNonNegativeNumber,
+  validateGender,
+  validateFitnessLevel,
+  validatePoseLandmark,
+  validatePoseData,
+  validatePageToken,
 } from "../../src/utils/validation";
 import { ValidationError } from "../../src/utils/errors";
 
@@ -211,3 +217,137 @@ describe("Validation Utilities", () => {
     });
   });
 });
+
+  describe("isNonNegativeNumber", () => {
+    it("should return true for zero and positive", () => {
+      expect(isNonNegativeNumber(0)).toBe(true);
+      expect(isNonNegativeNumber(1)).toBe(true);
+    });
+    it("should return false for negative", () => {
+      expect(isNonNegativeNumber(-1)).toBe(false);
+    });
+  });
+
+  describe("validateGender", () => {
+    it("should accept valid genders", () => {
+      expect(validateGender("male")).toBe("male");
+      expect(validateGender("female")).toBe("female");
+    });
+    it("should return undefined for null", () => {
+      expect(validateGender(null)).toBeUndefined();
+    });
+    it("should reject invalid", () => {
+      expect(() => validateGender("invalid")).toThrow(ValidationError);
+    });
+  });
+
+  describe("validateFitnessLevel", () => {
+    it("should accept valid levels", () => {
+      expect(validateFitnessLevel("beginner")).toBe("beginner");
+      expect(validateFitnessLevel("advanced")).toBe("advanced");
+    });
+    it("should return undefined for null", () => {
+      expect(validateFitnessLevel(null)).toBeUndefined();
+    });
+    it("should reject invalid", () => {
+      expect(() => validateFitnessLevel("expert")).toThrow(ValidationError);
+    });
+  });
+
+  describe("validatePoseLandmark", () => {
+    it("should accept valid landmark", () => {
+      const lm = { index: 0, x: 0.5, y: 0.5, z: 0.1, visibility: 0.9 };
+      expect(validatePoseLandmark(lm, 0)).toEqual(lm);
+    });
+    it("should reject invalid index", () => {
+      const lm = { index: 33, x: 0.5, y: 0.5, z: 0.1, visibility: 0.9 };
+      expect(() => validatePoseLandmark(lm, 0)).toThrow(ValidationError);
+    });
+    it("should reject non-object", () => {
+      expect(() => validatePoseLandmark(null, 0)).toThrow(ValidationError);
+    });
+  });
+
+  describe("validatePoseData", () => {
+    it("should accept 33 landmarks", () => {
+      const data = Array.from({ length: 33 }, (_, i) => ({
+        index: i,
+        x: 0.5,
+        y: 0.5,
+        z: 0.1,
+        visibility: 0.9,
+      }));
+      expect(validatePoseData(data)).toHaveLength(33);
+    });
+    it("should reject non-33 length", () => {
+      const data = Array.from({ length: 32 }, (_, i) => ({
+        index: i,
+        x: 0.5,
+        y: 0.5,
+        z: 0.1,
+        visibility: 0.9,
+      }));
+      expect(() => validatePoseData(data)).toThrow(ValidationError);
+    });
+    it("should reject non-array", () => {
+      expect(() => validatePoseData(null)).toThrow(ValidationError);
+    });
+  });
+
+  describe("validatePageToken", () => {
+    it("should return undefined for null", () => {
+      expect(validatePageToken(null)).toBeUndefined();
+    });
+    it("should accept valid base64", () => {
+      const t = Buffer.from("test").toString("base64");
+      expect(validatePageToken(t)).toBe(t);
+    });
+    it("should reject empty", () => {
+      expect(() => validatePageToken("")).toThrow(ValidationError);
+    });
+  });
+
+
+  describe("Edge cases", () => {
+    it("validatePoseLandmark should reject missing y coordinate", () => {
+      const lm = { index: 0, x: 0.5, z: 0.1, visibility: 0.9 };
+      expect(() => validatePoseLandmark(lm, 0)).toThrow(ValidationError);
+    });
+
+    it("validatePoseData should reject invalid landmark in middle", () => {
+      const data = Array.from({ length: 33 }, (_, i) => ({
+        index: i,
+        x: 0.5,
+        y: 0.5,
+        z: 0.1,
+        visibility: 0.9,
+      }));
+      data[16] = { index: 16, x: "invalid", y: 0.5, z: 0.1, visibility: 0.9 };
+      expect(() => validatePoseData(data)).toThrow(ValidationError);
+    });
+  });
+
+
+  describe("Additional coverage for validation.ts", () => {
+    it("isValidEmail should reject non-string input", () => {
+      expect(isValidEmail(123)).toBe(false);
+      expect(isValidEmail(null)).toBe(false);
+      expect(isValidEmail(undefined)).toBe(false);
+    });
+
+    it("validateEmail should reject non-string type", () => {
+      expect(() => validateEmail(123)).toThrow(ValidationError);
+      expect(() => validateEmail(123)).toThrow("文字列");
+    });
+
+    it("validatePoseLandmark should reject out of range visibility", () => {
+      const lm = { index: 0, x: 0.5, y: 0.5, z: 0.1, visibility: 1.5 };
+      expect(() => validatePoseLandmark(lm, 0)).toThrow(ValidationError);
+    });
+
+    it("validatePoseData should reject non-array input", () => {
+      expect(() => validatePoseData("not an array")).toThrow(ValidationError);
+      expect(() => validatePoseData({ length: 33 })).toThrow(ValidationError);
+    });
+
+  });
