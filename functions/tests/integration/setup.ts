@@ -4,8 +4,8 @@
  * Configuration for Firebase emulator-based integration tests.
  * Uses firebase-admin to connect to emulators.
  *
- * @version 1.0.0
- * @date 2025-11-27
+ * @version 1.1.0
+ * @date 2025-11-30
  */
 
 import * as admin from "firebase-admin";
@@ -26,7 +26,7 @@ process.env.GCLOUD_PROJECT = TEST_PROJECT_ID;
 process.env.CONSENT_SALT = "test-consent-salt";
 
 // Initialize Firebase Admin for emulator
-let app: admin.app.App;
+let app: admin.app.App | undefined;
 
 export function initializeTestApp(): admin.app.App {
   if (app) {
@@ -330,11 +330,6 @@ export async function getDeletionRequests(userId: string): Promise<
 // Global test setup
 beforeAll(async () => {
   initializeTestApp();
-});
-
-// Cleanup after each test
-afterEach(async () => {
-  // Note: Don't clear all data here as it may interfere with parallel tests
 });
 
 // Global test timeout for integration tests (longer than unit tests)
