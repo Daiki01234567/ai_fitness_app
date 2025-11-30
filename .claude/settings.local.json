@@ -25,11 +25,30 @@
       "Bash(Out-String -Width 500)",
       "Bash(findstr:*)",
       "Bash(firebase functions:list:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(flutter build:*)",
+      "Bash(git checkout:*)",
+      "Bash(dart:*)",
+      "Bash(if exist test_debug.dart del test_debug.dart)",
+      "Bash(del test_debug.dart)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(timeout 15 npm test:*)",
+      "Bash(dir:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(node:*)",
+      "Bash(python:*)",
+      "Bash(npx jest:*)"
     ],
     "deny": [
       "Bash(rm:*)",
-      "Bash(rm -rf:*)"
+      "Bash(rm -rf:*)",
+      "Bash(git config *)",
+      "Bash(brew install *)",
+      "Bash(chmod 777 *)",
+      "Bash(rm -rf /*)",
+      "Bash(gh repo delete:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -44,5 +63,29 @@
     "context7",
     "serena",
     "claude-context"
-  ]
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File C:\\Users\\katos\\Desktop\\ai_fitness_app\\.claude\\hooks\\notify-claude.ps1 -EventType Stop -WebhookUrl https://discord.com/api/webhooks/1344664933673205790/MyEmtMOyLTExsXU0NeUZ_lStnlD6josCByaBj-AmY6GsoeVY4EpEayK-BPubzNuEjNAH"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File C:\\Users\\katos\\Desktop\\ai_fitness_app\\.claude\\hooks\\notify-claude.ps1 -EventType Notification -WebhookUrl https://discord.com/api/webhooks/1344664933673205790/MyEmtMOyLTExsXU0NeUZ_lStnlD6josCByaBj-AmY6GsoeVY4EpEayK-BPubzNuEjNAH"
+          }
+        ]
+      }
+    ]
+  }
 }
