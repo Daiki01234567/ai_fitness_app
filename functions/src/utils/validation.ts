@@ -115,13 +115,17 @@ export function validateNickname(nickname: unknown): string {
  */
 export function validateEmail(email: unknown): string {
   validateRequired(email, "メールアドレス");
-  if (!isValidEmail(email)) {
+  if (typeof email !== "string") {
+    throw ValidationError.invalidType("メールアドレス", "文字列");
+  }
+  const trimmedEmail = email.toLowerCase().trim();
+  if (!isValidEmail(trimmedEmail)) {
     throw new ValidationError("有効なメールアドレスを入力してください", {
       field: "email",
       constraint: "email",
     });
   }
-  return email.toLowerCase().trim();
+  return trimmedEmail;
 }
 
 /**
