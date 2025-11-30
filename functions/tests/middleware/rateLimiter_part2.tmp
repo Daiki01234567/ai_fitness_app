@@ -1,0 +1,136 @@
+
+describe("RateLimiter Middleware", () => {
+  let mockFirestore: any;
+  let mockCollection: any;
+  let mockDoc: any;
+  let mockTransaction: any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockDoc = {
+      get: jest.fn(),
+      set: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+
+    mockCollection = {
+      doc: jest.fn(() => mockDoc),
+      where: jest.fn(() => ({
+        limit: jest.fn(() => ({
+          get: jest.fn(() => Promise.resolve({ empty: true, docs: [], size: 0 })),
+        })),
+      })),
+    };
+
+    mockTransaction = {
+      get: jest.fn(),
+      set: jest.fn(),
+      update: jest.fn(),
+    };
+
+    mockFirestore = {
+      collection: jest.fn(() => mockCollection),
+      runTransaction: jest.fn(async (callback) => callback(mockTransaction)),
+      batch: jest.fn(() => ({
+        delete: jest.fn(),
+        commit: jest.fn(() => Promise.resolve()),
+      })),
+    };
+
+    (getFirestore as jest.Mock).mockReturnValue(mockFirestore);
+
+    const now = Date.now();
+    (admin.firestore.Timestamp.now as jest.Mock).mockReturnValue({
+      toMillis: () => now,
+      toDate: () => new Date(now),
+    });
+    (admin.firestore.Timestamp.fromDate as jest.Mock).mockImplementation((date: Date) => ({
+      toMillis: () => date.getTime(),
+      toDate: () => date,
+    }));
+  });
+
+  describe("RateLimiter Class", () => {
+    let limiter: RateLimiter;
+
+    beforeEach(() => {
+      limiter = new RateLimiter();
+    });
+
+    describe("checkLimit", () => {
+      const config: RateLimitConfig = { maxRequests: 10, windowSeconds: 3600 };
+      const identifier = "user-123";
+
+      it("初回リクエストは成功し、レコードを作成する", async () => {
+        mockTransaction.get.mockResolvedValueOnce({
+          exists: false,
+        });
+
+        const result = await limiter.checkLimit(identifier, config);
+
+        expect(result).toBe(true);
+        expect(mockTransaction.set).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            count: 1,
+          })
+        );
+      });
+
+      it("制限内のリクエストは成功し、カウントをインクリメントする", async () => {
+        const now = Date.now();
+        const windowStart = now - 1000 * 1000;
+
+        mockTransaction.get.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            count: 5,
+            windowStart: {
+              toMillis: () => windowStart,
+            },
+            updatedAt: {
+              toMillis: () => now - 500 * 1000,
+            },
+          }),
+        });
+
+        const result = await limiter.checkLimit(identifier, config);
+
+        expect(result).toBe(true);
+        expect(mockTransaction.update).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            count: expect.objectContaining({ _methodName: "increment", _value: 1 }),
+          })
+        );
+      });
+
+      it("ウィンドウが期限切れの場合、リセットして成功する", async () => {
+        const now = Date.now();
+        const oldWindowStart = now - 5000 * 1000;
+
+        mockTransaction.get.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({
+            count: 10,
+            windowStart: {
+              toMillis: () => oldWindowStart,
+            },
+            updatedAt: {
+              toMillis: () => oldWindowStart,
+            },
+          }),
+        });
+
+        const result = await limiter.checkLimit(identifier, config);
+
+        expect(result).toBe(true);
+        expect(mockTransaction.set).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            count: 1,
+          })
+        );
+      });

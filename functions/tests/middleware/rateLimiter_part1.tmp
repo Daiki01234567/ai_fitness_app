@@ -1,0 +1,64 @@
+/**
+ * Rate Limiter Middleware Tests
+ *
+ * rateLimiter.ts の包括的なユニットテストスイート
+ * Firestore トランザクションベースのレート制限機能をテスト
+ *
+ * Reference: docs/specs/03_API設計書_Firebase_Functions_v3_3.md
+ */
+
+import * as admin from "firebase-admin";
+
+// Mock firebase-admin
+jest.mock("firebase-admin", () => {
+  return {
+    apps: [{ name: "test-app" }],
+    initializeApp: jest.fn(),
+    firestore: jest.fn(() => ({
+      collection: jest.fn(),
+      runTransaction: jest.fn(),
+      FieldValue: {
+        increment: jest.fn((value: number) => ({ _methodName: "increment", _value: value })),
+      },
+      Timestamp: {
+        now: jest.fn(),
+        fromDate: jest.fn(),
+      },
+    })),
+  };
+});
+
+// Mock utils
+jest.mock("../../src/utils/logger", () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+jest.mock("../../src/utils/firestore", () => ({
+  getFirestore: jest.fn(),
+  serverTimestamp: jest.fn(() => new Date()),
+}));
+
+jest.mock("../../src/utils/errors", () => ({
+  RateLimitError: class RateLimitError extends Error {
+    constructor(message = "リクエストが多すぎます。しばらく待ってから再度お試しください") {
+      super(message);
+      this.name = "RateLimitError";
+    }
+  },
+}));
+
+// Import after mocks
+import {
+  RateLimiter,
+  rateLimiter,
+  RateLimits,
+  RateLimitConfig,
+  withRateLimit,
+} from "../../src/middleware/rateLimiter";
+import { RateLimitError } from "../../src/utils/errors";
+import { logger } from "../../src/utils/logger";
+import { getFirestore } from "../../src/utils/firestore";
