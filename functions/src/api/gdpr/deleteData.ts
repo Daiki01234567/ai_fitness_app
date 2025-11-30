@@ -20,9 +20,12 @@ import { createAuditLog } from "../../services/auditLog";
 import { cloudTasks } from "../../services/cloudTasks";
 import {
   deleteUserData,
-  verifyDeletion,
   setUserDeletionScheduled,
   hasPendingDeletionRequest,
+  deleteUserStorage,
+  deleteUserFromBigQuery,
+  verifyCompleteDeletion,
+  generateDeletionCertificate,
 } from "../../services/gdprService";
 import {
   DeletionRequest,
@@ -34,6 +37,7 @@ import {
   CancelDeletionApiRequest,
   CancelDeletionApiResponse,
   GetDeletionStatusApiResponse,
+  DeletionCertificate,
   GDPR_CONSTANTS,
 } from "../../types/gdpr";
 import { ValidationError, NotFoundError } from "../../utils/errors";
@@ -445,6 +449,8 @@ export const gdpr_getDeletionStatus = onCall(
 
 /**
  * 削除ジョブを処理（Cloud Tasks トリガー）
+ *
+ * 強化版: Storage削除、BigQuery削除、削除証明書生成を含む完全な削除処理
  */
 export const gdpr_processDataDeletion = onTaskDispatched(
   {
@@ -464,9 +470,14 @@ export const gdpr_processDataDeletion = onTaskDispatched(
     const { userId, requestId } = req.data as { userId: string; requestId: string };
     const startTime = Date.now();
 
-    logger.info("Processing data deletion job", { userId, requestId });
+    logger.info("Processing data deletion job (enhanced)", { userId, requestId });
 
     const docRef = deletionRequestsCollection().doc(requestId);
+
+    // Track deletion results for certificate
+    let storageFilesCount = 0;
+    let bigqueryRowsDeleted = 0;
+    let authDeleted = false;
 
     try {
       // リクエストを取得
@@ -504,17 +515,94 @@ export const gdpr_processDataDeletion = onTaskDispatched(
       // ステータスを processing に更新
       await docRef.update({
         status: "processing" as DeletionRequestStatus,
+        processingStartedAt: FieldValue.serverTimestamp(),
       });
 
-      // ユーザーデータを削除
+      // ========================================
+      // Step 1: Firestore データを削除
+      // ========================================
+      logger.info("Step 1: Deleting Firestore data", { userId, requestId });
       const { deletedCollections } = await deleteUserData(userId, deletionRequest.scope);
 
-      // 削除を検証
-      const { verified, remainingData } = await verifyDeletion(userId, deletionRequest.scope);
+      // ========================================
+      // Step 2: Storage データを削除
+      // ========================================
+      logger.info("Step 2: Deleting Storage data", { userId, requestId });
+      const storageResult = await deleteUserStorage(userId);
+      storageFilesCount = storageResult.filesCount;
+
+      if (!storageResult.deleted && storageResult.error) {
+        logger.warn("Storage deletion had errors", {
+          userId,
+          requestId,
+          error: storageResult.error,
+        });
+      }
+
+      // ========================================
+      // Step 3: BigQuery データを削除
+      // ========================================
+      logger.info("Step 3: Deleting BigQuery data", { userId, requestId });
+      const bigqueryResult = await deleteUserFromBigQuery(userId);
+      bigqueryRowsDeleted = bigqueryResult.rowsAffected;
+
+      if (!bigqueryResult.deleted && bigqueryResult.error) {
+        logger.warn("BigQuery deletion had errors", {
+          userId,
+          requestId,
+          error: bigqueryResult.error,
+        });
+      }
+
+      // ========================================
+      // Step 4: Firebase Auth を削除（全削除の場合のみ）
+      // ========================================
+      if (deletionRequest.scope.includes("all")) {
+        logger.info("Step 4: Deleting Firebase Auth user", { userId, requestId });
+        try {
+          await admin.auth().deleteUser(userId);
+          authDeleted = true;
+          deletedCollections.push("auth");
+        } catch (authError) {
+          logger.warn("Failed to delete Auth user", { userId }, authError as Error);
+          // Auth user may have been deleted already
+          authDeleted = false;
+        }
+      }
+
+      // ========================================
+      // Step 5: 完全削除を検証
+      // ========================================
+      logger.info("Step 5: Verifying complete deletion", { userId, requestId });
+      const {
+        verified,
+        verificationResult,
+        remainingData,
+      } = await verifyCompleteDeletion(userId, deletionRequest.scope);
 
       if (!verified) {
-        logger.warn("Deletion verification failed", { userId, requestId, remainingData });
+        logger.warn("Deletion verification found remaining data", {
+          userId,
+          requestId,
+          remainingData,
+        });
       }
+
+      // ========================================
+      // Step 6: 削除証明書を生成
+      // ========================================
+      logger.info("Step 6: Generating deletion certificate", { userId, requestId });
+      const certificate = await generateDeletionCertificate(
+        userId,
+        requestId,
+        {
+          firestoreCollections: deletedCollections,
+          storageFilesCount,
+          bigqueryRowsDeleted,
+          authDeleted,
+        },
+        verificationResult,
+      );
 
       // ステータスを completed に更新
       await docRef.update({
@@ -522,6 +610,13 @@ export const gdpr_processDataDeletion = onTaskDispatched(
         executedAt: FieldValue.serverTimestamp(),
         deletionVerified: verified,
         deletedCollections,
+        certificateId: certificate.certificateId,
+        deletionDetails: {
+          storageFilesDeleted: storageFilesCount,
+          bigqueryRowsDeleted,
+          authDeleted,
+          verificationResult,
+        },
       });
 
       // 監査ログを作成
@@ -532,16 +627,24 @@ export const gdpr_processDataDeletion = onTaskDispatched(
         resourceId: requestId,
         newValues: {
           deletedCollections,
+          storageFilesDeleted: storageFilesCount,
+          bigqueryRowsDeleted,
+          authDeleted,
           verified,
+          certificateId: certificate.certificateId,
         },
         success: true,
       });
 
-      logger.info("Data deletion completed", {
+      logger.info("Data deletion completed successfully", {
         userId,
         requestId,
         deletedCollections,
+        storageFilesDeleted: storageFilesCount,
+        bigqueryRowsDeleted,
+        authDeleted,
         verified,
+        certificateId: certificate.certificateId,
         durationMs: Date.now() - startTime,
       });
     } catch (error) {
@@ -550,6 +653,7 @@ export const gdpr_processDataDeletion = onTaskDispatched(
       // ステータスを更新（エラー情報を記録）
       await docRef.update({
         error: error instanceof Error ? error.message : "不明なエラーが発生しました",
+        lastErrorAt: FieldValue.serverTimestamp(),
       });
 
       throw error; // リトライのために再スロー
@@ -602,6 +706,104 @@ export const gdpr_getDeletionRequests = onCall(
     } catch (error) {
       logger.error("Get deletion requests failed", error as Error, { userId });
       throw new HttpsError("internal", "削除リクエスト一覧の取得に失敗しました");
+    }
+  },
+);
+
+/**
+ * 削除証明書を取得
+ *
+ * @description
+ * 削除リクエスト完了後に発行された削除証明書を取得。
+ * GDPR コンプライアンス証明として使用可能。
+ */
+export const gdpr_getDeletionCertificate = onCall(
+  {
+    region: "asia-northeast1",
+    memory: "256MiB",
+    timeoutSeconds: 30,
+  },
+  async (
+    request: CallableRequest<{ requestId: string }>,
+  ): Promise<{ certificate: DeletionCertificate | null; message: string }> => {
+    // 認証チェック
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "認証が必要です");
+    }
+
+    const userId = request.auth.uid;
+    const { requestId } = request.data || {};
+
+    if (!requestId) {
+      throw new HttpsError("invalid-argument", "リクエストIDが必要です");
+    }
+
+    logger.info("Getting deletion certificate", { userId, requestId });
+
+    try {
+      // Get the deletion request first
+      const deletionDoc = await deletionRequestsCollection().doc(requestId).get();
+
+      if (!deletionDoc.exists) {
+        throw new NotFoundError("削除リクエスト", requestId);
+      }
+
+      const deletionRequest = deletionDoc.data() as DeletionRequest;
+
+      // Verify ownership
+      if (deletionRequest.userId !== userId) {
+        throw new HttpsError("permission-denied", "この証明書にアクセスする権限がありません");
+      }
+
+      // Check if deletion is completed and has a certificate
+      if (deletionRequest.status !== "completed") {
+        return {
+          certificate: null,
+          message: "削除がまだ完了していないため、証明書は発行されていません",
+        };
+      }
+
+      // Get the certificate ID from the deletion request
+      type DeletionRequestWithCert = DeletionRequest & { certificateId?: string };
+      const certificateId = (deletionRequest as DeletionRequestWithCert).certificateId;
+
+      if (!certificateId) {
+        return {
+          certificate: null,
+          message: "この削除リクエストには証明書が関連付けられていません",
+        };
+      }
+
+      // Get the certificate
+      const certDoc = await db.collection("deletionCertificates").doc(certificateId).get();
+
+      if (!certDoc.exists) {
+        logger.warn("Certificate not found for completed deletion", { requestId, certificateId });
+        return {
+          certificate: null,
+          message: "証明書が見つかりません",
+        };
+      }
+
+      const certificate = certDoc.data() as DeletionCertificate;
+
+      logger.info("Deletion certificate retrieved", { userId, requestId, certificateId });
+
+      return {
+        certificate,
+        message: "削除証明書を取得しました",
+      };
+    } catch (error) {
+      logger.error("Get deletion certificate failed", error as Error, { userId, requestId });
+
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      if (error instanceof NotFoundError) {
+        throw new HttpsError("not-found", error.message);
+      }
+
+      throw new HttpsError("internal", "証明書の取得に失敗しました");
     }
   },
 );
