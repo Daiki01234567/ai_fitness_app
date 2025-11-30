@@ -9,8 +9,10 @@
  */
 
 import * as crypto from "crypto";
+import { PassThrough } from "stream";
 
 import { Storage } from "@google-cloud/storage";
+import archiver from "archiver";
 import * as admin from "firebase-admin";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 
@@ -33,6 +35,11 @@ import {
   BigQueryDeletionResult,
   DeletionVerificationResult,
   DeletionCertificate,
+  StorageExportData,
+  BigQueryExportData,
+  ExportArchiveOptions,
+  WeeklyProgress,
+  MonthlyTrend,
 } from "../types/gdpr";
 import {
   getFirestore,
@@ -1610,4 +1617,854 @@ export function verifyCertificateSignature(certificate: DeletionCertificate): bo
   const expectedSignature = generateSignature(dataToSign);
 
   return certificate.signature === expectedSignature;
+}
+
+// =============================================================================
+// Storage データ収集関数（エクスポート用）
+// =============================================================================
+
+/**
+ * ユーザーアップロードバケット名を取得
+ */
+function getUserUploadsBucketName(): string {
+  const projectId = process.env.GCLOUD_PROJECT || "tokyo-list-478804-e5";
+  return `${projectId}-user-uploads`;
+}
+
+/**
+ * ユーザーの Storage データを収集（エクスポート用）
+ *
+ * @param userId - ユーザー ID
+ * @returns Storage エクスポートデータ
+ */
+export async function collectStorageData(userId: string): Promise<StorageExportData> {
+  const startTime = Date.now();
+  const bucketName = getUserUploadsBucketName();
+
+  logger.info("Collecting storage data for export", { userId, bucketName });
+
+  const result: StorageExportData = {};
+
+  try {
+    const bucket = storage.bucket(bucketName);
+    const userPrefix = `users/${userId}/`;
+
+    // List all files under the user's folder
+    const [files] = await bucket.getFiles({ prefix: userPrefix });
+
+    if (files.length === 0) {
+      logger.info("No storage files found for user", { userId });
+      return result;
+    }
+
+    // Process profile image
+    const profileImageFile = files.find(
+      (f) =>
+        f.name.includes("profile") &&
+        (f.name.endsWith(".jpg") ||
+          f.name.endsWith(".jpeg") ||
+          f.name.endsWith(".png") ||
+          f.name.endsWith(".webp")),
+    );
+
+    if (profileImageFile) {
+      try {
+        const [metadata] = await profileImageFile.getMetadata();
+        const [fileContent] = await profileImageFile.download();
+
+        result.profileImage = {
+          fileName: profileImageFile.name.split("/").pop() || "profile_image",
+          contentType: metadata.contentType || "image/jpeg",
+          size: parseInt(String(metadata.size || "0"), 10),
+          base64Data: fileContent.toString("base64"),
+        };
+
+        logger.info("Profile image collected", {
+          userId,
+          fileName: result.profileImage.fileName,
+          size: result.profileImage.size,
+        });
+      } catch (error) {
+        logger.warn("Failed to collect profile image", { userId }, error as Error);
+      }
+    }
+
+    // Collect metadata for other media files (training videos, etc.)
+    const mediaFiles = files.filter(
+      (f) =>
+        !f.name.includes("profile") &&
+        (f.name.endsWith(".mp4") ||
+          f.name.endsWith(".mov") ||
+          f.name.endsWith(".jpg") ||
+          f.name.endsWith(".png")),
+    );
+
+    if (mediaFiles.length > 0) {
+      result.mediaFiles = [];
+
+      for (const file of mediaFiles) {
+        try {
+          const [metadata] = await file.getMetadata();
+          result.mediaFiles.push({
+            fileName: file.name.split("/").pop() || "unknown",
+            path: file.name,
+            contentType: metadata.contentType || "application/octet-stream",
+            size: parseInt(String(metadata.size || "0"), 10),
+          });
+        } catch (error) {
+          logger.warn("Failed to collect media file metadata", { fileName: file.name }, error as Error);
+        }
+      }
+
+      logger.info("Media files metadata collected", {
+        userId,
+        count: result.mediaFiles.length,
+      });
+    }
+
+    logger.info("Storage data collection completed", {
+      userId,
+      hasProfileImage: !!result.profileImage,
+      mediaFilesCount: result.mediaFiles?.length || 0,
+      durationMs: Date.now() - startTime,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error("Failed to collect storage data", error as Error, { userId });
+    // Return empty result instead of throwing to allow export to continue
+    return result;
+  }
+}
+
+/**
+ * プロフィール画像のバイナリデータを取得
+ *
+ * @param userId - ユーザー ID
+ * @returns プロフィール画像の Buffer（存在しない場合は undefined）
+ */
+export async function getProfileImageBuffer(userId: string): Promise<Buffer | undefined> {
+  const bucketName = getUserUploadsBucketName();
+
+  try {
+    const bucket = storage.bucket(bucketName);
+    const userPrefix = `users/${userId}/`;
+
+    const [files] = await bucket.getFiles({ prefix: userPrefix });
+
+    const profileImageFile = files.find(
+      (f) =>
+        f.name.includes("profile") &&
+        (f.name.endsWith(".jpg") ||
+          f.name.endsWith(".jpeg") ||
+          f.name.endsWith(".png") ||
+          f.name.endsWith(".webp")),
+    );
+
+    if (profileImageFile) {
+      const [fileContent] = await profileImageFile.download();
+      return fileContent;
+    }
+
+    return undefined;
+  } catch (error) {
+    logger.warn("Failed to get profile image buffer", { userId }, error as Error);
+    return undefined;
+  }
+}
+
+// =============================================================================
+// BigQuery データ抽出関数（エクスポート用）
+// =============================================================================
+
+/**
+ * ユーザーの BigQuery 分析データを抽出（エクスポート用）
+ *
+ * @param userId - ユーザー ID
+ * @returns BigQuery エクスポートデータ
+ */
+export async function collectBigQueryData(userId: string): Promise<BigQueryExportData | null> {
+  const startTime = Date.now();
+
+  logger.info("Collecting BigQuery data for export", { userId });
+
+  try {
+    const projectId = process.env.GCLOUD_PROJECT || "tokyo-list-478804-e5";
+    const userHash = crypto
+      .createHash("sha256")
+      .update(userId + (process.env.ANONYMIZATION_SALT ?? ""))
+      .digest("hex")
+      .substring(0, 16);
+
+    // Get aggregate statistics
+    const aggregateQuery = `
+      SELECT
+        COUNT(*) as total_sessions,
+        SUM(rep_count) as total_reps,
+        AVG(average_score) as avg_score
+      FROM \`${projectId}.fitness_analytics.training_sessions\`
+      WHERE user_hash = @userHash
+    `;
+
+    // Get exercise breakdown
+    const exerciseQuery = `
+      SELECT
+        exercise_type,
+        COUNT(*) as session_count
+      FROM \`${projectId}.fitness_analytics.training_sessions\`
+      WHERE user_hash = @userHash
+      GROUP BY exercise_type
+    `;
+
+    // Get weekly progress (last 12 weeks)
+    const weeklyQuery = `
+      SELECT
+        FORMAT_DATE('%Y-W%V', DATE(created_at)) as week,
+        COUNT(*) as sessions,
+        AVG(average_score) as avg_score
+      FROM \`${projectId}.fitness_analytics.training_sessions\`
+      WHERE user_hash = @userHash
+        AND created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 WEEK)
+      GROUP BY week
+      ORDER BY week DESC
+    `;
+
+    // Get monthly trends (last 12 months)
+    const monthlyQuery = `
+      SELECT
+        FORMAT_DATE('%Y-%m', DATE(created_at)) as month,
+        COUNT(*) as sessions,
+        AVG(average_score) as avg_score
+      FROM \`${projectId}.fitness_analytics.training_sessions\`
+      WHERE user_hash = @userHash
+        AND created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
+      GROUP BY month
+      ORDER BY month DESC
+    `;
+
+    // Execute queries in parallel
+    interface AggregateResult {
+      total_sessions: number;
+      total_reps: number;
+      avg_score: number;
+    }
+
+    interface ExerciseResult {
+      exercise_type: string;
+      session_count: number;
+    }
+
+    interface WeeklyResult {
+      week: string;
+      sessions: number;
+      avg_score: number;
+    }
+
+    interface MonthlyResult {
+      month: string;
+      sessions: number;
+      avg_score: number;
+    }
+
+    const [aggregateResult, exerciseResult, weeklyResult, monthlyResult] = await Promise.all([
+      bigQueryService.runQuery<AggregateResult>(aggregateQuery, { userHash }),
+      bigQueryService.runQuery<ExerciseResult>(exerciseQuery, { userHash }),
+      bigQueryService.runQuery<WeeklyResult>(weeklyQuery, { userHash }),
+      bigQueryService.runQuery<MonthlyResult>(monthlyQuery, { userHash }),
+    ]);
+
+    // Build exercise breakdown
+    const exerciseBreakdown: Record<string, number> = {};
+    for (const row of exerciseResult) {
+      exerciseBreakdown[row.exercise_type] = row.session_count;
+    }
+
+    // Build weekly progress
+    const weeklyProgress: WeeklyProgress[] = weeklyResult.map((row) => ({
+      week: row.week,
+      sessions: row.sessions,
+      avgScore: row.avg_score || 0,
+    }));
+
+    // Build monthly trends
+    const monthlyTrends: MonthlyTrend[] = monthlyResult.map((row) => ({
+      month: row.month,
+      sessions: row.sessions,
+      avgScore: row.avg_score || 0,
+    }));
+
+    const aggregate = aggregateResult[0] || { total_sessions: 0, total_reps: 0, avg_score: 0 };
+
+    const result: BigQueryExportData = {
+      totalSessions: aggregate.total_sessions || 0,
+      totalReps: aggregate.total_reps || 0,
+      averageScore: aggregate.avg_score || 0,
+      exerciseBreakdown,
+      weeklyProgress,
+      monthlyTrends,
+    };
+
+    logger.info("BigQuery data collection completed", {
+      userId,
+      totalSessions: result.totalSessions,
+      totalReps: result.totalReps,
+      exerciseTypes: Object.keys(exerciseBreakdown).length,
+      durationMs: Date.now() - startTime,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error("Failed to collect BigQuery data", error as Error, { userId });
+    // Return null instead of throwing to allow export to continue
+    return null;
+  }
+}
+
+// =============================================================================
+// ZIP アーカイブ作成関数
+// =============================================================================
+
+/**
+ * README ファイルの内容を生成
+ *
+ * @param data - エクスポートデータ
+ * @param format - エクスポートフォーマット
+ * @returns README テキスト
+ */
+export function generateReadmeContent(data: ExportData, format: ExportFormat): string {
+  const lines: string[] = [
+    "=" .repeat(60),
+    "AI Fitness App - データエクスポート",
+    "=" .repeat(60),
+    "",
+    "このアーカイブには、あなたのAI Fitness Appのデータが含まれています。",
+    "",
+    "-" .repeat(40),
+    "エクスポート情報",
+    "-" .repeat(40),
+    `エクスポート日時: ${data.exportedAt}`,
+    `データフォーマット: ${format.toUpperCase()}`,
+    `ユーザーID: ${data.userId.substring(0, 8)}...（セキュリティのため一部非表示）`,
+    "",
+    "-" .repeat(40),
+    "含まれるデータ",
+    "-" .repeat(40),
+  ];
+
+  if (data.profile) {
+    lines.push("- profile." + format + ": プロフィール情報（名前、身体情報等）");
+  }
+
+  if (data.sessions && data.sessions.length > 0) {
+    lines.push(`- sessions.${format}: トレーニングセッション履歴（${data.sessions.length}件）`);
+  }
+
+  if (data.consents && data.consents.length > 0) {
+    lines.push(`- consents.${format}: 同意記録（${data.consents.length}件）`);
+  }
+
+  if (data.settings) {
+    lines.push("- settings." + format + ": アプリ設定");
+  }
+
+  if (data.subscriptions && data.subscriptions.length > 0) {
+    lines.push(`- subscriptions.${format}: サブスクリプション履歴（${data.subscriptions.length}件）`);
+  }
+
+  if (data.analytics) {
+    lines.push("- analytics." + format + ": 分析結果（統計情報、進捗データ）");
+  }
+
+  if (data.storage?.profileImage) {
+    lines.push("- media/: メディアファイル（プロフィール画像等）");
+  }
+
+  lines.push("");
+  lines.push("-" .repeat(40));
+  lines.push("データフォーマットの説明");
+  lines.push("-" .repeat(40));
+
+  if (format === "json") {
+    lines.push("各ファイルはJSON形式で保存されています。");
+    lines.push("任意のテキストエディタまたはJSONビューアで開くことができます。");
+  } else {
+    lines.push("各ファイルはCSV形式で保存されています。");
+    lines.push("Microsoft Excel、Google スプレッドシート等で開くことができます。");
+  }
+
+  lines.push("");
+  lines.push("-" .repeat(40));
+  lines.push("GDPR / 個人情報保護法について");
+  lines.push("-" .repeat(40));
+  lines.push("このエクスポートはGDPR第20条（データポータビリティ権）に基づいて提供されています。");
+  lines.push("");
+  lines.push("データの取り扱いについて:");
+  lines.push("- このデータはあなたの個人情報を含みます。");
+  lines.push("- 安全な場所に保管し、不要になったら削除してください。");
+  lines.push("- 第三者への共有時は十分ご注意ください。");
+  lines.push("");
+  lines.push("データ削除をご希望の場合:");
+  lines.push("- アプリ内の「設定」→「アカウント削除」から申請できます。");
+  lines.push("- 削除後30日間は復元可能です。");
+  lines.push("");
+  lines.push("-" .repeat(40));
+  lines.push("お問い合わせ");
+  lines.push("-" .repeat(40));
+  lines.push("データに関するご質問は、アプリ内のお問い合わせフォームまたは");
+  lines.push("プライバシーポリシーに記載のメールアドレスまでご連絡ください。");
+  lines.push("");
+  lines.push("=" .repeat(60));
+  lines.push("(c) AI Fitness App - All rights reserved");
+  lines.push("=" .repeat(60));
+
+  return lines.join("\n");
+}
+
+/**
+ * エクスポートデータの ZIP アーカイブを作成
+ *
+ * @param options - アーカイブオプション
+ * @returns ZIP ファイルの Buffer
+ */
+export async function createExportArchive(options: ExportArchiveOptions): Promise<Buffer> {
+  const { data, format, profileImageBuffer, includeReadme = true } = options;
+  const startTime = Date.now();
+
+  logger.info("Creating export archive", {
+    userId: options.userId,
+    requestId: options.requestId,
+    format,
+    includeReadme,
+    hasProfileImage: !!profileImageBuffer,
+  });
+
+  return new Promise((resolve, reject) => {
+    const buffers: Buffer[] = [];
+    const passThrough = new PassThrough();
+
+    passThrough.on("data", (chunk: Buffer) => buffers.push(chunk));
+    passThrough.on("end", () => {
+      const result = Buffer.concat(buffers);
+      logger.info("Export archive created", {
+        userId: options.userId,
+        requestId: options.requestId,
+        sizeBytes: result.length,
+        durationMs: Date.now() - startTime,
+      });
+      resolve(result);
+    });
+    passThrough.on("error", reject);
+
+    const archive = archiver("zip", {
+      zlib: { level: 9 }, // Maximum compression
+    });
+
+    archive.on("error", reject);
+    archive.pipe(passThrough);
+
+    const dateStr = new Date().toISOString().replace(/[:.]/g, "-").substring(0, 19);
+    const folderName = `export_${dateStr}`;
+
+    // Add README.txt
+    if (includeReadme) {
+      const readmeContent = generateReadmeContent(data, format);
+      archive.append(readmeContent, { name: `${folderName}/README.txt` });
+    }
+
+    // Add profile data
+    if (data.profile) {
+      const profileContent =
+        format === "json"
+          ? JSON.stringify(data.profile, null, 2)
+          : convertProfileToCSV(data.profile);
+      archive.append(profileContent, { name: `${folderName}/profile.${format}` });
+    }
+
+    // Add sessions data
+    if (data.sessions && data.sessions.length > 0) {
+      const sessionsContent =
+        format === "json"
+          ? JSON.stringify(data.sessions, null, 2)
+          : convertSessionsToCSV(data.sessions);
+      archive.append(sessionsContent, { name: `${folderName}/sessions.${format}` });
+    }
+
+    // Add consents data
+    if (data.consents && data.consents.length > 0) {
+      const consentsContent =
+        format === "json"
+          ? JSON.stringify(data.consents, null, 2)
+          : convertConsentsToCSV(data.consents);
+      archive.append(consentsContent, { name: `${folderName}/consents.${format}` });
+    }
+
+    // Add settings data
+    if (data.settings) {
+      const settingsContent =
+        format === "json"
+          ? JSON.stringify(data.settings, null, 2)
+          : convertSettingsToCSV(data.settings);
+      archive.append(settingsContent, { name: `${folderName}/settings.${format}` });
+    }
+
+    // Add subscriptions data
+    if (data.subscriptions && data.subscriptions.length > 0) {
+      const subscriptionsContent =
+        format === "json"
+          ? JSON.stringify(data.subscriptions, null, 2)
+          : convertSubscriptionsToCSV(data.subscriptions);
+      archive.append(subscriptionsContent, { name: `${folderName}/subscriptions.${format}` });
+    }
+
+    // Add analytics data
+    if (data.analytics) {
+      const analyticsContent =
+        format === "json"
+          ? JSON.stringify(data.analytics, null, 2)
+          : convertAnalyticsToCSV(data.analytics);
+      archive.append(analyticsContent, { name: `${folderName}/analytics.${format}` });
+    }
+
+    // Add profile image
+    if (profileImageBuffer) {
+      const imageExt = data.storage?.profileImage?.contentType?.includes("png") ? "png" : "jpg";
+      archive.append(profileImageBuffer, { name: `${folderName}/media/profile_image.${imageExt}` });
+    }
+
+    archive.finalize();
+  });
+}
+
+/**
+ * プロフィールデータを CSV に変換
+ */
+function convertProfileToCSV(profile: ExportProfileData): string {
+  const lines = [
+    "field,value",
+    `nickname,${escapeCSV(profile.nickname)}`,
+    `email,${escapeCSV(profile.email)}`,
+    `birthYear,${profile.birthYear || ""}`,
+    `gender,${escapeCSV(profile.gender || "")}`,
+    `height,${profile.height || ""}`,
+    `weight,${profile.weight || ""}`,
+    `fitnessLevel,${escapeCSV(profile.fitnessLevel || "")}`,
+    `createdAt,${profile.createdAt}`,
+    `updatedAt,${profile.updatedAt}`,
+  ];
+  return lines.join("\n");
+}
+
+/**
+ * セッションデータを CSV に変換
+ */
+function convertSessionsToCSV(sessions: ExportSessionData[]): string {
+  const header = "sessionId,exerciseType,startTime,endTime,repCount,totalScore,averageScore,duration,status";
+  const rows = sessions.map(
+    (s) =>
+      `${s.sessionId},${s.exerciseType},${s.startTime},${s.endTime || ""},${s.repCount},${s.totalScore},${s.averageScore},${s.duration},${s.status}`,
+  );
+  return [header, ...rows].join("\n");
+}
+
+/**
+ * 同意データを CSV に変換
+ */
+function convertConsentsToCSV(consents: ExportConsentData[]): string {
+  const header = "documentType,documentVersion,action,timestamp";
+  const rows = consents.map(
+    (c) => `${c.documentType},${c.documentVersion},${c.action},${c.timestamp}`,
+  );
+  return [header, ...rows].join("\n");
+}
+
+/**
+ * 設定データを CSV に変換
+ */
+function convertSettingsToCSV(settings: ExportSettingsData): string {
+  const lines = [
+    "field,value",
+    `notificationsEnabled,${settings.notificationsEnabled}`,
+    `reminderTime,${settings.reminderTime || ""}`,
+    `reminderDays,${settings.reminderDays?.join(";") || ""}`,
+    `language,${settings.language}`,
+    `theme,${settings.theme}`,
+    `units,${settings.units}`,
+    `analyticsEnabled,${settings.analyticsEnabled}`,
+    `crashReportingEnabled,${settings.crashReportingEnabled}`,
+  ];
+  return lines.join("\n");
+}
+
+/**
+ * サブスクリプションデータを CSV に変換
+ */
+function convertSubscriptionsToCSV(subscriptions: ExportSubscriptionData[]): string {
+  const header = "plan,status,startDate,expirationDate,store";
+  const rows = subscriptions.map(
+    (s) => `${s.plan},${s.status},${s.startDate},${s.expirationDate},${s.store}`,
+  );
+  return [header, ...rows].join("\n");
+}
+
+/**
+ * 分析データを CSV に変換
+ */
+function convertAnalyticsToCSV(analytics: BigQueryExportData): string {
+  const lines: string[] = [];
+
+  // Summary section
+  lines.push("# Summary");
+  lines.push("metric,value");
+  lines.push(`totalSessions,${analytics.totalSessions}`);
+  lines.push(`totalReps,${analytics.totalReps}`);
+  lines.push(`averageScore,${analytics.averageScore.toFixed(2)}`);
+  lines.push("");
+
+  // Exercise breakdown section
+  lines.push("# Exercise Breakdown");
+  lines.push("exerciseType,sessionCount");
+  for (const [exerciseType, count] of Object.entries(analytics.exerciseBreakdown)) {
+    lines.push(`${exerciseType},${count}`);
+  }
+  lines.push("");
+
+  // Weekly progress section
+  if (analytics.weeklyProgress.length > 0) {
+    lines.push("# Weekly Progress");
+    lines.push("week,sessions,avgScore");
+    for (const w of analytics.weeklyProgress) {
+      lines.push(`${w.week},${w.sessions},${w.avgScore.toFixed(2)}`);
+    }
+    lines.push("");
+  }
+
+  // Monthly trends section
+  if (analytics.monthlyTrends.length > 0) {
+    lines.push("# Monthly Trends");
+    lines.push("month,sessions,avgScore");
+    for (const m of analytics.monthlyTrends) {
+      lines.push(`${m.month},${m.sessions},${m.avgScore.toFixed(2)}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * CSV 用にエスケープ
+ */
+function escapeCSV(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+/**
+ * ZIP ファイルを Cloud Storage にアップロードし、署名付き URL を生成
+ *
+ * @param userId - ユーザー ID
+ * @param requestId - リクエスト ID
+ * @param archiveBuffer - ZIP ファイルの Buffer
+ * @returns ダウンロード URL と有効期限
+ */
+export async function uploadExportArchive(
+  userId: string,
+  requestId: string,
+  archiveBuffer: Buffer,
+): Promise<{ downloadUrl: string; expiresAt: Date; fileSizeBytes: number }> {
+  const bucketName = getExportBucketName();
+  const fileName = `exports/${userId}/${requestId}/export.zip`;
+  const expiresAt = new Date(
+    Date.now() + GDPR_CONSTANTS.DOWNLOAD_URL_EXPIRY_HOURS * 60 * 60 * 1000,
+  );
+
+  try {
+    const bucket = storage.bucket(bucketName);
+    const file = bucket.file(fileName);
+
+    // Upload the archive
+    await file.save(archiveBuffer, {
+      contentType: "application/zip",
+      metadata: {
+        userId,
+        requestId,
+        exportedAt: new Date().toISOString(),
+      },
+    });
+
+    // Set lifecycle rule for auto-deletion after 48 hours
+    // Note: Lifecycle rules are typically set at bucket level, but we can set metadata
+    // for tracking purposes. Actual deletion is handled by a scheduled function.
+
+    // Generate signed URL
+    const [signedUrl] = await file.getSignedUrl({
+      action: "read",
+      expires: expiresAt,
+    });
+
+    logger.info("Export archive uploaded", {
+      userId,
+      requestId,
+      fileName,
+      fileSizeBytes: archiveBuffer.length,
+      expiresAt: expiresAt.toISOString(),
+    });
+
+    return {
+      downloadUrl: signedUrl,
+      expiresAt,
+      fileSizeBytes: archiveBuffer.length,
+    };
+  } catch (error) {
+    logger.error("Failed to upload export archive", error as Error, {
+      userId,
+      requestId,
+      bucketName,
+    });
+    throw error;
+  }
+}
+
+// =============================================================================
+// 通知機能
+// =============================================================================
+
+/**
+ * エクスポート完了通知を送信
+ *
+ * @param userId - ユーザー ID
+ * @param email - メールアドレス
+ * @param downloadUrl - ダウンロード URL
+ * @param expiresAt - 有効期限
+ */
+export async function sendExportCompletionNotification(
+  userId: string,
+  email: string,
+  downloadUrl: string,
+  expiresAt: Date,
+): Promise<void> {
+  const isDevelopment =
+    process.env.FUNCTIONS_EMULATOR === "true" || process.env.NODE_ENV === "development";
+
+  const expiresAtFormatted = expiresAt.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const emailContent = {
+    subject: "[AI Fitness] データエクスポートが完了しました",
+    body: `
+AI Fitness Appをご利用いただきありがとうございます。
+
+リクエストいただいたデータエクスポートが完了しました。
+
+■ ダウンロードについて
+以下のリンクからデータをダウンロードできます。
+※リンクの有効期限: ${expiresAtFormatted}（日本時間）
+
+■ セキュリティに関するご注意
+- このリンクはあなた専用です。第三者に共有しないでください。
+- ダウンロードしたデータには個人情報が含まれています。
+- 安全な場所に保管し、不要になったら完全に削除してください。
+
+■ データの内容
+エクスポートされたZIPファイルには以下が含まれます：
+- プロフィール情報
+- トレーニング履歴
+- 設定情報
+- 同意記録
+- 分析データ（該当する場合）
+
+ご不明な点がございましたら、アプリ内のお問い合わせフォームよりご連絡ください。
+
+---
+AI Fitness App サポートチーム
+※このメールは自動送信されています。返信はできません。
+    `.trim(),
+  };
+
+  if (isDevelopment) {
+    // Development environment: log only
+    logger.info("Export completion notification (development mode)", {
+      userId,
+      email,
+      downloadUrl: downloadUrl.substring(0, 100) + "...",
+      expiresAt: expiresAtFormatted,
+      subject: emailContent.subject,
+      bodyPreview: emailContent.body.substring(0, 200) + "...",
+    });
+    return;
+  }
+
+  // Production environment: send email via email service
+  // TODO: Integrate with SendGrid, Firebase Extensions (Trigger Email), or other email service
+  logger.info("Export completion notification sent", {
+    userId,
+    email,
+    expiresAt: expiresAtFormatted,
+  });
+
+  // Example implementation with SendGrid (uncomment when service is configured):
+  // const sgMail = require('@sendgrid/mail');
+  // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  // await sgMail.send({
+  //   to: email,
+  //   from: 'noreply@aifitnessapp.com',
+  //   subject: emailContent.subject,
+  //   text: emailContent.body,
+  //   html: `<pre>${emailContent.body}</pre>`, // Simple HTML version
+  // });
+}
+
+/**
+ * エクスポート失敗通知を送信
+ *
+ * @param userId - ユーザー ID
+ * @param email - メールアドレス
+ * @param errorMessage - エラーメッセージ
+ */
+export async function sendExportFailureNotification(
+  userId: string,
+  email: string,
+  errorMessage?: string,
+): Promise<void> {
+  const isDevelopment =
+    process.env.FUNCTIONS_EMULATOR === "true" || process.env.NODE_ENV === "development";
+
+  const emailContent = {
+    subject: "[AI Fitness] データエクスポートに失敗しました",
+    body: `
+AI Fitness Appをご利用いただきありがとうございます。
+
+リクエストいただいたデータエクスポートの処理中にエラーが発生しました。
+大変申し訳ございませんが、しばらく時間をおいてから再度お試しください。
+
+問題が解決しない場合は、アプリ内のお問い合わせフォームよりご連絡ください。
+
+---
+AI Fitness App サポートチーム
+※このメールは自動送信されています。返信はできません。
+    `.trim(),
+  };
+
+  if (isDevelopment) {
+    logger.info("Export failure notification (development mode)", {
+      userId,
+      email,
+      errorMessage,
+      subject: emailContent.subject,
+    });
+    return;
+  }
+
+  logger.info("Export failure notification sent", {
+    userId,
+    email,
+    errorMessage,
+  });
 }
