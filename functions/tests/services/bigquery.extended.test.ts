@@ -576,4 +576,20 @@ describe("BigQuery Service Extended", () => {
       expect(stats.avgSessionsPerUser).toBe(0);
     });
   });
+
+  describe("syncWithRetry - edge cases", () => {
+    it("handles max retries = 0 (should return false immediately)", async () => {
+      // Edge case: if maxRetries is 0, the loop won't execute
+      // This would theoretically hit line 237 (unreachable return false)
+      const result = await service.syncWithRetry(
+        "users",
+        "doc-edge",
+        { data: "test" },
+        0
+      );
+      // With maxRetries=0, loop: for (let attempt = 1; attempt <= 0; attempt++)
+      // Loop never executes, so we reach line 237
+      expect(result).toBe(false);
+    });
+  });
 });
