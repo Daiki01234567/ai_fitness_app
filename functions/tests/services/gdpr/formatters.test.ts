@@ -192,6 +192,160 @@ describe("GDPR Formatters", () => {
       };
       const csv = transformToCSV(data);
       expect(csv).not.toContain("# Profile Data");
+      expect(csv).not.toContain("# Profile Data");
+    });
+
+    // Additional coverage tests for transformToCSV
+    it("includes consents section when consents array is not empty", () => {
+      const data: ExportData = {
+        exportedAt: "2024-01-15T10:30:00.000Z",
+        userId: "user123",
+        consents: [mockConsent, {
+          documentType: "privacy_policy",
+          documentVersion: "2.0",
+          action: "accepted",
+          timestamp: "2024-01-02T00:00:00.000Z",
+        }],
+      };
+      const csv = transformToCSV(data);
+      expect(csv).toContain("# Consents Data");
+      expect(csv).toContain("documentType,documentVersion,action,timestamp");
+      expect(csv).toContain("tos,1.0,accepted");
+      expect(csv).toContain("privacy_policy,2.0,accepted");
+    });
+
+    it("includes settings section with all fields", () => {
+      const data: ExportData = {
+        exportedAt: "2024-01-15T10:30:00.000Z",
+        userId: "user123",
+        settings: mockSettings,
+      };
+      const csv = transformToCSV(data);
+      expect(csv).toContain("# Settings Data");
+      expect(csv).toContain("notificationsEnabled,true");
+      expect(csv).toContain("reminderTime,09:00");
+      expect(csv).toContain("language,ja");
+      expect(csv).toContain("theme,light");
+      expect(csv).toContain("units,metric");
+      expect(csv).toContain("analyticsEnabled,true");
+      expect(csv).toContain("crashReportingEnabled,false");
+    });
+
+    it("handles settings without reminderTime", () => {
+      const settingsWithoutReminder: ExportSettingsData = {
+        notificationsEnabled: false,
+        language: "en",
+        theme: "dark",
+        units: "imperial",
+        analyticsEnabled: false,
+        crashReportingEnabled: true,
+      };
+      const data: ExportData = {
+        exportedAt: "2024-01-15T10:30:00.000Z",
+        userId: "user123",
+        settings: settingsWithoutReminder,
+      };
+      const csv = transformToCSV(data);
+      expect(csv).toContain("reminderTime,");
+      expect(csv).toContain("notificationsEnabled,false");
+    });
+
+    it("includes subscriptions section when subscriptions array is not empty", () => {
+      const data: ExportData = {
+        exportedAt: "2024-01-15T10:30:00.000Z",
+        userId: "user123",
+        subscriptions: [mockSubscription, {
+          plan: "basic",
+          status: "expired",
+          startDate: "2023-01-01T00:00:00.000Z",
+          expirationDate: "2023-12-31T23:59:59.999Z",
+          store: "google",
+        }],
+      };
+      const csv = transformToCSV(data);
+      expect(csv).toContain("# Subscriptions Data");
+      expect(csv).toContain("plan,status,startDate,expirationDate,store");
+      expect(csv).toContain("premium,active");
+      expect(csv).toContain("basic,expired");
+    });
+  });
+
+  // Additional coverage tests for escapeCSV
+  describe("escapeCSV - Additional Coverage", () => {
+    it("wraps value in quotes when contains newline", () => {
+      const input = "Hello\nWorld";
+      expect(escapeCSV(input)).toContain('"');
+    });
+
+    it("escapes double quotes and wraps when contains comma", () => {
+      expect(escapeCSV('Name: "John", Age: 30')).toBe('"Name: ""John"", Age: 30"');
+    });
+  });
+
+  // Additional coverage tests for convertAnalyticsToCSV
+  describe("convertAnalyticsToCSV - Additional Coverage", () => {
+    it("includes weekly progress section when array is not empty", () => {
+      const analytics: BigQueryExportData = {
+        totalSessions: 100,
+        totalReps: 1000,
+        averageScore: 85.5,
+        exerciseBreakdown: { squat: 50, pushup: 50 },
+        weeklyProgress: [
+          { week: "2024-W01", sessions: 10, avgScore: 85.5 },
+          { week: "2024-W02", sessions: 15, avgScore: 87.3 },
+        ],
+        monthlyTrends: [],
+      };
+      const csv = convertAnalyticsToCSV(analytics);
+      expect(csv).toContain("# Weekly Progress");
+      expect(csv).toContain("week,sessions,avgScore");
+      expect(csv).toContain("2024-W01,10,85.50");
+      expect(csv).toContain("2024-W02,15,87.30");
+    });
+
+    it("includes monthly trends section when array is not empty", () => {
+      const analytics: BigQueryExportData = {
+        totalSessions: 100,
+        totalReps: 1000,
+        averageScore: 85.5,
+        exerciseBreakdown: { squat: 50, pushup: 50 },
+        weeklyProgress: [],
+        monthlyTrends: [
+          { month: "2024-01", sessions: 50, avgScore: 86.2 },
+          { month: "2024-02", sessions: 50, avgScore: 84.8 },
+        ],
+      };
+      const csv = convertAnalyticsToCSV(analytics);
+      expect(csv).toContain("# Monthly Trends");
+      expect(csv).toContain("month,sessions,avgScore");
+      expect(csv).toContain("2024-01,50,86.20");
+      expect(csv).toContain("2024-02,50,84.80");
+    });
+
+    it("excludes weekly progress section when array is empty", () => {
+      const analytics: BigQueryExportData = {
+        totalSessions: 100,
+        totalReps: 1000,
+        averageScore: 85.5,
+        exerciseBreakdown: { squat: 100 },
+        weeklyProgress: [],
+        monthlyTrends: [],
+      };
+      const csv = convertAnalyticsToCSV(analytics);
+      expect(csv).not.toContain("# Weekly Progress");
+    });
+
+    it("excludes monthly trends section when array is empty", () => {
+      const analytics: BigQueryExportData = {
+        totalSessions: 100,
+        totalReps: 1000,
+        averageScore: 85.5,
+        exerciseBreakdown: { squat: 100 },
+        weeklyProgress: [],
+        monthlyTrends: [],
+      };
+      const csv = convertAnalyticsToCSV(analytics);
+      expect(csv).not.toContain("# Monthly Trends");
     });
   });
 });
