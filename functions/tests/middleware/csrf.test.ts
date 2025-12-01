@@ -616,4 +616,30 @@ describe("CSRF Protection Middleware", () => {
       expect(result.origin).toBe("https://ai-fitness-c38f0.web.app");
     });
   });
+
+  describe("Edge cases - uncovered lines", () => {
+    it("should handle request with neither rawRequest nor headers (line 115)", () => {
+      // Request object with no recognizable structure
+      const request = {} as any;
+
+      const result = validateCsrf(request);
+      // Should allow missing origin in non-strict mode
+      expect(result.valid).toBe(true);
+      expect(result.reason).toBe("origin_missing_allowed");
+    });
+
+    it("should handle request with neither rawRequest nor headers in strict mode", () => {
+      // Request object with no recognizable structure
+      const request = {} as any;
+
+      const options: CsrfOptions = {
+        strictMode: true,
+        allowMissingOrigin: false,
+      };
+
+      const result = validateCsrf(request, options);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe("Origin header is missing");
+    });
+  });
 });
