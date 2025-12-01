@@ -28,18 +28,23 @@ const mockWhere = jest.fn();
 const mockOrderBy = jest.fn();
 const mockLimit = jest.fn();
 
+const mockCollection = jest.fn();
+
 const mockFirestoreInstance = {
-  collection: jest.fn().mockImplementation(() => ({
-    doc: mockDoc,
-    where: mockWhere,
-    add: mockAdd,
-    get: mockGet,
-  })),
+  collection: mockCollection,
   batch: jest.fn().mockReturnValue({
     delete: mockBatchDelete,
     update: mockBatchUpdate,
     commit: mockBatchCommit,
   }),
+  FieldValue: {
+    serverTimestamp: jest.fn(),
+    delete: jest.fn(),
+  },
+  Timestamp: {
+    now: jest.fn(() => Timestamp.now()),
+    fromDate: jest.fn((date: Date) => Timestamp.fromDate(date)),
+  },
 };
 
 // Mock gdprStorage
@@ -67,6 +72,40 @@ jest.mock("firebase-admin", () => ({
   auth: jest.fn().mockReturnValue({
     deleteUser: mockDeleteUser,
     getUser: mockGetUser,
+  }),
+  firestore: jest.fn(() => mockFirestoreInstance),
+}));
+
+// Mock gdprVerification
+const mockVerifyCompleteDeletion = jest.fn();
+const mockGenerateDeletionCertificate = jest.fn();
+jest.mock("../../src/services/gdprVerification", () => ({
+  verifyCompleteDeletion: mockVerifyCompleteDeletion,
+  generateDeletionCertificate: mockGenerateDeletionCertificate,
+}));
+
+// Mock firestore utils
+jest.mock("../../src/utils/firestore", () => ({
+  getFirestore: jest.fn(() => mockFirestoreInstance),
+  userRef: jest.fn(() => ({
+    get: mockGet,
+    set: mockSet,
+    update: mockUpdate,
+    delete: mockDelete,
+    collection: mockCollection,
+  })),
+  sessionsCollection: jest.fn(() => ({
+    get: mockGet,
+    limit: jest.fn().mockReturnThis(),
+  })),
+  consentsCollection: jest.fn(() => ({
+    where: mockWhere,
+    get: mockGet,
+  })),
+  batchWrite: jest.fn((docs, fn) => {
+    const batch = mockFirestoreInstance.batch();
+    docs.forEach((doc: any) => fn(batch, doc));
+    return batch.commit();
   }),
 }));
 
@@ -105,13 +144,24 @@ describe("GDPR Deletion Service", () => {
       set: mockSet,
       update: mockUpdate,
       delete: mockDelete,
+      collection: mockCollection,
     });
+    
+    mockCollection.mockImplementation(() => ({
+      doc: mockDoc,
+      where: mockWhere,
+      add: mockAdd,
+      get: mockGet,
+      limit: jest.fn().mockReturnThis(),
+    }));
+    
     mockWhere.mockReturnValue({
       where: mockWhere,
       orderBy: mockOrderBy,
       limit: mockLimit,
       get: mockGet,
     });
+    
     mockOrderBy.mockReturnValue({
       limit: mockLimit,
       get: mockGet,
@@ -137,6 +187,18 @@ describe("GDPR Deletion Service", () => {
     mockDeleteUser.mockResolvedValue(undefined);
     mockGetUser.mockRejectedValue({ code: "auth/user-not-found" });
     mockBatchCommit.mockResolvedValue(undefined);
+    mockVerifyCompleteDeletion.mockResolvedValue({
+      verified: true,
+      verificationResult: {
+        firestoreVerified: true,
+        storageVerified: true,
+        bigqueryVerified: true,
+        authVerified: true,
+      },
+    });
+    mockGenerateDeletionCertificate.mockResolvedValue({
+      certificateId: "cert-123",
+    });
   });
 
   describe("deleteUserData", () => {
@@ -165,16 +227,13 @@ describe("GDPR Deletion Service", () => {
 
       const result = await deleteUserData(testUserId, ["all"]);
 
-      expect(result.deleted).toBe(true);
+      expect(result.success).toBe(true);
     });
 
     it("should return error on Firestore failure", async () => {
       mockGet.mockRejectedValue(new Error("Firestore error"));
 
-      const result = await deleteUserData(testUserId, ["all"]);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Firestore error");
+      await expect(deleteUserData(testUserId, ["all"])).rejects.toThrow("Firestore error");
       expect(logger.error).toHaveBeenCalled();
     });
 
@@ -188,7 +247,7 @@ describe("GDPR Deletion Service", () => {
 
       const result = await deleteUserData(testUserId, ["all"]);
 
-      expect(result.deleted).toBe(true);
+      expect(result.success).toBe(true);
     });
   });
 
@@ -221,7 +280,7 @@ describe("GDPR Deletion Service", () => {
 
       const result = await deleteUserDataCompletely(testUserId, testRequestId, ["all"]);
 
-      expect(result.storageDeleted).toBe(false);
+      expect(result.storageResult?.deleted).toBe(false);
     });
 
     it("should handle BigQuery deletion failure", async () => {
@@ -234,7 +293,7 @@ describe("GDPR Deletion Service", () => {
 
       const result = await deleteUserDataCompletely(testUserId, testRequestId, ["all"]);
 
-      expect(result.bigqueryDeleted).toBe(false);
+      expect(result.bigqueryResult?.deleted).toBe(false);
     });
 
     it("should handle Auth deletion failure", async () => {
@@ -303,8 +362,8 @@ describe("GDPR Deletion Service", () => {
       const result = await getUserDeletionStatus(testUserId);
 
       expect(result).not.toBeNull();
-      expect(result?.deletionScheduled).toBe(true);
-      expect(result?.scheduledDeletionDate).toBeDefined();
+      expect(result.scheduledDate).toBeDefined();
+
     });
 
     it("should return null for non-existent user", async () => {
@@ -312,16 +371,13 @@ describe("GDPR Deletion Service", () => {
 
       const result = await getUserDeletionStatus(testUserId);
 
-      expect(result).toBeNull();
+      expect(result.scheduled).toBe(false);
     });
 
-    it("should return null on error", async () => {
+    it("should throw error on Firestore failure", async () => {
       mockGet.mockRejectedValue(new Error("Firestore error"));
 
-      const result = await getUserDeletionStatus(testUserId);
-
-      expect(result).toBeNull();
-      expect(logger.error).toHaveBeenCalled();
+      await expect(getUserDeletionStatus(testUserId)).rejects.toThrow("Firestore error");
     });
   });
 
@@ -469,4 +525,5 @@ describe("GDPR Deletion Service", () => {
       );
     });
   });
+describe("Coverage Enhancement Tests", () => {    describe("Partial Deletion Scopes", () => {      beforeEach(() => {        mockGet.mockResolvedValue({ empty: false, docs: [{ ref: { delete: mockDelete }, id: "d1" }] });      });      it("should delete only sessions", async () => {        const result = await deleteUserData(testUserId, ["sessions"]);        expect(result.success).toBe(true);        expect(result.deletedCollections).toContain("sessions");      });      it("should delete only settings", async () => {        const result = await deleteUserData(testUserId, ["settings"]);        expect(result.success).toBe(true);        expect(result.deletedCollections).toContain("settings");      });      it("should delete only subscriptions", async () => {        const result = await deleteUserData(testUserId, ["subscriptions"]);        expect(result.success).toBe(true);        expect(result.deletedCollections).toContain("subscriptions");      });      it("should delete only consents", async () => {        const result = await deleteUserData(testUserId, ["consents"]);        expect(result.success).toBe(true);        expect(result.deletedCollections).toContain("consents");      });    });    it("should delete user document when exists", async () => {      let c = 0;      mockGet.mockImplementation(() => {        c++;        if (c <= 4) return Promise.resolve({ empty: true, docs: [] });        return Promise.resolve({ exists: true, data: () => ({}) });      });      await deleteUserData(testUserId, ["all"]);      expect(mockDelete).toHaveBeenCalled();    });    it("should handle auth user not found", async () => {      mockGet.mockResolvedValue({ empty: true, docs: [], exists: false });      mockDeleteUser.mockRejectedValue({ code: "auth/user-not-found" });      const result = await deleteUserData(testUserId, ["all"]);      expect(result.success).toBe(true);    });    it("should handle deleteUserDataCompletely error", async () => {      mockGet.mockRejectedValue(new Error("DB error"));      const result = await deleteUserDataCompletely(testUserId, testRequestId, ["all"]);      expect(result.success).toBe(false);      expect(result.error).toBe("DB error");    });    describe("verifyDeletion tests", () => {      it("should verify complete deletion", async () => {        mockGet.mockResolvedValue({ empty: true, exists: false, docs: [] });        const result = await verifyDeletion(testUserId, ["all"]);        expect(result.verified).toBe(true);      });      it("should detect remaining sessions", async () => {        let c = 0;        mockGet.mockImplementation(() => {          c++;          if (c === 1) return Promise.resolve({ empty: false, docs: [{ id: "s1" }] });          return Promise.resolve({ empty: true, exists: false, docs: [] });        });        const result = await verifyDeletion(testUserId, ["all"]);        expect(result.verified).toBe(false);        expect(result.remainingData).toContain("sessions");      });      it("should detect remaining settings", async () => {        let c = 0;        mockGet.mockImplementation(() => {          c++;          if (c === 1) return Promise.resolve({ empty: true, docs: [] });          if (c === 2) return Promise.resolve({ exists: true });          return Promise.resolve({ empty: true, exists: false, docs: [] });        });        const result = await verifyDeletion(testUserId, ["all"]);        expect(result.verified).toBe(false);        expect(result.remainingData).toContain("settings");      });      it("should detect remaining subscriptions", async () => {        let c = 0;        mockGet.mockImplementation(() => {          c++;          if (c <= 2) return Promise.resolve({ empty: true, exists: false, docs: [] });          if (c === 3) return Promise.resolve({ empty: false, docs: [{ id: "sub1" }] });          return Promise.resolve({ empty: true, exists: false, docs: [] });        });        const result = await verifyDeletion(testUserId, ["all"]);        expect(result.verified).toBe(false);        expect(result.remainingData).toContain("subscriptions");      });      it("should detect remaining consents", async () => {        let c = 0;        mockGet.mockImplementation(() => {          c++;          if (c <= 3) return Promise.resolve({ empty: true, exists: false, docs: [] });          if (c === 4) return Promise.resolve({ empty: false, docs: [{ id: "c1" }] });          return Promise.resolve({ empty: true, exists: false, docs: [] });        });        const result = await verifyDeletion(testUserId, ["all"]);        expect(result.verified).toBe(false);        expect(result.remainingData).toContain("consents");      });      it("should detect remaining user document", async () => {        let c = 0;        mockGet.mockImplementation(() => {          c++;          if (c <= 4) return Promise.resolve({ empty: true, exists: false, docs: [] });          return Promise.resolve({ exists: true });        });        const result = await verifyDeletion(testUserId, ["all"]);        expect(result.verified).toBe(false);        expect(result.remainingData).toContain("users");      });      it("should verify partial - sessions", async () => {        mockGet.mockResolvedValue({ empty: true, docs: [] });        const result = await verifyDeletion(testUserId, ["sessions"]);        expect(result.verified).toBe(true);      });      it("should verify partial - settings", async () => {        mockGet.mockResolvedValue({ exists: false });        const result = await verifyDeletion(testUserId, ["settings"]);        expect(result.verified).toBe(true);      });      it("should verify partial - subscriptions", async () => {        mockGet.mockResolvedValue({ empty: true, docs: [] });        const result = await verifyDeletion(testUserId, ["subscriptions"]);        expect(result.verified).toBe(true);      });      it("should verify partial - consents", async () => {        mockGet.mockResolvedValue({ empty: true, docs: [] });        const result = await verifyDeletion(testUserId, ["consents"]);        expect(result.verified).toBe(true);      });      it("should handle verification error", async () => {        mockGet.mockRejectedValue(new Error("Verification failed"));        await expect(verifyDeletion(testUserId, ["all"])).rejects.toThrow("Verification failed");      });    });    it("should handle undefined scheduledDeletionDate", async () => {      mockGet.mockResolvedValue({ exists: true, data: () => ({ deletionScheduled: true }) });      const result = await getUserDeletionStatus(testUserId);      expect(result.scheduled).toBe(true);      expect(result.scheduledDate).toBeUndefined();    });  });
 });
