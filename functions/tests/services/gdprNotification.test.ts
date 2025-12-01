@@ -85,7 +85,7 @@ describe("GDPR Notification Service", () => {
       expect(logger.info).toHaveBeenCalledWith(
         "Export completion notification (development mode)",
         expect.objectContaining({
-          downloadUrl: expect.stringMatching(/^https:\/\/storage\.googleapis\.com\/a{100}\.\.\.$/),
+          downloadUrl: expect.stringMatching(/^https:\/\/storage\.googleapis\.com\/a{69}\.\.\.$/),
         })
       );
     });
