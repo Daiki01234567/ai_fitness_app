@@ -1,8 +1,9 @@
 // Profile Screen
-// User profile and settings screen with consent management
+// User profile screen with consent management and link to settings
+// Based on: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (Section 3.12)
 //
-// @version 1.1.0
-// @date 2025-11-29
+// @version 1.2.0
+// @date 2025-12-02
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -201,19 +202,13 @@ class ProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // Logout button
-              FilledButton.icon(
-                onPressed: () async {
-                  await ref.read(authStateProvider.notifier).signOut();
-                  if (context.mounted) {
-                    context.go(AppRoutes.login);
-                  }
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text('ログアウト'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  foregroundColor: Theme.of(context).colorScheme.onError,
+              // Settings button (v3.3 addition)
+              OutlinedButton.icon(
+                onPressed: () => context.goToSettings(),
+                icon: const Icon(Icons.settings_outlined),
+                label: const Text('設定'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),

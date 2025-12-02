@@ -1,10 +1,11 @@
 // Consent Management Section Widget
 //
 // Widget for displaying and managing consent status in profile screen.
+// Based on: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (Section 3.12)
 // Based on: docs/specs/00_要件定義書_v3_3.md (FR-002-1)
 //
-// @version 1.0.0
-// @date 2025-11-27
+// @version 1.1.0
+// @date 2025-12-02
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -300,24 +301,30 @@ class ConsentManagementSection extends ConsumerWidget {
   Future<void> _showRevokeDialog(BuildContext context, WidgetRef ref) async {
     bool requestDeletion = false;
 
+    // Confirmation dialog based on wireframe specification
+    // docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md Section 3.12
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('同意の解除'),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('同意を解除しますか？'),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '利用規約またはプライバシーポリシーへの同意を解除すると、'
-                'アプリを使用できなくなり、ログアウトされます。',
+                '同意を解除すると、サービスを利用できなくなります。',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               const Text(
-                '本当に解除しますか？',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                'この操作を行うと、自動的にログアウトされます。',
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
