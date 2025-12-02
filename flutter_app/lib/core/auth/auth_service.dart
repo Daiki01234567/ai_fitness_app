@@ -432,6 +432,50 @@ class AuthService {
     }
   }
 
+  /// メールアドレスの重複をチェック（Cloud Functions呼び出し）
+  ///
+  /// 新規登録のステップ1で「次へ」を押した時点で
+  /// メールアドレスが既に使用されているかをチェックする。
+  ///
+  /// [email] チェックするメールアドレス
+  ///
+  /// 戻り値:
+  /// - exists: メールアドレスが既に登録されているかどうか
+  /// - message: エラーメッセージ（存在する場合）
+  ///
+  /// セキュリティ:
+  /// - レート制限あり（1分あたり10リクエスト）
+  /// - 詳細なエラー情報は返さない
+  Future<({bool exists, String? message})> checkEmailExists(String email) async {
+    try {
+      final callable = _functions.httpsCallable('auth_checkEmailExists');
+      final result = await callable.call({'email': email});
+
+      final data = Map<String, dynamic>.from(result.data as Map);
+      return (
+        exists: data['exists'] as bool? ?? false,
+        message: data['message'] as String?,
+      );
+    } on FirebaseFunctionsException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'resource-exhausted':
+          errorMessage = 'リクエストが多すぎます。しばらく待ってから再度お試しください';
+          break;
+        case 'invalid-argument':
+          errorMessage = e.message ?? 'メールアドレスが無効です';
+          break;
+        default:
+          // Do not expose detailed error messages for security
+          errorMessage = 'メールアドレスの確認中にエラーが発生しました';
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      // Generic error - don't expose details
+      throw Exception('メールアドレスの確認中にエラーが発生しました');
+    }
+  }
+
   /// ユーザープロフィールを更新（Cloud Functions呼び出し）
   ///
   /// Step 2の登録情報やプロフィール設定画面からFirestoreに保存

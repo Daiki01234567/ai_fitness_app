@@ -84,6 +84,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
 
+  // Email check state
+  bool _isCheckingEmail = false;
+  String? _emailError;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -95,11 +99,71 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  void _nextStep() {
-    if (_formKey.currentState!.validate()) {
+  /// 次のステップに進む
+  ///
+  /// ステップ1からステップ2に進む前に:
+  /// 1. フォームバリデーション
+  /// 2. メールアドレス重複チェック（Cloud Functions呼び出し）
+  Future<void> _nextStep() async {
+    // Clear previous email error
+    setState(() {
+      _emailError = null;
+    });
+
+    // Validate form first
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Check email duplication
+    setState(() {
+      _isCheckingEmail = true;
+    });
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      final email = _emailController.text.trim();
+
+      final result = await authService.checkEmailExists(email);
+
+      if (!mounted) return;
+
+      if (result.exists) {
+        // Email already registered
+        setState(() {
+          _emailError = result.message ?? 'このメールアドレスは既に登録されています';
+          _isCheckingEmail = false;
+        });
+
+        // Show error in snackbar as well
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_emailError!),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
+
+      // Email is available, proceed to next step
       setState(() {
+        _isCheckingEmail = false;
         _currentStep = RegisterStep.profile;
       });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isCheckingEmail = false;
+      });
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 
@@ -477,9 +541,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           prefixIcon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          validator: EmailValidator.validate,
-          enabled: !authState.isLoading,
+          validator: (value) {
+            // First check standard email validation
+            final standardError = EmailValidator.validate(value);
+            if (standardError != null) {
+              return standardError;
+            }
+            // Then show server-side duplicate error if exists
+            if (_emailError != null) {
+              return _emailError;
+            }
+            return null;
+          },
+          enabled: !authState.isLoading && !_isCheckingEmail,
           autofillHints: const [AutofillHints.email],
+          onChanged: (value) {
+            // Clear email error when user modifies the field
+            if (_emailError != null) {
+              setState(() {
+                _emailError = null;
+              });
+            }
+          },
         ),
         const SizedBox(height: AppSpacing.md),
 
@@ -511,9 +594,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
         // Next button
         LoadingButton(
-          onPressed: _nextStep,
+          onPressed: _isCheckingEmail ? null : _nextStep,
           label: '次へ',
-          isLoading: false,
+          isLoading: _isCheckingEmail,
         ),
         const SizedBox(height: AppSpacing.lg),
 

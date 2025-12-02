@@ -21,6 +21,7 @@ class AuthTextField extends StatelessWidget {
     this.textInputAction = TextInputAction.next,
     this.validator,
     this.onFieldSubmitted,
+    this.onChanged,
     this.enabled = true,
     this.autofillHints,
     this.inputFormatters,
@@ -35,6 +36,7 @@ class AuthTextField extends StatelessWidget {
   final TextInputAction textInputAction;
   final String? Function(String?)? validator;
   final void Function(String)? onFieldSubmitted;
+  final void Function(String)? onChanged;
   final bool enabled;
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
@@ -54,6 +56,7 @@ class AuthTextField extends StatelessWidget {
       textInputAction: textInputAction,
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
+      onChanged: onChanged,
       enabled: enabled,
       autofillHints: autofillHints,
       inputFormatters: inputFormatters,
