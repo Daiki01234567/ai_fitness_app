@@ -1,0 +1,93 @@
+{
+  "_metadata": {
+    "table_name": "aggregated_stats",
+    "description": "事前集計統計データ(コスト削減のため)",
+    "source_spec": "docs/specs/04_BigQuery設計書_v3_3.md - セクション4.5",
+    "data_classification": "aggregated",
+    "partition": {
+      "type": "DAY",
+      "field": "stat_date",
+      "expiration_days": 730,
+      "require_partition_filter": true
+    },
+    "clustering": {
+      "fields": ["exercise_id", "country_code"]
+    },
+    "labels": {
+      "env": "production",
+      "data_type": "aggregated"
+    },
+    "cost_optimization_notes": {
+      "purpose": "プロジェクト懸念点#8対応 - クエリコスト削減",
+      "cost_reduction": "リアルタイムクエリと比較して99%のコスト削減",
+      "use_case": "定期レポート生成に最適",
+      "update_frequency": "日次バッチ処理(午前2時実行)"
+    },
+    "gdpr_notes": {
+      "retention_period": "2年間",
+      "data_nature": "集計データのため個人を特定できない"
+    }
+  },
+  "schema": [
+    {
+      "name": "stat_date",
+      "type": "DATE",
+      "mode": "REQUIRED",
+      "description": "統計日付 - パーティションキー"
+    },
+    {
+      "name": "exercise_id",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "種目ID(NULLは全体統計)"
+    },
+    {
+      "name": "age_group",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "年齢層: 18-25, 26-35, 36-45, 46+"
+    },
+    {
+      "name": "country_code",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "国コード(ISO 3166-1 alpha-2)"
+    },
+    {
+      "name": "total_sessions",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "セッション数"
+    },
+    {
+      "name": "total_users",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "ユニークユーザー数"
+    },
+    {
+      "name": "total_duration_seconds",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "合計トレーニング時間(秒)"
+    },
+    {
+      "name": "average_score",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "平均スコア(0-100)"
+    },
+    {
+      "name": "average_rep_count",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "平均回数"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "レコード作成日時"
+    }
+  ]
+}

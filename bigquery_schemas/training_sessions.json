@@ -1,0 +1,209 @@
+{
+  "_metadata": {
+    "table_name": "training_sessions",
+    "description": "トレーニングセッション記録(GDPR準拠: 2年間保持)",
+    "source_spec": "docs/specs/04_BigQuery設計書_v3_3.md - セクション4.2",
+    "data_classification": "pseudonymized",
+    "partition": {
+      "type": "DAY",
+      "field": "created_at",
+      "expiration_days": 730,
+      "require_partition_filter": true
+    },
+    "clustering": {
+      "fields": ["user_id_hash", "exercise_id"]
+    },
+    "labels": {
+      "env": "production",
+      "data_classification": "pseudonymized"
+    },
+    "gdpr_notes": {
+      "legal_basis": "GDPR第6条1項(a) 同意, プライバシーポリシーv3.1第5.1条",
+      "retention_period": "2年間",
+      "pseudonymization": "user_idはSHA-256でハッシュ化してuser_id_hashとして保存"
+    }
+  },
+  "schema": [
+    {
+      "name": "session_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "セッションID(UUIDv4形式)"
+    },
+    {
+      "name": "user_id_hash",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ユーザーIDのSHA-256ハッシュ値(仮名化)"
+    },
+    {
+      "name": "exercise_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "トレーニング種目ID (squat, push_up, plank, lunge, glute_bridge)"
+    },
+    {
+      "name": "start_time",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "セッション開始時刻(UTC)"
+    },
+    {
+      "name": "end_time",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "セッション終了時刻(UTC)"
+    },
+    {
+      "name": "duration_seconds",
+      "type": "INT64",
+      "mode": "REQUIRED",
+      "description": "セッション時間(秒), 制約: > 0, <= 7200"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "レコード作成日時(UTC) - パーティションキー"
+    },
+    {
+      "name": "rep_count",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "回数(レップ数), 制約: >= 0, <= 1000"
+    },
+    {
+      "name": "set_count",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "セット数, 制約: >= 0, <= 100"
+    },
+    {
+      "name": "average_score",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "平均スコア(0-100)"
+    },
+    {
+      "name": "max_score",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "最大スコア(0-100)"
+    },
+    {
+      "name": "min_score",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "最小スコア(0-100)"
+    },
+    {
+      "name": "landmarks",
+      "type": "RECORD",
+      "mode": "REPEATED",
+      "description": "フレーム単位の骨格座標データ(30fps想定) - FR-028: カスタムML移行準備",
+      "fields": [
+        {
+          "name": "timestamp",
+          "type": "TIMESTAMP",
+          "mode": "NULLABLE",
+          "description": "フレームのタイムスタンプ"
+        },
+        {
+          "name": "frame_number",
+          "type": "INT64",
+          "mode": "NULLABLE",
+          "description": "フレーム番号(0から開始)"
+        },
+        {
+          "name": "keypoints",
+          "type": "RECORD",
+          "mode": "REPEATED",
+          "description": "MediaPipe 33関節点の座標",
+          "fields": [
+            {
+              "name": "landmark_id",
+              "type": "INT64",
+              "mode": "NULLABLE",
+              "description": "MediaPipe Pose ランドマークID(0-32)"
+            },
+            {
+              "name": "x",
+              "type": "FLOAT64",
+              "mode": "NULLABLE",
+              "description": "X座標(正規化: 0.0-1.0)"
+            },
+            {
+              "name": "y",
+              "type": "FLOAT64",
+              "mode": "NULLABLE",
+              "description": "Y座標(正規化: 0.0-1.0)"
+            },
+            {
+              "name": "z",
+              "type": "FLOAT64",
+              "mode": "NULLABLE",
+              "description": "Z座標(深度、正規化)"
+            },
+            {
+              "name": "visibility",
+              "type": "FLOAT64",
+              "mode": "NULLABLE",
+              "description": "可視性スコア(0.0-1.0)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "device_info",
+      "type": "RECORD",
+      "mode": "NULLABLE",
+      "description": "デバイス情報(ML移行時の分析用) - FR-029: セッションメタデータ収集",
+      "fields": [
+        {
+          "name": "os",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "OS種別(iOS/Android)"
+        },
+        {
+          "name": "os_version",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "OSバージョン"
+        },
+        {
+          "name": "device_model",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "デバイスモデル名"
+        },
+        {
+          "name": "app_version",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "アプリバージョン"
+        }
+      ]
+    },
+    {
+      "name": "region",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "リージョンコード(ISO 3166-1 alpha-2)"
+    },
+    {
+      "name": "is_deleted",
+      "type": "BOOL",
+      "mode": "NULLABLE",
+      "defaultValueExpression": "FALSE",
+      "description": "論理削除フラグ"
+    },
+    {
+      "name": "deleted_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "論理削除日時"
+    }
+  ]
+}

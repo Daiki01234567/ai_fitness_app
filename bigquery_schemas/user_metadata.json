@@ -1,0 +1,120 @@
+{
+  "_metadata": {
+    "table_name": "user_metadata",
+    "description": "ユーザーメタデータ(仮名化済み、個人特定不可)",
+    "source_spec": "docs/specs/04_BigQuery設計書_v3_3.md - セクション4.3",
+    "data_classification": "pseudonymized",
+    "partition": {
+      "type": "DAY",
+      "field": "updated_at",
+      "expiration_days": 730,
+      "require_partition_filter": false
+    },
+    "clustering": {
+      "fields": ["user_id_hash", "country_code"]
+    },
+    "labels": {
+      "env": "production",
+      "data_classification": "pseudonymized"
+    },
+    "gdpr_notes": {
+      "legal_basis": "GDPR第6条1項(f) 正当な利益(サービス改善、統計分析), プライバシーポリシーv3.1第5.2条",
+      "retention_period": "2年間",
+      "pseudonymization": "user_idはSHA-256でハッシュ化してuser_id_hashとして保存",
+      "privacy_protection": {
+        "excluded_fields": [
+          "名前",
+          "メールアドレス",
+          "電話番号",
+          "正確な生年月日(年齢層のみ)",
+          "住所",
+          "IPアドレス",
+          "正確な位置情報(国レベルのみ)"
+        ],
+        "included_fields": [
+          "ユーザーIDのハッシュ値(SHA-256)",
+          "年齢層(範囲: 18-25, 26-35, 36-45, 46+)",
+          "国コード(国レベルのみ)",
+          "統計情報(セッション数、スコア)"
+        ]
+      }
+    }
+  },
+  "schema": [
+    {
+      "name": "user_id_hash",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ユーザーIDのSHA-256ハッシュ値(仮名化)"
+    },
+    {
+      "name": "account_created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "アカウント作成日時"
+    },
+    {
+      "name": "last_active_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "最終アクティブ日時"
+    },
+    {
+      "name": "updated_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "レコード更新日時 - パーティションキー"
+    },
+    {
+      "name": "total_sessions",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "defaultValueExpression": "0",
+      "description": "累計セッション数"
+    },
+    {
+      "name": "total_duration_seconds",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "defaultValueExpression": "0",
+      "description": "累計トレーニング時間(秒)"
+    },
+    {
+      "name": "average_session_score",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "平均セッションスコア(0-100)"
+    },
+    {
+      "name": "age_group",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "年齢層: 18-25, 26-35, 36-45, 46+ (個人特定を避けるため範囲で保存)"
+    },
+    {
+      "name": "country_code",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "国コード(ISO 3166-1 alpha-2) - 国レベルのみ、詳細な位置情報は保存しない"
+    },
+    {
+      "name": "subscription_plan",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "サブスクリプションプラン: free, premium"
+    },
+    {
+      "name": "is_deleted",
+      "type": "BOOL",
+      "mode": "NULLABLE",
+      "defaultValueExpression": "FALSE",
+      "description": "論理削除フラグ"
+    },
+    {
+      "name": "deleted_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "論理削除日時"
+    }
+  ]
+}
