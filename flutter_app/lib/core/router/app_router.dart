@@ -1,8 +1,11 @@
 // アプリルーター設定
 // 認証状態を考慮したGoRouterベースのナビゲーション
 //
-// @version 1.1.0
-// @date 2025-11-27
+// 同意画面チラつき防止のため、認証状態と同意状態を統合管理
+// 仕様参照: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md セクション2.1
+//
+// @version 1.2.0
+// @date 2025-12-02
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../auth/auth_state_notifier.dart';
 import '../consent/consent_state_notifier.dart';
+import 'app_initialization_state.dart';
 import '../form_analyzer/form_analyzer.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
@@ -17,6 +21,7 @@ import '../../screens/auth/password_reset_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/profile/profile_screen.dart';
 import '../../screens/splash/splash_screen.dart';
+import '../../screens/onboarding/onboarding_screen.dart';
 import '../../screens/legal/consent_screen.dart';
 import '../../screens/session/pre_session_screen.dart';
 import '../../screens/session/active_session_screen.dart';
@@ -27,6 +32,7 @@ import '../../screens/history/history_screen.dart';
 import '../../screens/analytics/analytics_screen.dart';
 import '../../screens/settings/data_export_screen.dart';
 import '../../screens/settings/account_deletion_screen.dart';
+import '../../screens/settings/settings_screen.dart';
 import '../../screens/auth/recovery_screen.dart';
 
 /// ルートパス
@@ -51,28 +57,33 @@ class AppRoutes {
   static const settingsDeletion = '/settings/deletion';
   static const consent = '/consent';
   static const recovery = '/auth/recovery';
+  static const onboarding = '/onboarding';
 }
 
 /// ルータープロバイダー
+///
+/// 同意画面チラつき防止のため、appInitializationProviderを使用して
+/// 認証状態と同意状態が両方ロード完了するまでスプラッシュ画面を維持
+///
+/// 仕様参照: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md セクション2.1
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final consentState = ref.watch(consentStateProvider);
+  // Use the combined initialization state to prevent consent screen flickering
+  final appInitState = ref.watch(appInitializationProvider);
   final authNotifier = ref.read(authStateProvider.notifier);
+  final authState = ref.watch(authStateProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
     refreshListenable: _AuthConsentStateNotifier(ref),
     redirect: (context, state) {
-      final isLoading = authState.isLoading || consentState.isLoading;
-      final isAuthenticated = authState.user != null;
-      final needsConsent = consentState.needsConsent;
       final isOnAuthPage = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register ||
           state.matchedLocation == AppRoutes.passwordReset ||
           state.matchedLocation == AppRoutes.recovery;
       final isOnSplash = state.matchedLocation == AppRoutes.splash;
       final isOnConsent = state.matchedLocation == AppRoutes.consent;
+      final isOnOnboarding = state.matchedLocation == AppRoutes.onboarding;
 
       // 別のページに移動する際にエラーをクリア
       if (authState.error != null) {
@@ -80,50 +91,77 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         Future.microtask(() => authNotifier.clearError());
       }
 
-      // 読み込み中はスプラッシュを表示
-      if (isLoading && isOnSplash) {
-        return null;
-      }
-
-      // まず強制ログアウトをチェック
-      if (authState.isForceLogout) {
-        // ログインへのリダイレクト後に強制ログアウトフラグをクリア
+      // 強制ログアウトの場合は即座にログイン画面へ
+      if (appInitState.status == AppInitializationStatus.forceLoggedOut) {
         Future.microtask(() => authNotifier.clearForceLogout());
         return AppRoutes.login;
       }
 
-      // 読み込み完了後、スプラッシュにいる場合は認証と同意状態に基づいてリダイレクト
-      if (!isLoading && isOnSplash) {
-        if (!isAuthenticated) {
-          return AppRoutes.login;
+      // ローディング中の場合（認証状態または同意状態がまだ読み込み中）
+      // これがチラつき防止の核心部分
+      if (appInitState.isLoading) {
+        // スプラッシュ画面にいる場合はそのまま維持
+        if (isOnSplash) {
+          return null;
         }
-        // 認証後に同意をチェック
-        if (needsConsent) {
-          return AppRoutes.consent;
+        // 認証ページにいる場合は維持（ローディング中でも操作可能にする）
+        if (isOnAuthPage) {
+          return null;
         }
-        return AppRoutes.home;
+        // オンボーディング中は維持
+        if (isOnOnboarding) {
+          return null;
+        }
+        // 他のページにいる場合はスプラッシュへリダイレクト
+        // これにより認証・同意状態が確定するまで待機
+        return AppRoutes.splash;
+      }
+
+      // 以下、ローディング完了後の処理
+      // 認証状態と同意状態が両方確定してから遷移先を決定
+      // -------------------------
+
+      // スプラッシュ画面にいる場合は適切な画面へ遷移
+      if (isOnSplash) {
+        switch (appInitState.status) {
+          case AppInitializationStatus.unauthenticated:
+          case AppInitializationStatus.forceLoggedOut:
+            return AppRoutes.login;
+          case AppInitializationStatus.needsConsent:
+            return AppRoutes.consent;
+          case AppInitializationStatus.ready:
+            return AppRoutes.home;
+          case AppInitializationStatus.loading:
+            return null; // Keep showing splash
+        }
       }
 
       // 未認証で認証ページにいない場合はログインにリダイレクト
-      if (!isAuthenticated && !isOnAuthPage && !isOnSplash) {
+      // オンボーディング画面は認証不要なのでスキップ
+      if (appInitState.shouldShowLogin &&
+          !isOnAuthPage &&
+          !isOnSplash &&
+          !isOnOnboarding) {
         return AppRoutes.login;
       }
 
-      // 認証済みで認証ページにいる場合は同意をチェックしてホームへ
-      if (isAuthenticated && isOnAuthPage) {
-        if (needsConsent) {
+      // 認証済みで認証ページにいる場合は適切な画面へリダイレクト
+      if (appInitState.status != AppInitializationStatus.unauthenticated &&
+          appInitState.status != AppInitializationStatus.forceLoggedOut &&
+          isOnAuthPage) {
+        if (appInitState.shouldShowConsent) {
           return AppRoutes.consent;
         }
         return AppRoutes.home;
       }
 
       // 認証済みだが同意が必要な場合は同意画面にリダイレクト
-      if (isAuthenticated && needsConsent && !isOnConsent && !isOnSplash) {
+      if (appInitState.shouldShowConsent && !isOnConsent && !isOnSplash) {
         return AppRoutes.consent;
       }
 
       // 認証済みで同意済みかつ同意ページにいる場合はホームへ
-      if (isAuthenticated && !needsConsent && isOnConsent) {
+      if (appInitState.isReady && isOnConsent) {
         return AppRoutes.home;
       }
 
@@ -134,6 +172,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.splash,
         builder: (context, state) => const SplashScreen(),
+      ),
+
+      // オンボーディング画面（初回起動時のみ表示）
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
       ),
 
       // 認証ルート
@@ -222,6 +266,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 設定ルート（GDPR対応）
       GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.settingsExport,
         builder: (context, state) => const DataExportScreen(),
       ),
@@ -271,6 +319,10 @@ class _AuthConsentStateNotifier extends ChangeNotifier {
     _ref.listen(consentStateProvider, (previous, next) {
       notifyListeners();
     });
+    // Also listen to the combined initialization state for immediate updates
+    _ref.listen(appInitializationProvider, (previous, next) {
+      notifyListeners();
+    });
   }
 
   // ignore: unused_field - リスナー用にrefの参照を保持するために使用されるフィールド
@@ -297,16 +349,19 @@ extension GoRouterExtension on BuildContext {
   /// プロフィールに移動
   void goToProfile() => GoRouter.of(this).go(AppRoutes.profile);
 
+  /// 設定に移動
+  void goToSettings() => GoRouter.of(this).go(AppRoutes.settings);
+
   /// トレーニング（種目選択）に移動
   void goToTraining() => GoRouter.of(this).go(AppRoutes.training);
 
   /// 種目詳細画面に移動
-  void goToExerciseDetail(ExerciseType exerciseType) =>
-      GoRouter.of(this).go('${AppRoutes.trainingDetail}?exercise=${exerciseType.name}');
+  void goToExerciseDetail(ExerciseType exerciseType) => GoRouter.of(this)
+      .go('${AppRoutes.trainingDetail}?exercise=${exerciseType.name}');
 
   /// 種目タイプ付きでトレーニングセットアップに移動
-  void goToTrainingSetup(ExerciseType exerciseType) =>
-      GoRouter.of(this).go('${AppRoutes.trainingSetup}?exercise=${exerciseType.name}');
+  void goToTrainingSetup(ExerciseType exerciseType) => GoRouter.of(this)
+      .go('${AppRoutes.trainingSetup}?exercise=${exerciseType.name}');
 
   /// アクティブトレーニングに移動
   void goToActiveTraining() => GoRouter.of(this).go(AppRoutes.trainingActive);
@@ -328,4 +383,7 @@ extension GoRouterExtension on BuildContext {
 
   /// アカウント復元に移動
   void goToAccountRecovery() => GoRouter.of(this).go(AppRoutes.recovery);
+
+  /// オンボーディングに移動
+  void goToOnboarding() => GoRouter.of(this).go(AppRoutes.onboarding);
 }
