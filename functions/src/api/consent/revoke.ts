@@ -160,7 +160,7 @@ export const revokeConsent = onCall(
 
     const consentType = validateConsentType(data.consentType);
     const requestDataDeletion = data.requestDataDeletion === true;
-    const reason = typeof data.reason === "string" ? data.reason.substring(0, 500) : undefined;
+    const reason = typeof data.reason === "string" ? data.reason.substring(0, 500) : "user_request";
 
     // リクエストメタデータを抽出
     const clientIp = getClientIp(request.rawRequest);
