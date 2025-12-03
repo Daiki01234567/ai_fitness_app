@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../camera/camera_config.dart';
+import '../camera/camera_error.dart';
 import '../camera/camera_service.dart';
 import '../camera/frame_rate_monitor.dart';
 import 'pose_data.dart';
@@ -38,6 +39,7 @@ class PoseSessionState {
     this.isInitializing = false,
     this.currentPose,
     this.errorMessage,
+    this.error,
     this.sessionStartTime,
     this.totalFramesProcessed = 0,
     this.currentConfig = CameraConfig.highQuality,
@@ -52,8 +54,11 @@ class PoseSessionState {
   /// 現在検出された姿勢
   final PoseFrame? currentPose;
 
-  /// エラーメッセージ（ある場合）
+  /// エラーメッセージ（ある場合）- 後方互換性のため維持
   final String? errorMessage;
+
+  /// 構造化されたエラー情報
+  final CameraError? error;
 
   /// セッション開始時刻
   final DateTime? sessionStartTime;
@@ -70,11 +75,15 @@ class PoseSessionState {
     return DateTime.now().difference(sessionStartTime!);
   }
 
+  /// エラーがあるかどうか
+  bool get hasError => error != null || errorMessage != null;
+
   PoseSessionState copyWith({
     bool? isActive,
     bool? isInitializing,
     PoseFrame? currentPose,
     String? errorMessage,
+    CameraError? error,
     DateTime? sessionStartTime,
     int? totalFramesProcessed,
     CameraConfig? currentConfig,
@@ -84,6 +93,7 @@ class PoseSessionState {
       isInitializing: isInitializing ?? this.isInitializing,
       currentPose: currentPose ?? this.currentPose,
       errorMessage: errorMessage,
+      error: error,
       sessionStartTime: sessionStartTime ?? this.sessionStartTime,
       totalFramesProcessed: totalFramesProcessed ?? this.totalFramesProcessed,
       currentConfig: currentConfig ?? this.currentConfig,
@@ -125,6 +135,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     state = state.copyWith(
       isInitializing: true,
       errorMessage: null,
+      error: null,
     );
 
     try {
@@ -134,6 +145,7 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
         state = state.copyWith(
           isInitializing: false,
           errorMessage: 'Failed to initialize pose detector',
+          error: CameraError.poseDetectorFailed,
         );
         return false;
       }
@@ -145,9 +157,16 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
       );
 
       if (!cameraInitialized) {
+        // Get the error message from camera state if available
+        final cameraError = _cameraStateNotifier.state.errorMessage;
+        final error = cameraError != null
+            ? CameraError.fromMessage(cameraError)
+            : CameraError.initializationFailed;
+
         state = state.copyWith(
           isInitializing: false,
-          errorMessage: 'Failed to initialize camera',
+          errorMessage: cameraError ?? 'Failed to initialize camera',
+          error: error,
         );
         return false;
       }
@@ -163,14 +182,17 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
         isInitializing: false,
         sessionStartTime: DateTime.now(),
         currentConfig: config,
+        error: null,
       );
 
       debugPrint('PoseSessionController: Session started with config: $config');
       return true;
     } catch (e) {
+      final errorMessage = e.toString();
       state = state.copyWith(
         isInitializing: false,
-        errorMessage: e.toString(),
+        errorMessage: errorMessage,
+        error: CameraError.fromMessage(errorMessage),
       );
       return false;
     }
