@@ -13,6 +13,7 @@ import '../../core/auth/auth_state_notifier.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../legal/consent_management_section.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 /// Profile screen widget
 class ProfileScreen extends ConsumerWidget {
@@ -27,10 +28,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('プロフィール'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(AppRoutes.home),
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -227,6 +225,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
     );
   }
 
