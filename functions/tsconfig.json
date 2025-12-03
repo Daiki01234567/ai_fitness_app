@@ -14,7 +14,7 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
     "outDir": "lib",
-    "rootDir": ".",
+    "rootDir": "src",
     "sourceMap": true,
     "strict": true,
     "target": "ES2022",
@@ -28,8 +28,7 @@
   },
   "compileOnSave": true,
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
