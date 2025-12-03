@@ -161,19 +161,41 @@ export async function createAuditLog(
   entry: Omit<AuditLogEntry, "timestamp">,
 ): Promise<string> {
   try {
-    const logEntry: AuditLogEntry = {
-      ...entry,
+    // Firestoreはundefined値を許可しないため、未定義のフィールドを除外
+    const logEntry: Partial<AuditLogEntry> = {
       // プライバシーのためにユーザー ID をハッシュ化
       userId: hashForPrivacy(entry.userId),
-      // 値をサニタイズ
-      previousValues: entry.previousValues
-        ? sanitizeForLog(entry.previousValues)
-        : undefined,
-      newValues: entry.newValues
-        ? sanitizeForLog(entry.newValues)
-        : undefined,
+      action: entry.action,
+      resourceType: entry.resourceType,
+      success: entry.success,
       timestamp: FieldValue.serverTimestamp(),
     };
+
+    // 条件付きでオプションフィールドを追加（undefined/nullは除外）
+    if (entry.resourceId != null) {
+      logEntry.resourceId = entry.resourceId;
+    }
+    if (entry.previousValues) {
+      logEntry.previousValues = sanitizeForLog(entry.previousValues);
+    }
+    if (entry.newValues) {
+      logEntry.newValues = sanitizeForLog(entry.newValues);
+    }
+    if (entry.changedFields && entry.changedFields.length > 0) {
+      logEntry.changedFields = entry.changedFields;
+    }
+    if (entry.ipAddressHash) {
+      logEntry.ipAddressHash = entry.ipAddressHash;
+    }
+    if (entry.userAgent) {
+      logEntry.userAgent = entry.userAgent;
+    }
+    if (entry.metadata) {
+      logEntry.metadata = entry.metadata;
+    }
+    if (entry.errorMessage) {
+      logEntry.errorMessage = entry.errorMessage;
+    }
 
     const docRef = await db.collection("auditLogs").add(logEntry);
 
