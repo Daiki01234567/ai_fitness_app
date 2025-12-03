@@ -22,7 +22,7 @@ import '../../core/form_analyzer/form_analyzer.dart';
 import '../../core/router/app_router.dart';
 import '../../core/session/session_state.dart';
 import '../../core/theme/app_theme.dart';
-import '../home/home_screen.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 /// Exercise detail screen
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
