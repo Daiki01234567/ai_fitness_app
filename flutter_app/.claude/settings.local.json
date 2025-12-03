@@ -1,0 +1,12 @@
+{
+  "enabledMcpjsonServers": [
+    "playwright",
+    "github",
+    "firebase",
+    "gcp",
+    "filesystem",
+    "mcp-server-commands",
+    "context7",
+    "serena"
+  ]
+}
