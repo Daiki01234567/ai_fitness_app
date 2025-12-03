@@ -8,6 +8,7 @@
 /// - Setup checklist (4 items)
 /// - Auto-start countdown when all items checked
 /// - Exercise info display
+/// - Improved error handling with recovery options
 ///
 /// Legal notice: This is NOT a medical device.
 /// All feedback is for reference purposes only.
@@ -19,12 +20,14 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/camera/camera_error.dart';
 import '../../core/camera/camera_service.dart';
 import '../../core/router/app_router.dart';
 import '../../core/pose/coordinate_transformer.dart';
 import '../../core/pose/pose_session_controller.dart';
 import '../../core/session/session_state.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/camera/camera_error_widget.dart';
 import '../../core/widgets/pose/pose_overlay.dart';
 import '../../core/widgets/pose/pose_painter.dart';
 import '../../core/form_analyzer/form_analyzer.dart';
@@ -165,49 +168,38 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
     );
   }
 
+  /// Navigate back to the training screen
+  void _goBack() {
+    ref.read(poseSessionControllerProvider.notifier).stopSession();
+    ref.read(trainingSessionProvider.notifier).resetSession();
+    context.goToTraining();
+  }
+
   Widget _buildCameraPreview(CameraServiceState cameraState, PoseSessionState poseState) {
     if (poseState.isInitializing) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: AppSpacing.md),
-            Text('カメラを起動中...'),
-          ],
-        ),
-      );
+      return _buildLoadingState();
     }
 
-    if (poseState.errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              poseState.errorMessage!,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            FilledButton(
-              onPressed: _initializeSession,
-              child: const Text('再試行'),
-            ),
-          ],
-        ),
+    // Check for errors using the structured error first, then fallback to message
+    if (poseState.hasError) {
+      final error = poseState.error ??
+          (poseState.errorMessage != null
+              ? CameraError.fromMessage(poseState.errorMessage!)
+              : const CameraError(
+                  type: CameraErrorType.unknown,
+                  message: 'エラーが発生しました',
+                ));
+
+      return CameraErrorWidget(
+        error: error,
+        onRetry: _initializeSession,
+        onGoBack: _goBack,
       );
     }
 
     final controller = cameraState.controller;
     if (controller == null || !controller.value.isInitialized) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildLoadingState();
     }
 
     return ClipRRect(
@@ -388,6 +380,32 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
         minimumSize: const Size.fromHeight(48),
       ),
       child: const Text('開始'),
+    );
+  }
+
+  /// Build the loading state widget
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'カメラを起動中...',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'しばらくお待ちください',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
+          ),
+        ],
+      ),
     );
   }
 }
