@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -197,13 +198,18 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   /// ユーザーサインアウト時の処理
   void _handleUserSignOut() {
+    debugPrint('[AuthState] _handleUserSignOut called');
+    debugPrint('[AuthState] Current state.isForceLogout before reset: ${state.isForceLogout}');
+
     _userDataSubscription?.cancel();
     _tokenRefreshTimer?.cancel();
 
     // サインアウト中にisForceLogoutフラグを保持
     // これにより強制ログアウト後にルーターがログイン画面にリダイレクトすることを保証
     final wasForceLogout = state.isForceLogout;
+    debugPrint('[AuthState] Preserving isForceLogout=$wasForceLogout');
     state = AuthState(isForceLogout: wasForceLogout);
+    debugPrint('[AuthState] State reset completed. New state.isForceLogout: ${state.isForceLogout}');
   }
 
   /// トークンリフレッシュタイマーの開始
@@ -423,33 +429,46 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   /// 全デバイスでのログアウトを保証（Cloud Functionsが失敗した場合に備えて）
   /// 仕様: FR-002-1 同意撤回時の強制ログアウト
   Future<void> forceLogout() async {
+    debugPrint('[ForceLogout] Starting forceLogout...');
+    debugPrint('[ForceLogout] Current user: ${_auth.currentUser?.uid}');
+    debugPrint('[ForceLogout] Current state.isForceLogout: ${state.isForceLogout}');
+
     // まず強制ログアウトフラグを設定してルーターがログインにリダイレクトするようにする
     state = state.copyWith(isForceLogout: true);
+    debugPrint('[ForceLogout] Set isForceLogout=true in state');
 
     try {
       // フォールバックとしてFirestoreのforceLogoutフィールドを更新
       // （Cloud Functionsで更新されているはずだが、失敗している可能性あり）
       final currentUser = _auth.currentUser;
       if (currentUser != null) {
+        debugPrint('[ForceLogout] Updating Firestore forceLogout field...');
         try {
           await _firestore.collection('users').doc(currentUser.uid).update({
             'forceLogout': true,
             'forceLogoutAt': FieldValue.serverTimestamp(),
           });
+          debugPrint('[ForceLogout] Firestore update successful');
         } catch (firestoreError) {
           // Firestoreエラーは無視 - ローカルでのサインアウトは続行
           // セキュリティルールで禁止されている場合やユーザーが存在しない場合に失敗する可能性あり
+          debugPrint('[ForceLogout] Firestore update failed (ignoring): $firestoreError');
         }
       }
 
       // Googleサインイン済みの場合はGoogleからもサインアウト
+      debugPrint('[ForceLogout] Signing out from Google...');
       await _googleSignIn.signOut();
+      debugPrint('[ForceLogout] Signing out from Firebase Auth...');
       await _auth.signOut();
+      debugPrint('[ForceLogout] Firebase Auth signOut completed');
     } catch (e) {
+      debugPrint('[ForceLogout] Error during signOut: $e');
       state = state.copyWith(
         error: 'サインアウトエラー: $e',
       );
     }
+    debugPrint('[ForceLogout] forceLogout() method completed');
   }
 
   /// Googleアカウントでサインイン
