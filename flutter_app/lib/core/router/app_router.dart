@@ -85,6 +85,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isOnConsent = state.matchedLocation == AppRoutes.consent;
       final isOnOnboarding = state.matchedLocation == AppRoutes.onboarding;
 
+      debugPrint('[Router] redirect called: location=${state.matchedLocation}, appInitState=$appInitState');
+
       // 別のページに移動する際にエラーをクリア
       if (authState.error != null) {
         // ビルド中に状態を変更しないようにFuture.microtaskを使用
@@ -93,6 +95,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 強制ログアウトの場合は即座にログイン画面へ
       if (appInitState.status == AppInitializationStatus.forceLoggedOut) {
+        debugPrint('[Router] Force logout detected, redirecting to login');
         Future.microtask(() => authNotifier.clearForceLogout());
         return AppRoutes.login;
       }
@@ -105,11 +108,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return null;
         }
         // 認証ページにいる場合は維持（ローディング中でも操作可能にする）
+        // 登録完了後のローディング中もここで維持される
         if (isOnAuthPage) {
           return null;
         }
         // オンボーディング中は維持
         if (isOnOnboarding) {
+          return null;
+        }
+        // 同意画面にいる場合も維持（同意処理中）
+        if (isOnConsent) {
           return null;
         }
         // 他のページにいる場合はスプラッシュへリダイレクト
@@ -121,48 +129,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 認証状態と同意状態が両方確定してから遷移先を決定
       // -------------------------
 
-      // スプラッシュ画面にいる場合は適切な画面へ遷移
-      if (isOnSplash) {
-        switch (appInitState.status) {
-          case AppInitializationStatus.unauthenticated:
-          case AppInitializationStatus.forceLoggedOut:
-            return AppRoutes.login;
-          case AppInitializationStatus.needsConsent:
-            return AppRoutes.consent;
-          case AppInitializationStatus.ready:
-            return AppRoutes.home;
-          case AppInitializationStatus.loading:
-            return null; // Keep showing splash
+      // 未認証の場合のルーティング
+      if (appInitState.shouldShowLogin) {
+        // オンボーディング・スプラッシュ画面は認証不要なのでスキップ
+        if (isOnAuthPage || isOnOnboarding) {
+          return null;
         }
-      }
-
-      // 未認証で認証ページにいない場合はログインにリダイレクト
-      // オンボーディング画面は認証不要なのでスキップ
-      if (appInitState.shouldShowLogin &&
-          !isOnAuthPage &&
-          !isOnSplash &&
-          !isOnOnboarding) {
+        // スプラッシュ画面にいる場合はスプラッシュ画面のナビゲーションに任せる
+        // （初回起動チェック等を行うため）
+        if (isOnSplash) {
+          return null;
+        }
         return AppRoutes.login;
       }
 
-      // 認証済みで認証ページにいる場合は適切な画面へリダイレクト
-      if (appInitState.status != AppInitializationStatus.unauthenticated &&
-          appInitState.status != AppInitializationStatus.forceLoggedOut &&
-          isOnAuthPage) {
-        if (appInitState.shouldShowConsent) {
-          return AppRoutes.consent;
+      // 認証済みだが同意が必要な場合
+      if (appInitState.shouldShowConsent) {
+        // 同意画面にいる場合はそのまま維持
+        if (isOnConsent) {
+          return null;
         }
-        return AppRoutes.home;
-      }
-
-      // 認証済みだが同意が必要な場合は同意画面にリダイレクト
-      if (appInitState.shouldShowConsent && !isOnConsent && !isOnSplash) {
+        // スプラッシュ画面にいる場合も同意画面にリダイレクト
+        // （スプラッシュ画面のナビゲーションが競合するのを防ぐ）
+        // 認証ページ・オンボーディングからも同意画面へ
         return AppRoutes.consent;
       }
 
-      // 認証済みで同意済みかつ同意ページにいる場合はホームへ
-      if (appInitState.isReady && isOnConsent) {
-        return AppRoutes.home;
+      // 認証済みで同意済み（ready状態）
+      if (appInitState.isReady) {
+        // 認証ページ・オンボーディング・同意ページ・スプラッシュにいる場合はホームへ
+        if (isOnAuthPage || isOnOnboarding || isOnConsent || isOnSplash) {
+          return AppRoutes.home;
+        }
+        // その他のページはそのまま維持
+        return null;
       }
 
       return null;
