@@ -74,8 +74,16 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   final authState = ref.watch(authStateProvider);
   final consentState = ref.watch(consentStateProvider);
 
-  // Check force logout first - this takes priority
+  // Debug logging
+  // ignore: avoid_print
+  print('[AppInit] authState: user=${authState.user?.uid}, isLoading=${authState.isLoading}, isForceLogout=${authState.isForceLogout}');
+  // ignore: avoid_print
+  print('[AppInit] consentState: isLoading=${consentState.isLoading}, needsConsent=${consentState.needsConsent}, tosAccepted=${consentState.tosAccepted}');
+
+  // Check force logout first - this takes priority over everything
   if (authState.isForceLogout) {
+    // ignore: avoid_print
+    print('[AppInit] -> forceLoggedOut');
     return const AppInitializationState(
       status: AppInitializationStatus.forceLoggedOut,
       isAuthLoading: false,
@@ -83,28 +91,50 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
     );
   }
 
-  // Check if user is not authenticated
-  if (authState.user == null && !authState.isLoading) {
-    return AppInitializationState(
+  // Check if user is not authenticated - this takes priority over consent
+  // User must be logged in before we care about consent status
+  // This check must come BEFORE loading check to prevent flickering to consent screen
+  if (authState.user == null) {
+    // If still loading auth state, show loading
+    if (authState.isLoading) {
+      // ignore: avoid_print
+      print('[AppInit] -> loading (auth loading, no user yet)');
+      return const AppInitializationState(
+        status: AppInitializationStatus.loading,
+        isAuthLoading: true,
+        isConsentLoading: false,
+      );
+    }
+    // Auth loading complete and no user - definitely unauthenticated
+    // ignore: avoid_print
+    print('[AppInit] -> unauthenticated');
+    return const AppInitializationState(
       status: AppInitializationStatus.unauthenticated,
-      isAuthLoading: authState.isLoading,
-      isConsentLoading: false, // Don't care about consent if not authenticated
+      isAuthLoading: false,
+      isConsentLoading: false,
     );
   }
 
-  // User exists but auth is still loading user data
+  // From here on, user is authenticated (authState.user != null)
+
+  // User exists but auth is still loading user data (e.g., fetching userData from Firestore)
   if (authState.isLoading) {
-    return AppInitializationState(
+    // ignore: avoid_print
+    print('[AppInit] -> loading (auth loading user data)');
+    return const AppInitializationState(
       status: AppInitializationStatus.loading,
       isAuthLoading: true,
-      isConsentLoading: consentState.isLoading,
+      isConsentLoading: true, // Keep consent loading while auth is loading
     );
   }
 
   // Auth is loaded, but consent state is still loading
-  // This is the key fix - we wait for consent state before deciding
+  // IMPORTANT: Wait for consent state to fully load before making routing decisions
+  // This prevents flickering when consent listener is initializing
   if (consentState.isLoading) {
-    return AppInitializationState(
+    // ignore: avoid_print
+    print('[AppInit] -> loading (consent loading)');
+    return const AppInitializationState(
       status: AppInitializationStatus.loading,
       isAuthLoading: false,
       isConsentLoading: true,
@@ -113,6 +143,8 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
 
   // Both states are loaded - determine final status
   if (consentState.needsConsent) {
+    // ignore: avoid_print
+    print('[AppInit] -> needsConsent');
     return const AppInitializationState(
       status: AppInitializationStatus.needsConsent,
       isAuthLoading: false,
@@ -121,6 +153,8 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   }
 
   // All good - user is authenticated and has given consent
+  // ignore: avoid_print
+  print('[AppInit] -> ready');
   return const AppInitializationState(
     status: AppInitializationStatus.ready,
     isAuthLoading: false,
