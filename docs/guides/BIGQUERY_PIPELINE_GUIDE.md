@@ -91,6 +91,8 @@
 cd C:\Users\katos\Desktop\ai_fitness_app
 
 # スキーマファイルを作成（後述）
+
+# Linux/Mac用（複数行）:
 bq mk \
   --table \
   --schema=bigquery_schemas/training_sessions.json \
@@ -102,6 +104,9 @@ bq mk \
   --label=env:production \
   --label=data_classification:pseudonymized \
   tokyo-list-478804-e5:fitness_analytics.training_sessions
+
+# Windows用（1行で実行）:
+bq mk --table --schema=bigquery_schemas/training_sessions.json --time_partitioning_field=created_at --time_partitioning_type=DAY --time_partitioning_expiration=63072000 --clustering_fields=user_id_hash,exercise_id --description="トレーニングセッション記録(GDPR準拠: 2年間保持)" --label=env:production --label=data_classification:pseudonymized tokyo-list-478804-e5:fitness_analytics.training_sessions
 ```
 
 **方法2: BigQuery Console GUI**
@@ -331,6 +336,7 @@ bq show --format=prettyjson tokyo-list-478804-e5:fitness_analytics.training_sess
 **作成コマンド**:
 
 ```bash
+# Linux/Mac用（複数行）:
 bq mk \
   --table \
   --schema=bigquery_schemas/user_metadata.json \
@@ -342,6 +348,9 @@ bq mk \
   --label=env:production \
   --label=data_classification:pseudonymized \
   tokyo-list-478804-e5:fitness_analytics.user_metadata
+
+# Windows用（1行で実行）:
+bq mk --table --schema=bigquery_schemas/user_metadata.json --time_partitioning_field=updated_at --time_partitioning_type=DAY --time_partitioning_expiration=63072000 --clustering_fields=user_id_hash,country_code --description="ユーザーメタデータ(仮名化済み、個人特定不可)" --label=env:production --label=data_classification:pseudonymized tokyo-list-478804-e5:fitness_analytics.user_metadata
 ```
 
 #### 2.2.2 スキーマファイル
@@ -434,6 +443,7 @@ bq mk \
 **作成コマンド**:
 
 ```bash
+# Linux/Mac用（複数行）:
 bq mk \
   --table \
   --schema=bigquery_schemas/aggregated_stats.json \
@@ -445,6 +455,9 @@ bq mk \
   --label=env:production \
   --label=data_classification:aggregated \
   tokyo-list-478804-e5:fitness_analytics.aggregated_stats
+
+# Windows用（1行で実行）:
+bq mk --table --schema=bigquery_schemas/aggregated_stats.json --time_partitioning_field=stat_date --time_partitioning_type=DAY --time_partitioning_expiration=63072000 --clustering_fields=stat_type,region --description="集計統計データ(日次バッチ処理)" --label=env:production --label=data_classification:aggregated tokyo-list-478804-e5:fitness_analytics.aggregated_stats
 ```
 
 #### 2.3.2 スキーマファイル
@@ -647,6 +660,8 @@ gcloud pubsub subscriptions describe training-sessions-stream-sub \
 
 ```bash
 # 開発用テーブルを作成
+
+# Linux/Mac用（複数行）:
 bq mk \
   --table \
   --schema=bigquery_schemas/training_sessions.json \
@@ -656,6 +671,9 @@ bq mk \
   --clustering_fields=user_id_hash,exercise_id \
   --description="開発用トレーニングセッション記録（30日保持）" \
   tokyo-list-478804-e5:fitness_analytics_dev.training_sessions
+
+# Windows用（1行で実行）:
+bq mk --table --schema=bigquery_schemas/training_sessions.json --time_partitioning_field=created_at --time_partitioning_type=DAY --time_partitioning_expiration=2592000 --clustering_fields=user_id_hash,exercise_id --description="開発用トレーニングセッション記録（30日保持）" tokyo-list-478804-e5:fitness_analytics_dev.training_sessions
 ```
 
 #### 5.1.2 環境変数の設定（開発環境）
