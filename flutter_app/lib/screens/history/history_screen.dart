@@ -545,12 +545,23 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildCalendarView(DateTime month, List<DailySummary> summaries) {
-    final firstDay = DateTime(month.year, month.month, 1);
-    final lastDay = DateTime(month.year, month.month + 1, 0);
-    final startWeekday = firstDay.weekday;
-    final daysInMonth = lastDay.day;
+    final state = ref.watch(historyStateProvider);
+    final selectedDate = state.selectedDate;
 
-    // Create summary map
+    final firstDayOfMonth = DateTime(month.year, month.month, 1);
+    final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
+    final daysInMonth = lastDayOfMonth.day;
+
+    // Calculate first day offset (Monday = 1, Sunday = 7)
+    // For Monday-start calendar, Monday offset = 0, Sunday offset = 6
+    final firstDayWeekday = firstDayOfMonth.weekday;
+    final startOffset = firstDayWeekday - 1; // Monday = 0, Sunday = 6
+
+    // Calculate days from previous month to show
+    final prevMonth = DateTime(month.year, month.month - 1);
+    final daysInPrevMonth = DateTime(prevMonth.year, prevMonth.month + 1, 0).day;
+
+    // Create summary map for current month
     final summaryMap = <int, DailySummary>{};
     for (final summary in summaries) {
       if (summary.date.year == month.year &&
@@ -559,84 +570,258 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       }
     }
 
+    // Calculate total cells needed (up to 6 weeks)
+    final totalCells = startOffset + daysInMonth;
+    final numRows = ((totalCells + 6) ~/ 7).clamp(5, 6);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Weekday headers
+            // Weekday headers with weekend color distinction
             Row(
-              children: ['月', '火', '水', '木', '金', '土', '日']
-                  .map((day) => Expanded(
-                        child: Center(
-                          child: Text(
-                            day,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      ))
-                  .toList(),
+              children: [
+                _buildWeekdayHeader('月', false),
+                _buildWeekdayHeader('火', false),
+                _buildWeekdayHeader('水', false),
+                _buildWeekdayHeader('木', false),
+                _buildWeekdayHeader('金', false),
+                _buildWeekdayHeader('土', true, isSaturday: true),
+                _buildWeekdayHeader('日', true, isSunday: true),
+              ],
             ),
             const SizedBox(height: 8),
             // Calendar grid
-            ...List.generate(6, (weekIndex) {
+            ...List.generate(numRows, (weekIndex) {
               return Row(
                 children: List.generate(7, (dayIndex) {
-                  final dayNumber =
-                      weekIndex * 7 + dayIndex + 1 - (startWeekday - 1);
-                  if (dayNumber < 1 || dayNumber > daysInMonth) {
-                    return const Expanded(child: SizedBox(height: 40));
+                  final cellIndex = weekIndex * 7 + dayIndex;
+                  final dayOffset = cellIndex - startOffset;
+
+                  // Determine which month and day this cell represents
+                  DateTime cellDate;
+                  bool isCurrentMonth;
+
+                  if (dayOffset < 0) {
+                    // Previous month
+                    final prevMonthDay = daysInPrevMonth + dayOffset + 1;
+                    cellDate = DateTime(prevMonth.year, prevMonth.month, prevMonthDay);
+                    isCurrentMonth = false;
+                  } else if (dayOffset >= daysInMonth) {
+                    // Next month
+                    final nextMonthDay = dayOffset - daysInMonth + 1;
+                    final nextMonth = DateTime(month.year, month.month + 1);
+                    cellDate = DateTime(nextMonth.year, nextMonth.month, nextMonthDay);
+                    isCurrentMonth = false;
+                  } else {
+                    // Current month
+                    cellDate = DateTime(month.year, month.month, dayOffset + 1);
+                    isCurrentMonth = true;
                   }
 
-                  final summary = summaryMap[dayNumber];
-                  final isToday = _isSameDay(
-                    DateTime(month.year, month.month, dayNumber),
-                    DateTime.now(),
-                  );
+                  // Skip cells beyond the 6th row if not needed
+                  if (!isCurrentMonth && weekIndex >= 5 && dayOffset >= daysInMonth) {
+                    // Check if we need this row
+                    final firstCellOfRow = weekIndex * 7 - startOffset;
+                    if (firstCellOfRow >= daysInMonth) {
+                      return const Expanded(child: SizedBox(height: 44));
+                    }
+                  }
+
+                  final summary = isCurrentMonth ? summaryMap[cellDate.day] : null;
+                  final isToday = _isSameDay(cellDate, DateTime.now());
+                  final isSelected = selectedDate != null && _isSameDay(cellDate, selectedDate);
+                  final isWeekend = dayIndex >= 5;
 
                   return Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        ref.read(historyStateProvider.notifier).selectDate(
-                              DateTime(month.year, month.month, dayNumber),
-                            );
-                        ref
-                            .read(historyStateProvider.notifier)
-                            .setViewMode(HistoryViewMode.daily);
-                      },
-                      child: Container(
-                        height: 40,
-                        margin: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: summary != null
-                              ? _getIntensityColor(summary.intensityLevel)
-                              : null,
-                          border: isToday
-                              ? Border.all(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 2,
-                                )
-                              : null,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$dayNumber',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontWeight: isToday ? FontWeight.bold : null,
-                                ),
-                          ),
-                        ),
-                      ),
+                    child: _buildCalendarDay(
+                      date: cellDate,
+                      isCurrentMonth: isCurrentMonth,
+                      isToday: isToday,
+                      isSelected: isSelected,
+                      isWeekend: isWeekend,
+                      summary: summary,
+                      onTap: () => _onCalendarDateTap(cellDate),
                     ),
                   );
                 }),
               );
             }),
+            // Intensity legend
+            const SizedBox(height: 16),
+            _buildIntensityLegend(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildWeekdayHeader(String day, bool isWeekend, {bool isSaturday = false, bool isSunday = false}) {
+    Color? textColor;
+    if (isSunday) {
+      textColor = Colors.red.shade400;
+    } else if (isSaturday) {
+      textColor = Colors.blue.shade400;
+    }
+
+    return Expanded(
+      child: Center(
+        child: Text(
+          day,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalendarDay({
+    required DateTime date,
+    required bool isCurrentMonth,
+    required bool isToday,
+    required bool isSelected,
+    required bool isWeekend,
+    required DailySummary? summary,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    // Background color based on training intensity (GitHub contribution style)
+    Color? backgroundColor;
+    if (summary != null && isCurrentMonth) {
+      backgroundColor = _getIntensityColor(summary.intensityLevel);
+    }
+
+    // Text color
+    Color textColor;
+    if (!isCurrentMonth) {
+      textColor = Colors.grey.shade400;
+    } else if (isSelected) {
+      textColor = theme.colorScheme.onPrimary;
+    } else if (summary != null && summary.intensityLevel >= 2) {
+      textColor = Colors.white;
+    } else {
+      textColor = theme.textTheme.bodyMedium?.color ?? Colors.black;
+    }
+
+    // Border and decoration
+    BoxDecoration decoration;
+    if (isSelected && isCurrentMonth) {
+      decoration = BoxDecoration(
+        color: theme.colorScheme.primary,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    } else if (isToday && isCurrentMonth) {
+      decoration = BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.primary,
+          width: 2,
+        ),
+      );
+    } else {
+      decoration = BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(2),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          splashColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+          highlightColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 40,
+            decoration: decoration,
+            child: Center(
+              child: Text(
+                '${date.day}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntensityLegend() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          '活動量: ',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+        ),
+        const SizedBox(width: 8),
+        _buildLegendItem('なし', null),
+        const SizedBox(width: 4),
+        _buildLegendItem('少', 1),
+        const SizedBox(width: 4),
+        _buildLegendItem('中', 2),
+        const SizedBox(width: 4),
+        _buildLegendItem('多', 3),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(String label, int? level) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: level != null ? _getIntensityColor(level) : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(3),
+            border: level == null
+                ? Border.all(color: Colors.grey.shade400, width: 0.5)
+                : null,
+          ),
+        ),
+        const SizedBox(width: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+        ),
+      ],
+    );
+  }
+
+  void _onCalendarDateTap(DateTime date) {
+    // Update selected date
+    ref.read(historyStateProvider.notifier).selectDate(date);
+
+    // Switch to daily tab
+    ref.read(historyStateProvider.notifier).setViewMode(HistoryViewMode.daily);
+
+    // Animate tab controller to daily tab (index 1)
+    _tabController.animateTo(1);
   }
 
   Widget _buildScoreChart(List<HistorySession> sessions) {
@@ -802,15 +987,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     return AppColors.scorePoor;
   }
 
+  /// Get intensity color for GitHub contribution graph style display
+  /// Level 0: No activity (transparent/white)
+  /// Level 1: Light activity (light green)
+  /// Level 2: Medium activity (medium green)
+  /// Level 3: High activity (dark green)
   Color _getIntensityColor(int level) {
     switch (level) {
       case 3:
-        return Colors.green.shade400;
+        return const Color(0xFF216E39); // Dark green - high activity
       case 2:
-        return Colors.green.shade200;
+        return const Color(0xFF30A14E); // Medium green - medium activity
       case 1:
+        return const Color(0xFF9BE9A8); // Light green - light activity
+      case 0:
       default:
-        return Colors.green.shade100;
+        return const Color(0xFFEBEDF0); // Very light gray - no activity
     }
   }
 
