@@ -374,42 +374,54 @@ class ConsentManagementSection extends ConsumerWidget {
         ),
       );
 
+      debugPrint('[ConsentRevoke] Starting consent revocation...');
+
       // Revoke consent via Cloud Function
       final result = await ref
           .read(consentStateProvider.notifier)
           .revokeAllConsents(requestDataDeletion: requestDeletion);
 
-      // Close loading
+      debugPrint('[ConsentRevoke] Cloud Function result: success=${result.success}, error=${result.error}');
+
+      // Close loading dialog first
       if (context.mounted) {
         Navigator.of(context).pop();
+      }
 
-        // Always force logout when user confirms consent revocation
-        // Even if Cloud Function fails, we should log out the user
-        // Based on: FR-002-1 同意撤回時の強制ログアウト
-        //
-        // The Cloud Function sets forceLogout in Firestore, but if it fails
-        // (e.g., emulator not running), we still need to log out the user.
-        await ref.read(authStateProvider.notifier).forceLogout();
+      // Always force logout when user confirms consent revocation
+      // Even if Cloud Function fails, we should log out the user
+      // Based on: FR-002-1 同意撤回時の強制ログアウト
+      //
+      // IMPORTANT: We call forceLogout() regardless of context.mounted status
+      // because the router will handle navigation based on auth state changes.
+      // The forceLogout() sets isForceLogout flag which triggers router redirect.
+      debugPrint('[ConsentRevoke] Calling forceLogout()...');
+      await ref.read(authStateProvider.notifier).forceLogout();
+      debugPrint('[ConsentRevoke] forceLogout() completed');
 
-        if (!result.success && context.mounted) {
-          // Show warning that revocation may not be fully recorded
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                result.error ?? '同意解除の記録に問題が発生しました。ログアウトします。',
-              ),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 3),
+      // Show warning if Cloud Function failed
+      // Note: At this point, context may be unmounted due to auth state change
+      if (!result.success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.error ?? '同意解除の記録に問題が発生しました。ログアウトします。',
             ),
-          );
-        }
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
 
-        // Explicitly navigate to login screen to ensure redirect happens
-        // The router should handle this automatically, but we force it here
-        // to prevent returning to the previous screen
-        if (context.mounted) {
-          context.goToLogin();
-        }
+      // Note: Explicit navigation is no longer needed here because:
+      // 1. forceLogout() sets isForceLogout flag in auth state
+      // 2. Router's redirect function detects forceLoggedOut status
+      // 3. Router automatically redirects to login screen
+      // Keeping this as a fallback only if context is still valid
+      debugPrint('[ConsentRevoke] context.mounted=${context.mounted}');
+      if (context.mounted) {
+        debugPrint('[ConsentRevoke] Explicitly navigating to login...');
+        context.goToLogin();
       }
     }
   }
