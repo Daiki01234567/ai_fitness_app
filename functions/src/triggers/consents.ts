@@ -11,6 +11,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 
 import { logger } from "../utils/logger";
@@ -79,7 +80,7 @@ export const onConsentCreated = onDocumentCreated(
       // forceLogoutAt が設定されていない場合、ここで設定
       if (!userData.forceLogoutAt) {
         await userRef.update({
-          forceLogoutAt: admin.firestore.FieldValue.serverTimestamp(),
+          forceLogoutAt: FieldValue.serverTimestamp(),
         });
 
         logger.info("Set forceLogoutAt for user", { userId });
@@ -117,8 +118,8 @@ export const onConsentCreated = onDocumentCreated(
           consentType,
         },
         read: false,
-        sentAt: admin.firestore.FieldValue.serverTimestamp(),
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        sentAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
 
       logger.info("Created notification for consent revocation", {
