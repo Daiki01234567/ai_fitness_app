@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -97,15 +98,35 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
         _listenToUserConsentState(user.uid);
       } else {
         _userSubscription?.cancel();
+        _currentListeningUserId = null;
         // 未認証ユーザーのためにisLoading: falseで状態をリセット
         state = const ConsentState(isLoading: false);
       }
     });
   }
 
+  /// 現在リッスン中のユーザーID
+  String? _currentListeningUserId;
+
   /// Firestoreからユーザーの同意状態をリッスン
   void _listenToUserConsentState(String userId) {
+    // Skip if already listening to the same user
+    // This prevents unnecessary isLoading: true state changes that cause redirect loops
+    if (_currentListeningUserId == userId && _userSubscription != null) {
+      debugPrint('[ConsentState] Already listening to user $userId, skipping');
+      return;
+    }
+
+    debugPrint('[ConsentState] Starting to listen for user $userId');
     _userSubscription?.cancel();
+    _currentListeningUserId = userId;
+
+    // Set loading state when starting to listen for a NEW user
+    // Note: Only set isLoading if not already loading to prevent unnecessary state changes
+    // that could trigger router re-evaluation and cause redirect loops
+    if (!state.isLoading) {
+      state = state.copyWith(isLoading: true);
+    }
 
     _userSubscription = _firestore
         .collection('users')
@@ -139,9 +160,14 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
             error: null,
           );
         } else {
+          // Document doesn't exist yet (newly registered user)
+          // Keep loading state to wait for document creation by Cloud Function
+          // The register_screen waits for document creation, so this should resolve quickly
           state = state.copyWith(
             isLoading: false,
             needsConsent: true,
+            tosAccepted: false,
+            ppAccepted: false,
           );
         }
       },
@@ -298,6 +324,7 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
   @override
   void dispose() {
     _userSubscription?.cancel();
+    _currentListeningUserId = null;
     super.dispose();
   }
 }
