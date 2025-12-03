@@ -16,7 +16,7 @@ import '../../core/gdpr/gdpr_models.dart';
 import '../../core/gdpr/gdpr_state.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../home/home_screen.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 /// Data export screen widget
 class DataExportScreen extends ConsumerStatefulWidget {
