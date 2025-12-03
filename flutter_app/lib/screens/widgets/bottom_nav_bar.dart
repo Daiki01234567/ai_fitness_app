@@ -13,9 +13,14 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/app_router.dart';
+
+/// Provider for tracking the current bottom navigation index
+/// Used to sync navigation state across screens
+final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 
 /// Bottom navigation bar with 4 tabs
 class BottomNavBar extends StatelessWidget {
