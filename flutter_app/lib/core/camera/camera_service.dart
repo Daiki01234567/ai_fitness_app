@@ -10,8 +10,10 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'camera_config.dart';
+import 'camera_error.dart';
 
 /// カメラサービスプロバイダー
 final cameraServiceProvider = Provider<CameraService>((ref) {
@@ -32,6 +34,7 @@ class CameraServiceState {
     this.currentConfig,
     this.availableCameras = const [],
     this.errorMessage,
+    this.error,
   });
 
   final CameraState state;
@@ -39,6 +42,7 @@ class CameraServiceState {
   final CameraConfig? currentConfig;
   final List<CameraDescription> availableCameras;
   final String? errorMessage;
+  final CameraError? error;
 
   bool get isReady => state == CameraState.ready;
   bool get isInitializing => state == CameraState.initializing;
@@ -50,6 +54,7 @@ class CameraServiceState {
     CameraConfig? currentConfig,
     List<CameraDescription>? availableCameras,
     String? errorMessage,
+    CameraError? error,
   }) {
     return CameraServiceState(
       state: state ?? this.state,
@@ -57,6 +62,7 @@ class CameraServiceState {
       currentConfig: currentConfig ?? this.currentConfig,
       availableCameras: availableCameras ?? this.availableCameras,
       errorMessage: errorMessage,
+      error: error,
     );
   }
 }
@@ -76,12 +82,33 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
     state = state.copyWith(state: CameraState.initializing);
 
     try {
+      // Check camera permission first
+      final permissionStatus = await Permission.camera.status;
+      if (!permissionStatus.isGranted) {
+        // Request permission if not granted
+        final requestResult = await Permission.camera.request();
+        if (!requestResult.isGranted) {
+          final error = requestResult.isPermanentlyDenied
+              ? CameraError.permissionPermanentlyDenied
+              : CameraError.permissionDenied;
+          state = state.copyWith(
+            state: CameraState.error,
+            errorMessage: error.message,
+            error: error,
+          );
+          debugPrint('CameraStateNotifier: Camera permission denied');
+          return false;
+        }
+      }
+
       final cameras = await _cameraService.getAvailableCameras();
       if (cameras.isEmpty) {
         state = state.copyWith(
           state: CameraState.error,
-          errorMessage: 'No cameras available on this device',
+          errorMessage: CameraError.noCameraAvailable.message,
+          error: CameraError.noCameraAvailable,
         );
+        debugPrint('CameraStateNotifier: No cameras available');
         return false;
       }
 
@@ -108,20 +135,26 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
           controller: controller,
           currentConfig: config,
           errorMessage: null,
+          error: null,
         );
         return true;
       } else {
         state = state.copyWith(
           state: CameraState.error,
-          errorMessage: 'Failed to initialize camera',
+          errorMessage: CameraError.initializationFailed.message,
+          error: CameraError.initializationFailed,
         );
         return false;
       }
     } catch (e) {
+      final errorMessage = e.toString();
+      final error = CameraError.fromMessage(errorMessage);
       state = state.copyWith(
         state: CameraState.error,
-        errorMessage: e.toString(),
+        errorMessage: error.message,
+        error: error,
       );
+      debugPrint('CameraStateNotifier: Initialization error: $errorMessage');
       return false;
     }
   }
