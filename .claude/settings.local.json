@@ -1,55 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat:*)",
-      "Bash(tree:*)",
-      "Bash(npm test)",
-      "Bash(npm test:*)",
-      "Bash(git add:*)",
-      "Bash(git push:*)",
-      "Bash(git commit:*)",
-      "mcp__serena__initial_instructions",
-      "mcp__serena__list_dir",
-      "mcp__mcp-server-commands__run_command",
-      "mcp__ide__getDiagnostics",
-      "Bash(npm install:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm run lint:*)",
-      "Bash(npm run test:integration:*)",
-      "Bash(flutter analyze:*)",
-      "Bash(flutter test:*)",
-      "Bash(flutter doctor:*)",
-      "Bash(flutter pub:*)",
-      "Bash(powershell -Command:*)",
-      "Bash(Select-String -Pattern \"^\\d{2}:\\d{2}|All tests|Some tests|^$\")",
-      "Bash(Out-String -Width 500)",
-      "Bash(findstr:*)",
-      "Bash(firebase functions:list:*)",
-      "Bash(mkdir:*)",
-      "Bash(flutter build:*)",
-      "Bash(git checkout:*)",
-      "Bash(dart:*)",
-      "Bash(if exist test_debug.dart del test_debug.dart)",
-      "Bash(del test_debug.dart)",
-      "Bash(npx eslint:*)",
-      "Bash(npx tsc:*)",
-      "Bash(find:*)",
-      "Bash(timeout 15 npm test:*)",
-      "Bash(dir:*)",
-      "Bash(npm run test:coverage:*)",
-      "Bash(node:*)",
-      "Bash(python:*)",
-      "Bash(npx jest:*)"
+      "Bash(claude --doctor)",
+      "Bash(claude doctor:*)",
+      "Bash(claude:*)"
     ],
-    "deny": [
-      "Bash(rm:*)",
-      "Bash(rm -rf:*)",
-      "Bash(git config *)",
-      "Bash(brew install *)",
-      "Bash(chmod 777 *)",
-      "Bash(rm -rf /*)",
-      "Bash(gh repo delete:*)"
-    ]
+    "deny": [],
+    "ask": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
@@ -63,29 +20,5 @@
     "context7",
     "serena",
     "claude-context"
-  ],
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File C:\\Users\\katos\\Desktop\\ai_fitness_app\\.claude\\hooks\\notify-claude.ps1 -EventType Stop -WebhookUrl https://discord.com/api/webhooks/1344664933673205790/MyEmtMOyLTExsXU0NeUZ_lStnlD6josCByaBj-AmY6GsoeVY4EpEayK-BPubzNuEjNAH"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File C:\\Users\\katos\\Desktop\\ai_fitness_app\\.claude\\hooks\\notify-claude.ps1 -EventType Notification -WebhookUrl https://discord.com/api/webhooks/1344664933673205790/MyEmtMOyLTExsXU0NeUZ_lStnlD6josCByaBj-AmY6GsoeVY4EpEayK-BPubzNuEjNAH"
-          }
-        ]
-      }
-    ]
-  }
+  ]
 }

@@ -145,10 +145,7 @@ void main() {
           ),
         };
 
-        final frame = PoseFrame(
-          landmarks: landmarks,
-          timestamp: 0,
-        );
+        final frame = PoseFrame(landmarks: landmarks, timestamp: 0);
 
         final result = transformer.transformPoseFrame(frame);
 
@@ -185,10 +182,7 @@ void main() {
           ),
         };
 
-        final frame = PoseFrame(
-          landmarks: landmarks,
-          timestamp: 0,
-        );
+        final frame = PoseFrame(landmarks: landmarks, timestamp: 0);
 
         final result = transformer.getBoundingBox(frame);
 
@@ -199,10 +193,7 @@ void main() {
       });
 
       test('returns null for empty frame', () {
-        final frame = PoseFrame(
-          landmarks: {},
-          timestamp: 0,
-        );
+        final frame = PoseFrame(landmarks: {}, timestamp: 0);
 
         final result = transformer.getBoundingBox(frame);
 

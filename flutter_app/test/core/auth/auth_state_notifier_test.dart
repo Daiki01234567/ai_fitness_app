@@ -38,10 +38,7 @@ void main() {
   });
 
   AuthStateNotifier createNotifier() {
-    return AuthStateNotifier(
-      auth: mockAuth,
-      firestore: fakeFirestore,
-    );
+    return AuthStateNotifier(auth: mockAuth, firestore: fakeFirestore);
   }
 
   group('Initial State', () {
@@ -136,7 +133,10 @@ void main() {
   group('Login Failure', () {
     test('should set error state on auth exception - user not found', () async {
       mockAuth.setSignInError(
-        FirebaseAuthException(code: 'user-not-found', message: 'User not found'),
+        FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'User not found',
+        ),
       );
 
       notifier = createNotifier();
@@ -153,7 +153,10 @@ void main() {
 
     test('should set error state on auth exception - wrong password', () async {
       mockAuth.setSignInError(
-        FirebaseAuthException(code: 'wrong-password', message: 'Wrong password'),
+        FirebaseAuthException(
+          code: 'wrong-password',
+          message: 'Wrong password',
+        ),
       );
 
       notifier = createNotifier();
@@ -199,23 +202,27 @@ void main() {
       expect(notifier.state.isLoading, isFalse);
     });
 
-    test('should set error state on auth exception - too many requests',
-        () async {
-      mockAuth.setSignInError(
-        FirebaseAuthException(
-            code: 'too-many-requests', message: 'Too many requests'),
-      );
+    test(
+      'should set error state on auth exception - too many requests',
+      () async {
+        mockAuth.setSignInError(
+          FirebaseAuthException(
+            code: 'too-many-requests',
+            message: 'Too many requests',
+          ),
+        );
 
-      notifier = createNotifier();
+        notifier = createNotifier();
 
-      await notifier.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      );
+        await notifier.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        );
 
-      expect(notifier.state.error, contains('too-many-requests'));
-      expect(notifier.state.isLoading, isFalse);
-    });
+        expect(notifier.state.error, contains('too-many-requests'));
+        expect(notifier.state.isLoading, isFalse);
+      },
+    );
   });
 
   group('Logout Processing', () {
@@ -310,49 +317,53 @@ void main() {
   });
 
   group('ForceLogout Flag Detection', () {
-    test('should sign out and set isForceLogout when forceLogout claim is true',
-        () async {
-      final mockUser = MockUser(
-        uid: 'test-uid',
-        email: 'test@example.com',
-        emailVerified: true,
-        customClaims: {'forceLogout': true},
-      );
-      mockAuth.setMockUser(mockUser);
+    test(
+      'should sign out and set isForceLogout when forceLogout claim is true',
+      () async {
+        final mockUser = MockUser(
+          uid: 'test-uid',
+          email: 'test@example.com',
+          emailVerified: true,
+          customClaims: {'forceLogout': true},
+        );
+        mockAuth.setMockUser(mockUser);
 
-      notifier = createNotifier();
-      mockAuth.emitUser(mockUser);
-      await Future.delayed(const Duration(milliseconds: 200));
+        notifier = createNotifier();
+        mockAuth.emitUser(mockUser);
+        await Future.delayed(const Duration(milliseconds: 200));
 
-      expect(notifier.state.isForceLogout, isTrue);
-      expect(notifier.state.error, equals('アカウントがログアウトされました'));
-    });
+        expect(notifier.state.isForceLogout, isTrue);
+        expect(notifier.state.error, equals('アカウントがログアウトされました'));
+      },
+    );
   });
 
   group('Deletion Scheduled Detection', () {
-    test('should set isDeletionScheduled when user has deletion scheduled',
-        () async {
-      final mockUser = MockUser(
-        uid: 'test-uid',
-        email: 'test@example.com',
-        emailVerified: true,
-      );
-      mockAuth.setMockUser(mockUser);
+    test(
+      'should set isDeletionScheduled when user has deletion scheduled',
+      () async {
+        final mockUser = MockUser(
+          uid: 'test-uid',
+          email: 'test@example.com',
+          emailVerified: true,
+        );
+        mockAuth.setMockUser(mockUser);
 
-      final deletionDate = DateTime.now().add(const Duration(days: 15));
-      await fakeFirestore.collection('users').doc('test-uid').set({
-        'nickname': 'TestUser',
-        'deletionScheduled': true,
-        'scheduledDeletionDate': Timestamp.fromDate(deletionDate),
-      });
+        final deletionDate = DateTime.now().add(const Duration(days: 15));
+        await fakeFirestore.collection('users').doc('test-uid').set({
+          'nickname': 'TestUser',
+          'deletionScheduled': true,
+          'scheduledDeletionDate': Timestamp.fromDate(deletionDate),
+        });
 
-      notifier = createNotifier();
-      mockAuth.emitUser(mockUser);
-      await Future.delayed(const Duration(milliseconds: 200));
+        notifier = createNotifier();
+        mockAuth.emitUser(mockUser);
+        await Future.delayed(const Duration(milliseconds: 200));
 
-      expect(notifier.state.isDeletionScheduled, isTrue);
-      expect(notifier.state.error, contains('日後に削除されます'));
-    });
+        expect(notifier.state.isDeletionScheduled, isTrue);
+        expect(notifier.state.error, contains('日後に削除されます'));
+      },
+    );
   });
 
   group('Error Handling', () {
@@ -368,7 +379,10 @@ void main() {
 
     test('should clear error with clearError method', () async {
       mockAuth.setSignInError(
-        FirebaseAuthException(code: 'user-not-found', message: 'User not found'),
+        FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'User not found',
+        ),
       );
 
       notifier = createNotifier();
@@ -411,7 +425,9 @@ void main() {
     test('should handle email already in use error', () async {
       mockAuth.setCreateUserError(
         FirebaseAuthException(
-            code: 'email-already-in-use', message: 'Email already in use'),
+          code: 'email-already-in-use',
+          message: 'Email already in use',
+        ),
       );
 
       notifier = createNotifier();
@@ -450,16 +466,16 @@ void main() {
 
       expect(mockAuth.passwordResetEmailSent, isTrue);
       expect(mockAuth.lastPasswordResetEmail, equals('test@example.com'));
-      expect(
-        notifier.state.error,
-        equals('パスワードリセットメールを送信しました'),
-      );
+      expect(notifier.state.error, equals('パスワードリセットメールを送信しました'));
       expect(notifier.state.isLoading, isFalse);
     });
 
     test('should handle user not found error on password reset', () async {
       mockAuth.setPasswordResetError(
-        FirebaseAuthException(code: 'user-not-found', message: 'User not found'),
+        FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'User not found',
+        ),
       );
 
       notifier = createNotifier();
@@ -492,22 +508,22 @@ void main() {
       await notifier.requestAccountDeletion();
 
       // Check deletion request was created
-      final requests =
-          await fakeFirestore.collection('dataDeletionRequests').get();
+      final requests = await fakeFirestore
+          .collection('dataDeletionRequests')
+          .get();
       expect(requests.docs.length, equals(1));
       expect(requests.docs.first.data()['userId'], equals('test-uid'));
       expect(requests.docs.first.data()['status'], equals('pending'));
 
       // Check user document was updated
-      final userDoc =
-          await fakeFirestore.collection('users').doc('test-uid').get();
+      final userDoc = await fakeFirestore
+          .collection('users')
+          .doc('test-uid')
+          .get();
       expect(userDoc.data()!['deletionScheduled'], isTrue);
 
       expect(notifier.state.isDeletionScheduled, isTrue);
-      expect(
-        notifier.state.error,
-        contains('30日後に削除されます'),
-      );
+      expect(notifier.state.error, contains('30日後に削除されます'));
     });
 
     test('should handle deletion request when not authenticated', () async {
@@ -554,10 +570,7 @@ void main() {
       expect(requests.docs.first.data()['status'], equals('cancelled'));
 
       expect(notifier.state.isDeletionScheduled, isFalse);
-      expect(
-        notifier.state.error,
-        contains('キャンセルしました'),
-      );
+      expect(notifier.state.error, contains('キャンセルしました'));
     });
   });
 

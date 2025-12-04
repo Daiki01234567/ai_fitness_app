@@ -54,16 +54,16 @@ void main() {
         .collection('sessions')
         .doc(id)
         .set({
-      'id': id,
-      'userId': userId,
-      'exerciseType': exerciseType.name,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
-      'totalReps': totalReps,
-      'totalSets': totalSets,
-      'averageScore': averageScore,
-      'sets': sets ?? [],
-    });
+          'id': id,
+          'userId': userId,
+          'exerciseType': exerciseType.name,
+          'startTime': startTime.toIso8601String(),
+          'endTime': endTime.toIso8601String(),
+          'totalReps': totalReps,
+          'totalSets': totalSets,
+          'averageScore': averageScore,
+          'sets': sets ?? [],
+        });
   }
 
   group('HistoryScreenState', () {
@@ -262,8 +262,20 @@ void main() {
           id: 'session-1',
           userId: testUserId,
           exerciseType: ExerciseType.squat,
-          startTime: DateTime(weekStart.year, weekStart.month, weekStart.day, 10, 0),
-          endTime: DateTime(weekStart.year, weekStart.month, weekStart.day, 10, 30),
+          startTime: DateTime(
+            weekStart.year,
+            weekStart.month,
+            weekStart.day,
+            10,
+            0,
+          ),
+          endTime: DateTime(
+            weekStart.year,
+            weekStart.month,
+            weekStart.day,
+            10,
+            30,
+          ),
           totalReps: 50,
           totalSets: 5,
           averageScore: 85.0,
@@ -333,22 +345,12 @@ void main() {
         await notifier.previousPeriod();
 
         final expected = DateTime(today.year, today.month, today.day - 1);
-        expect(
-          notifier.state.selectedDate?.year,
-          equals(expected.year),
-        );
-        expect(
-          notifier.state.selectedDate?.month,
-          equals(expected.month),
-        );
-        expect(
-          notifier.state.selectedDate?.day,
-          equals(expected.day),
-        );
+        expect(notifier.state.selectedDate?.year, equals(expected.year));
+        expect(notifier.state.selectedDate?.month, equals(expected.month));
+        expect(notifier.state.selectedDate?.day, equals(expected.day));
       });
 
       test('previousPeriodがweeklyビューで7日戻る', () async {
-
         await notifier.setViewMode(HistoryViewMode.weekly);
         final beforeDate = notifier.state.selectedDate;
 
@@ -384,10 +386,7 @@ void main() {
       test('setExerciseTypeFilterがフィルタを設定する', () async {
         await notifier.setExerciseTypeFilter(ExerciseType.squat);
 
-        expect(
-          notifier.state.selectedExerciseType,
-          equals(ExerciseType.squat),
-        );
+        expect(notifier.state.selectedExerciseType, equals(ExerciseType.squat));
         expect(
           notifier.state.filter.exerciseTypes,
           contains(ExerciseType.squat),
@@ -414,7 +413,10 @@ void main() {
         // After setting to squat, it should have squat
         await notifier.setExerciseTypeFilter(ExerciseType.squat);
         expect(notifier.state.selectedExerciseType, equals(ExerciseType.squat));
-        expect(notifier.state.filter.exerciseTypes, contains(ExerciseType.squat));
+        expect(
+          notifier.state.filter.exerciseTypes,
+          contains(ExerciseType.squat),
+        );
 
         // When trying to clear with null, copyWith with ?? preserves the value
         // This documents the current (potentially buggy) behavior
@@ -502,7 +504,10 @@ void main() {
         final updated = original.copyWith(exerciseStats: stats);
 
         expect(updated.exerciseStats.length, equals(1));
-        expect(updated.exerciseStats.first.exerciseType, equals(ExerciseType.squat));
+        expect(
+          updated.exerciseStats.first.exerciseType,
+          equals(ExerciseType.squat),
+        );
       });
     });
 

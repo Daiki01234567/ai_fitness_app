@@ -105,7 +105,9 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
           icon: Icon(
-            _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            _obscureText
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
           ),
           onPressed: () {
             setState(() {
@@ -161,10 +163,7 @@ class LoadingButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (icon != null) ...[
-                  Icon(icon),
-                  const SizedBox(width: 8),
-                ],
+                if (icon != null) ...[Icon(icon), const SizedBox(width: 8)],
                 Text(label),
               ],
             ),
@@ -207,10 +206,7 @@ class OutlinedLoadingButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (icon != null) ...[
-                  Icon(icon),
-                  const SizedBox(width: 8),
-                ],
+                if (icon != null) ...[Icon(icon), const SizedBox(width: 8)],
                 Text(label),
               ],
             ),
@@ -258,11 +254,7 @@ class SocialSignInButton extends StatelessWidget {
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: icon,
-                ),
+                SizedBox(width: 24, height: 24, child: icon),
                 const SizedBox(width: 12),
                 Text(label),
               ],
@@ -273,10 +265,7 @@ class SocialSignInButton extends StatelessWidget {
 
 /// テキスト付き区切り線
 class DividerWithText extends StatelessWidget {
-  const DividerWithText({
-    super.key,
-    required this.text,
-  });
+  const DividerWithText({super.key, required this.text});
 
   final String text;
 
@@ -290,8 +279,8 @@ class DividerWithText extends StatelessWidget {
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         const Expanded(child: Divider()),
@@ -302,11 +291,7 @@ class DividerWithText extends StatelessWidget {
 
 /// エラーメッセージカード
 class ErrorMessageCard extends StatelessWidget {
-  const ErrorMessageCard({
-    super.key,
-    required this.message,
-    this.onDismiss,
-  });
+  const ErrorMessageCard({super.key, required this.message, this.onDismiss});
 
   final String message;
   final VoidCallback? onDismiss;
@@ -350,11 +335,7 @@ class ErrorMessageCard extends StatelessWidget {
 
 /// 成功メッセージカード
 class SuccessMessageCard extends StatelessWidget {
-  const SuccessMessageCard({
-    super.key,
-    required this.message,
-    this.onDismiss,
-  });
+  const SuccessMessageCard({super.key, required this.message, this.onDismiss});
 
   final String message;
   final VoidCallback? onDismiss;
@@ -369,26 +350,18 @@ class SuccessMessageCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: colorScheme.primary,
-            ),
+            Icon(Icons.check_circle_outline, color: colorScheme.primary),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(
-                  color: colorScheme.onPrimaryContainer,
-                ),
+                style: TextStyle(color: colorScheme.onPrimaryContainer),
               ),
             ),
             if (onDismiss != null)
               IconButton(
                 onPressed: onDismiss,
-                icon: Icon(
-                  Icons.close,
-                  color: colorScheme.onPrimaryContainer,
-                ),
+                icon: Icon(Icons.close, color: colorScheme.onPrimaryContainer),
                 tooltip: '閉じる',
               ),
           ],

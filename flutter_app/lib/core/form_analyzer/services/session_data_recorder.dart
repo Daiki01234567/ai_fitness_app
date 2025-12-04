@@ -96,8 +96,9 @@ class RecordedFrame {
       score: result.score,
       phase: phase,
       jointAngles: recordJointAngles ? result.jointAngles : null,
-      issueTypes:
-          recordIssues ? result.issues.map((i) => i.issueType).toList() : null,
+      issueTypes: recordIssues
+          ? result.issues.map((i) => i.issueType).toList()
+          : null,
     );
   }
 }
@@ -116,8 +117,10 @@ class RecordedRep {
   });
 
   final int repNumber;
+
   /// Start timestamp in milliseconds
   final int startTime;
+
   /// End timestamp in milliseconds
   final int endTime;
   final double score;
@@ -170,8 +173,10 @@ class RecordedSet {
   });
 
   final int setNumber;
+
   /// Start timestamp in milliseconds
   final int startTime;
+
   /// End timestamp in milliseconds
   final int endTime;
   final int repCount;
@@ -254,8 +259,9 @@ class SessionRecord {
       'sets': sets.map((s) => s.toJson()).toList(),
       'topIssues': topIssues,
       if (scoreDistribution != null)
-        'scoreDistribution':
-            scoreDistribution!.map((k, v) => MapEntry(k.name, v)),
+        'scoreDistribution': scoreDistribution!.map(
+          (k, v) => MapEntry(k.name, v),
+        ),
       if (metadata != null) 'metadata': metadata,
     };
   }
@@ -274,8 +280,9 @@ class SessionRecord {
         'averageFormScore': averageScore,
         'topIssues': topIssues,
         'setCount': sets.length,
-        'scoreDistribution':
-            scoreDistribution?.map((k, v) => MapEntry(k.name, v)),
+        'scoreDistribution': scoreDistribution?.map(
+          (k, v) => MapEntry(k.name, v),
+        ),
       },
       'poseData': {
         'frameCount': _calculateTotalFrames(),
@@ -345,10 +352,7 @@ enum SessionEventType {
 
 /// Session event
 class SessionEvent {
-  const SessionEvent({
-    required this.type,
-    this.data,
-  });
+  const SessionEvent({required this.type, this.data});
 
   final SessionEventType type;
   final dynamic data;
@@ -566,20 +570,24 @@ class SessionDataRecorder {
     // Include current set if it has reps
     final allSets = List<RecordedSet>.from(_recordedSets);
     if (_currentSetReps.isNotEmpty) {
-      allSets.add(RecordedSet(
-        setNumber: _currentSetNumber,
-        startTime: _currentSetReps.first.startTime,
-        endTime: _currentSetReps.last.endTime,
-        repCount: _currentSetReps.length,
-        averageScore: _calculateAverageScore(_currentSetReps),
-        reps: List.from(_currentSetReps),
-        commonIssues: _getCommonIssuesFromReps(_currentSetReps),
-      ));
+      allSets.add(
+        RecordedSet(
+          setNumber: _currentSetNumber,
+          startTime: _currentSetReps.first.startTime,
+          endTime: _currentSetReps.last.endTime,
+          repCount: _currentSetReps.length,
+          averageScore: _calculateAverageScore(_currentSetReps),
+          reps: List.from(_currentSetReps),
+          commonIssues: _getCommonIssuesFromReps(_currentSetReps),
+        ),
+      );
     }
 
     final totalReps = allSets.fold<int>(0, (sum, set) => sum + set.repCount);
     final totalScore = allSets.fold<double>(
-        0, (sum, set) => sum + set.averageScore * set.repCount);
+      0,
+      (sum, set) => sum + set.averageScore * set.repCount,
+    );
 
     return SessionRecord(
       sessionId: sessionId,
@@ -700,8 +708,7 @@ class SessionStatistics {
       'averageScore': averageScore,
       'minScore': minScore,
       'maxScore': maxScore,
-      'scoreDistribution':
-          scoreDistribution.map((k, v) => MapEntry(k.name, v)),
+      'scoreDistribution': scoreDistribution.map((k, v) => MapEntry(k.name, v)),
       'totalDurationMs': totalDuration.inMilliseconds,
       'framesRecorded': framesRecorded,
     };

@@ -17,9 +17,9 @@ import 'history_service.dart';
 /// History view mode
 enum HistoryViewMode {
   overview, // Today's overview
-  daily,    // Single day view
-  weekly,   // Weekly view with charts
-  monthly,  // Monthly view with charts
+  daily, // Single day view
+  weekly, // Weekly view with charts
+  monthly, // Monthly view with charts
 }
 
 /// History screen state
@@ -82,7 +82,7 @@ class HistoryScreenState {
 /// History state notifier
 class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
   HistoryStateNotifier(this._historyService, this._userId)
-      : super(const HistoryScreenState());
+    : super(const HistoryScreenState());
 
   final HistoryService _historyService;
   final String _userId;
@@ -114,10 +114,7 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'データの読み込みに失敗しました: $e',
-      );
+      state = state.copyWith(isLoading: false, error: 'データの読み込みに失敗しました: $e');
     }
   }
 
@@ -143,10 +140,7 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
           break;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'データの読み込みに失敗しました',
-      );
+      state = state.copyWith(isLoading: false, error: 'データの読み込みに失敗しました');
     }
   }
 
@@ -168,10 +162,29 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
           break;
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'データの読み込みに失敗しました',
-      );
+      state = state.copyWith(isLoading: false, error: 'データの読み込みに失敗しました');
+    }
+  }
+
+  /// Select date within monthly view without switching tabs
+  /// Used when tapping on calendar dates - shows sessions for that date in the monthly tab
+  Future<void> selectDateInMonthView(DateTime date) async {
+    // If the date is in a different month, load that month's data
+    final currentMonth = state.selectedDate ?? DateTime.now();
+    final isSameMonth =
+        date.year == currentMonth.year && date.month == currentMonth.month;
+
+    if (isSameMonth) {
+      // Same month - just update selected date, no need to reload
+      state = state.copyWith(selectedDate: date);
+    } else {
+      // Different month - load the new month's data
+      state = state.copyWith(selectedDate: date, isLoading: true);
+      try {
+        await _loadMonthlyView(date);
+      } catch (e) {
+        state = state.copyWith(isLoading: false, error: 'データの読み込みに失敗しました');
+      }
     }
   }
 
@@ -233,10 +246,7 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
     try {
       await _reloadCurrentView();
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'データの読み込みに失敗しました',
-      );
+      state = state.copyWith(isLoading: false, error: 'データの読み込みに失敗しました');
     }
   }
 
@@ -329,11 +339,13 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
       limit: 200,
     );
 
-    // Update daily summaries for calendar
+    // Update daily summaries for calendar with exercise filter applied
+    // As per spec 3.11: Exercise filter should also filter calendar markers
     final dailySummaries = await _historyService.fetchDailySummaries(
       userId: _userId,
       startDate: startOfMonth,
       endDate: endOfMonth,
+      exerciseTypes: state.filter.exerciseTypes,
     );
 
     state = state.copyWith(
@@ -367,13 +379,15 @@ class HistoryStateNotifier extends StateNotifier<HistoryScreenState> {
 
 /// History state provider
 final historyStateProvider =
-    StateNotifierProvider.autoDispose<HistoryStateNotifier, HistoryScreenState>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final historyService = ref.watch(historyServiceProvider);
+    StateNotifierProvider.autoDispose<HistoryStateNotifier, HistoryScreenState>(
+      (ref) {
+        final authState = ref.watch(authStateProvider);
+        final historyService = ref.watch(historyServiceProvider);
 
-  final userId = authState.user?.uid ?? '';
-  return HistoryStateNotifier(historyService, userId);
-});
+        final userId = authState.user?.uid ?? '';
+        return HistoryStateNotifier(historyService, userId);
+      },
+    );
 
 /// Analytics state for detailed analysis screens
 class AnalyticsScreenState {
@@ -436,7 +450,7 @@ class AnalyticsScreenState {
 /// Analytics state notifier
 class AnalyticsStateNotifier extends StateNotifier<AnalyticsScreenState> {
   AnalyticsStateNotifier(this._historyService, this._userId)
-      : super(const AnalyticsScreenState());
+    : super(const AnalyticsScreenState());
 
   final HistoryService _historyService;
   final String _userId;
@@ -503,10 +517,7 @@ class AnalyticsStateNotifier extends StateNotifier<AnalyticsScreenState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '分析データの読み込みに失敗しました: $e',
-      );
+      state = state.copyWith(isLoading: false, error: '分析データの読み込みに失敗しました: $e');
     }
   }
 
@@ -520,11 +531,13 @@ class AnalyticsStateNotifier extends StateNotifier<AnalyticsScreenState> {
 
 /// Analytics state provider
 final analyticsStateProvider =
-    StateNotifierProvider.autoDispose<AnalyticsStateNotifier, AnalyticsScreenState>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final historyService = ref.watch(historyServiceProvider);
+    StateNotifierProvider.autoDispose<
+      AnalyticsStateNotifier,
+      AnalyticsScreenState
+    >((ref) {
+      final authState = ref.watch(authStateProvider);
+      final historyService = ref.watch(historyServiceProvider);
 
-  final userId = authState.user?.uid ?? '';
-  return AnalyticsStateNotifier(historyService, userId);
-});
-
+      final userId = authState.user?.uid ?? '';
+      return AnalyticsStateNotifier(historyService, userId);
+    });

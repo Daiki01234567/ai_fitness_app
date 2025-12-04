@@ -25,9 +25,11 @@ class AuthService {
     FirebaseAuth? auth,
     GoogleSignIn? googleSignIn,
     FirebaseFunctions? functions,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(),
-        _functions = functions ?? FirebaseFunctions.instanceFor(region: 'asia-northeast1');
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _googleSignIn = googleSignIn ?? GoogleSignIn(),
+       _functions =
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'asia-northeast1');
 
   /// 電話番号でサインイン（SMS認証）
   Future<void> signInWithPhoneNumber({
@@ -135,7 +137,8 @@ class AuthService {
       }
 
       // 認証情報を取得
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Firebase認証用のクレデンシャルを作成
       final credential = GoogleAuthProvider.credential(
@@ -145,7 +148,6 @@ class AuthService {
 
       // Firebaseにサインイン
       return await _auth.signInWithCredential(credential);
-
     } catch (e) {
       throw Exception('Google Sign Inエラー: $e');
     }
@@ -173,7 +175,6 @@ class AuthService {
 
       // Webまたはモバイルでの認証
       return await _auth.signInWithProvider(appleProvider);
-
     } catch (e) {
       throw Exception('Apple Sign Inエラー: $e');
     }
@@ -446,7 +447,9 @@ class AuthService {
   /// セキュリティ:
   /// - レート制限あり（1分あたり10リクエスト）
   /// - 詳細なエラー情報は返さない
-  Future<({bool exists, String? message})> checkEmailExists(String email) async {
+  Future<({bool exists, String? message})> checkEmailExists(
+    String email,
+  ) async {
     try {
       final callable = _functions.httpsCallable('auth_checkEmailExists');
       final result = await callable.call({'email': email});

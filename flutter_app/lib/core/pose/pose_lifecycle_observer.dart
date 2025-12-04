@@ -122,15 +122,13 @@ class PoseLifecycleObserver with WidgetsBindingObserver {
 
 /// 姿勢ライフサイクルを自動管理するWidget
 class PoseLifecycleWidget extends ConsumerStatefulWidget {
-  const PoseLifecycleWidget({
-    required this.child,
-    super.key,
-  });
+  const PoseLifecycleWidget({required this.child, super.key});
 
   final Widget child;
 
   @override
-  ConsumerState<PoseLifecycleWidget> createState() => _PoseLifecycleWidgetState();
+  ConsumerState<PoseLifecycleWidget> createState() =>
+      _PoseLifecycleWidgetState();
 }
 
 class _PoseLifecycleWidgetState extends ConsumerState<PoseLifecycleWidget> {
@@ -162,9 +160,7 @@ class _PoseLifecycleWidgetState extends ConsumerState<PoseLifecycleWidget> {
 /// バッテリーを考慮したセッション制御用の拡張
 extension BatteryAwareSessionExtension on PoseSessionController {
   /// バッテリーを考慮してセッションを開始
-  Future<bool> startSessionBatteryAware({
-    required bool isPowerSaveMode,
-  }) async {
+  Future<bool> startSessionBatteryAware({required bool isPowerSaveMode}) async {
     // 省電力モードがオンの場合、低品質で開始
     if (isPowerSaveMode) {
       return startSession(config: CameraConfig.lowQuality);

@@ -1,0 +1,81 @@
+{
+  "_metadata": {
+    "table_name": "exercise_definitions",
+    "description": "トレーニング種目マスターデータ",
+    "source_spec": "docs/specs/04_BigQuery設計書_v3_3.md - セクション4.4",
+    "data_classification": "master",
+    "partition": null,
+    "clustering": null,
+    "labels": {
+      "env": "production",
+      "data_type": "master"
+    },
+    "notes": {
+      "update_frequency": "手動(種目追加・変更時)",
+      "retention_period": "無期限(マスターデータ)"
+    }
+  },
+  "schema": [
+    {
+      "name": "exercise_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "種目ID(ユニーク)"
+    },
+    {
+      "name": "exercise_name_en",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "種目名(英語)"
+    },
+    {
+      "name": "exercise_name_ja",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "種目名(日本語)"
+    },
+    {
+      "name": "category",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "カテゴリ: strength, cardio, flexibility"
+    },
+    {
+      "name": "description",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "種目の説明"
+    },
+    {
+      "name": "difficulty_level",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "難易度: beginner, intermediate, advanced"
+    },
+    {
+      "name": "required_landmarks",
+      "type": "INT64",
+      "mode": "REPEATED",
+      "description": "必要な関節ID(MediaPipe Pose 0-32)"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "レコード作成日時"
+    },
+    {
+      "name": "updated_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "レコード更新日時"
+    },
+    {
+      "name": "is_active",
+      "type": "BOOL",
+      "mode": "NULLABLE",
+      "defaultValueExpression": "TRUE",
+      "description": "種目の有効/無効"
+    }
+  ]
+}

@@ -34,7 +34,8 @@ class ActiveSessionScreen extends ConsumerStatefulWidget {
   const ActiveSessionScreen({super.key});
 
   @override
-  ConsumerState<ActiveSessionScreen> createState() => _ActiveSessionScreenState();
+  ConsumerState<ActiveSessionScreen> createState() =>
+      _ActiveSessionScreenState();
 }
 
 class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
@@ -77,8 +78,12 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
 
     if (currentPose != null) {
       final result = _analyzer.analyze(currentPose);
-      ref.read(trainingSessionProvider.notifier).updateEvaluation(result.frameResult);
-      ref.read(trainingSessionProvider.notifier).setRepCount(_analyzer.repCount);
+      ref
+          .read(trainingSessionProvider.notifier)
+          .updateEvaluation(result.frameResult);
+      ref
+          .read(trainingSessionProvider.notifier)
+          .setRepCount(_analyzer.repCount);
     }
   }
 
@@ -135,7 +140,10 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     final cameraState = ref.watch(cameraStateProvider);
 
     // Process pose updates
-    ref.listen<PoseSessionState>(poseSessionControllerProvider, (previous, next) {
+    ref.listen<PoseSessionState>(poseSessionControllerProvider, (
+      previous,
+      next,
+    ) {
       if (next.currentPose != previous?.currentPose) {
         _handlePoseUpdate();
       }
@@ -174,7 +182,10 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     );
   }
 
-  Widget _buildCameraView(CameraServiceState cameraState, PoseSessionState poseState) {
+  Widget _buildCameraView(
+    CameraServiceState cameraState,
+    PoseSessionState poseState,
+  ) {
     final controller = cameraState.controller;
     if (controller == null || !controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
@@ -192,9 +203,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
           fit: StackFit.expand,
           children: [
             // Camera preview
-            Center(
-              child: CameraPreview(controller),
-            ),
+            Center(child: CameraPreview(controller)),
 
             // Skeleton overlay
             if (poseState.currentPose != null)
@@ -225,10 +234,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.7),
-            Colors.transparent,
-          ],
+          colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
         ),
       ),
       child: Row(
@@ -270,9 +276,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
           IconButton(
             onPressed: _showStopConfirmDialog,
             icon: const Icon(Icons.close, color: Colors.white),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.black45,
-            ),
+            style: IconButton.styleFrom(backgroundColor: Colors.black45),
           ),
         ],
       ),
@@ -286,10 +290,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.8),
-            Colors.transparent,
-          ],
+          colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
         ),
       ),
       child: Column(
@@ -358,7 +359,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
         _buildStatItem(
           icon: Icons.replay,
           label: 'セット',
-          value: '${sessionState.currentSet}/${sessionState.config?.targetSets ?? 0}',
+          value:
+              '${sessionState.currentSet}/${sessionState.config?.targetSets ?? 0}',
         ),
         _buildStatItem(
           icon: Icons.star,
@@ -394,10 +396,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
               Text(
                 value,
@@ -433,10 +432,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: AppSpacing.sm),
-            Text(
-              '良いフォームです',
-              style: TextStyle(color: Colors.white),
-            ),
+            Text('良いフォームです', style: TextStyle(color: Colors.white)),
           ],
         ),
       );
@@ -463,10 +459,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
               children: [
                 const Text(
                   '参考情報',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 Text(
                   topIssue.message,
@@ -701,26 +694,20 @@ class _RestDialogState extends State<RestDialog> {
           Text(
             _formatSeconds(_remainingSeconds),
             style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           LinearProgressIndicator(
             value: _remainingSeconds / widget.restDurationSeconds,
           ),
           const SizedBox(height: AppSpacing.lg),
-          const Text(
-            '次のセットの準備をしましょう',
-            textAlign: TextAlign.center,
-          ),
+          const Text('次のセットの準備をしましょう', textAlign: TextAlign.center),
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: widget.onSkip,
-          child: const Text('スキップ'),
-        ),
+        TextButton(onPressed: widget.onSkip, child: const Text('スキップ')),
       ],
     );
   }

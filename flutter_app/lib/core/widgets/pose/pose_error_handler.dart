@@ -70,9 +70,10 @@ class PoseErrorState {
 }
 
 /// 姿勢エラー状態プロバイダー
-final poseErrorStateProvider = StateNotifierProvider<PoseErrorNotifier, PoseErrorState>((ref) {
-  return PoseErrorNotifier(ref);
-});
+final poseErrorStateProvider =
+    StateNotifierProvider<PoseErrorNotifier, PoseErrorState>((ref) {
+      return PoseErrorNotifier(ref);
+    });
 
 /// 姿勢エラー状態Notifier
 class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
@@ -97,10 +98,7 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
 
   void _checkSessionErrors(PoseSessionState sessionState) {
     if (sessionState.errorMessage != null) {
-      _setError(
-        PoseErrorType.sessionError,
-        sessionState.errorMessage!,
-      );
+      _setError(PoseErrorType.sessionError, sessionState.errorMessage!);
     } else if (state.errorType == PoseErrorType.sessionError) {
       clearError();
     }
@@ -142,7 +140,8 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
         break;
       case CameraPermissionState.granted:
         if (state.errorType == PoseErrorType.cameraPermissionDenied ||
-            state.errorType == PoseErrorType.cameraPermissionPermanentlyDenied) {
+            state.errorType ==
+                PoseErrorType.cameraPermissionPermanentlyDenied) {
           clearError();
         }
         break;
@@ -159,10 +158,7 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
     double? averageConfidence,
   }) {
     if (!isPoseDetected) {
-      _setError(
-        PoseErrorType.noPerson,
-        'フレーム内に人物が検出されませんでした。カメラに向かって立ってください。',
-      );
+      _setError(PoseErrorType.noPerson, 'フレーム内に人物が検出されませんでした。カメラに向かって立ってください。');
       return;
     }
 
@@ -177,10 +173,7 @@ class PoseErrorNotifier extends StateNotifier<PoseErrorState> {
     }
 
     if (averageConfidence != null && averageConfidence < 0.4) {
-      _setError(
-        PoseErrorType.lowLight,
-        '検出精度が低下しています。明るい場所で撮影してください。',
-      );
+      _setError(PoseErrorType.lowLight, '検出精度が低下しています。明るい場所で撮影してください。');
       return;
     }
 
@@ -271,10 +264,7 @@ class PoseErrorDisplay extends ConsumerWidget {
           Flexible(
             child: Text(
               _getShortMessage(errorState.errorType!),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -316,10 +306,7 @@ class PoseErrorDisplay extends ConsumerWidget {
           Text(
             errorState.message ?? '',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 16),
           Row(

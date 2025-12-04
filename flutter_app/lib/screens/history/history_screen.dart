@@ -4,6 +4,19 @@
 /// Reference: docs/tickets/012_history_analytics.md
 /// Reference: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (Section 3.11)
 ///
+/// Calendar Implementation Note:
+/// The spec suggests using `table_calendar` package, but a custom calendar
+/// implementation is used here to provide:
+/// - GitHub-style activity intensity visualization
+/// - Full integration with app's design system
+/// - Reduced external dependencies
+/// All functional requirements from spec 3.11 are satisfied:
+/// - Calendar display with session markers
+/// - Date selection with session list display
+/// - Month navigation
+/// - Japanese locale support
+/// - Exercise type filter integration
+///
 /// Legal notice: This is NOT a medical device.
 /// All feedback is for reference purposes only.
 library;
@@ -94,17 +107,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             ),
             tooltip: '種目フィルタ',
             onSelected: (type) {
-              ref.read(historyStateProvider.notifier).setExerciseTypeFilter(type);
+              ref
+                  .read(historyStateProvider.notifier)
+                  .setExerciseTypeFilter(type);
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: null,
-                child: Text('全て'),
+              const PopupMenuItem(value: null, child: Text('全て')),
+              ...ExerciseType.values.map(
+                (type) => PopupMenuItem(
+                  value: type,
+                  child: Text(AnalyzerFactory.getDisplayName(type)),
+                ),
               ),
-              ...ExerciseType.values.map((type) => PopupMenuItem(
-                    value: type,
-                    child: Text(AnalyzerFactory.getDisplayName(type)),
-                  )),
             ],
           ),
         ],
@@ -114,16 +128,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         child: state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : state.error != null
-                ? _buildErrorView(state.error!)
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildOverviewTab(state),
-                      _buildDailyTab(state),
-                      _buildWeeklyTab(state),
-                      _buildMonthlyTab(state),
-                    ],
-                  ),
+            ? _buildErrorView(state.error!)
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildOverviewTab(state),
+                  _buildDailyTab(state),
+                  _buildWeeklyTab(state),
+                  _buildMonthlyTab(state),
+                ],
+              ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 2),
     );
@@ -167,9 +181,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         // Session list header
         Text(
           'セッション一覧',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
 
@@ -227,9 +241,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         // Sessions list
         Text(
           'セッション一覧',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
 
@@ -247,6 +261,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final sessions = state.sessions;
     final date = state.selectedDate ?? DateTime.now();
 
+    // Filter sessions for selected date if in monthly view with date selected
+    final selectedDateSessions = _getSessionsForDate(sessions, date);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -258,6 +275,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         _buildCalendarView(date, dailySummaries),
         const SizedBox(height: 24),
 
+        // Selected date header and sessions (as per spec 3.11)
+        _buildSelectedDateSection(date, selectedDateSessions),
+        const SizedBox(height: 24),
+
         // Monthly stats
         if (monthlyStats != null) ...[
           _buildMonthlyStatsSection(monthlyStats),
@@ -266,30 +287,88 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
         // Score chart
         _buildScoreChart(sessions),
-        const SizedBox(height: 24),
+      ],
+    );
+  }
 
-        // Sessions list
-        Text(
-          'セッション一覧',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+  /// Get sessions for a specific date
+  List<HistorySession> _getSessionsForDate(
+    List<HistorySession> sessions,
+    DateTime date,
+  ) {
+    return sessions.where((session) => _isSameDay(session.startTime, date)).toList()
+      ..sort((a, b) => b.startTime.compareTo(a.startTime)); // Most recent first
+  }
+
+  /// Build selected date section with session list (as per spec 3.11)
+  Widget _buildSelectedDateSection(
+    DateTime selectedDate,
+    List<HistorySession> sessions,
+  ) {
+    final dateFormat = DateFormat('yyyy/MM/dd (E)', 'ja');
+    final isToday = _isSameDay(selectedDate, DateTime.now());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Divider and selected date header
+        const Divider(thickness: 2),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              dateFormat.format(selectedDate),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                isToday ? '今日' : '選択日',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
+        const Divider(thickness: 2),
+        const SizedBox(height: 16),
 
+        // Session list for selected date
         if (sessions.isEmpty)
-          _buildEmptyState('この月のトレーニング記録はありません')
+          _buildEmptyStateCompact('この日のトレーニング記録はありません')
         else
-          ...sessions.take(10).map((session) => _buildSessionCard(session)),
-
-        if (sessions.length > 10)
-          TextButton(
-            onPressed: () {
-              // TODO: Navigate to full list
-            },
-            child: Text('さらに${sessions.length - 10}件を表示'),
-          ),
+          ...sessions.map((session) => _buildSessionCard(session)),
       ],
+    );
+  }
+
+  /// Compact empty state for selected date section
+  Widget _buildEmptyStateCompact(String message) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.event_busy, size: 40, color: Colors.grey.shade400),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -318,8 +397,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               Text(
                 '今日',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
           ],
         ),
@@ -381,8 +460,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right),
-          onPressed: DateTime(date.year, date.month + 1, 1)
-                  .isBefore(DateTime.now())
+          onPressed:
+              DateTime(date.year, date.month + 1, 1).isBefore(DateTime.now())
               ? () => ref.read(historyStateProvider.notifier).nextPeriod()
               : null,
         ),
@@ -395,7 +474,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final avgScore = sessions.isEmpty
         ? 0.0
         : sessions.map((s) => s.averageScore).reduce((a, b) => a + b) /
-            sessions.length;
+              sessions.length;
 
     return Row(
       children: [
@@ -433,9 +512,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       children: [
         Text(
           '週間統計',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Row(
@@ -478,9 +557,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       children: [
         Text(
           '月間統計',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Row(
@@ -559,7 +638,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
     // Calculate days from previous month to show
     final prevMonth = DateTime(month.year, month.month - 1);
-    final daysInPrevMonth = DateTime(prevMonth.year, prevMonth.month + 1, 0).day;
+    final daysInPrevMonth = DateTime(
+      prevMonth.year,
+      prevMonth.month + 1,
+      0,
+    ).day;
 
     // Create summary map for current month
     final summaryMap = <int, DailySummary>{};
@@ -606,13 +689,21 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   if (dayOffset < 0) {
                     // Previous month
                     final prevMonthDay = daysInPrevMonth + dayOffset + 1;
-                    cellDate = DateTime(prevMonth.year, prevMonth.month, prevMonthDay);
+                    cellDate = DateTime(
+                      prevMonth.year,
+                      prevMonth.month,
+                      prevMonthDay,
+                    );
                     isCurrentMonth = false;
                   } else if (dayOffset >= daysInMonth) {
                     // Next month
                     final nextMonthDay = dayOffset - daysInMonth + 1;
                     final nextMonth = DateTime(month.year, month.month + 1);
-                    cellDate = DateTime(nextMonth.year, nextMonth.month, nextMonthDay);
+                    cellDate = DateTime(
+                      nextMonth.year,
+                      nextMonth.month,
+                      nextMonthDay,
+                    );
                     isCurrentMonth = false;
                   } else {
                     // Current month
@@ -621,7 +712,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   }
 
                   // Skip cells beyond the 6th row if not needed
-                  if (!isCurrentMonth && weekIndex >= 5 && dayOffset >= daysInMonth) {
+                  if (!isCurrentMonth &&
+                      weekIndex >= 5 &&
+                      dayOffset >= daysInMonth) {
                     // Check if we need this row
                     final firstCellOfRow = weekIndex * 7 - startOffset;
                     if (firstCellOfRow >= daysInMonth) {
@@ -629,9 +722,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     }
                   }
 
-                  final summary = isCurrentMonth ? summaryMap[cellDate.day] : null;
+                  final summary = isCurrentMonth
+                      ? summaryMap[cellDate.day]
+                      : null;
                   final isToday = _isSameDay(cellDate, DateTime.now());
-                  final isSelected = selectedDate != null && _isSameDay(cellDate, selectedDate);
+                  final isSelected =
+                      selectedDate != null &&
+                      _isSameDay(cellDate, selectedDate);
                   final isWeekend = dayIndex >= 5;
 
                   return Expanded(
@@ -657,7 +754,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     );
   }
 
-  Widget _buildWeekdayHeader(String day, bool isWeekend, {bool isSaturday = false, bool isSunday = false}) {
+  Widget _buildWeekdayHeader(
+    String day,
+    bool isWeekend, {
+    bool isSaturday = false,
+    bool isSunday = false,
+  }) {
     Color? textColor;
     if (isSunday) {
       textColor = Colors.red.shade400;
@@ -670,9 +772,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         child: Text(
           day,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
         ),
       ),
     );
@@ -725,10 +827,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       decoration = BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.primary,
-          width: 2,
-        ),
+        border: Border.all(color: theme.colorScheme.primary, width: 2),
       );
     } else {
       decoration = BoxDecoration(
@@ -754,7 +853,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               child: Text(
                 '${date.day}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isToday || isSelected
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                   color: textColor,
                 ),
               ),
@@ -771,9 +872,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       children: [
         Text(
           '活動量: ',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
         ),
         const SizedBox(width: 8),
         _buildLegendItem('なし', null),
@@ -795,7 +896,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           width: 14,
           height: 14,
           decoration: BoxDecoration(
-            color: level != null ? _getIntensityColor(level) : Colors.grey.shade200,
+            color: level != null
+                ? _getIntensityColor(level)
+                : Colors.grey.shade200,
             borderRadius: BorderRadius.circular(3),
             border: level == null
                 ? Border.all(color: Colors.grey.shade400, width: 0.5)
@@ -805,23 +908,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         const SizedBox(width: 2),
         Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: Colors.grey.shade600),
         ),
       ],
     );
   }
 
   void _onCalendarDateTap(DateTime date) {
-    // Update selected date
-    ref.read(historyStateProvider.notifier).selectDate(date);
-
-    // Switch to daily tab
-    ref.read(historyStateProvider.notifier).setViewMode(HistoryViewMode.daily);
-
-    // Animate tab controller to daily tab (index 1)
-    _tabController.animateTo(1);
+    // Update selected date and stay in monthly view
+    // As per spec 3.11: Date tap shows sessions for that date in the month tab
+    ref.read(historyStateProvider.notifier).selectDateInMonthView(date);
   }
 
   Widget _buildScoreChart(List<HistorySession> sessions) {
@@ -838,9 +936,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           children: [
             Text(
               'スコア推移',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -886,8 +984,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   Text(
                     timeFormat.format(session.startTime),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     '${session.duration.inMinutes}分',
@@ -897,11 +995,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               ),
               const SizedBox(width: 16),
               // Divider
-              Container(
-                width: 1,
-                height: 40,
-                color: Colors.grey.shade300,
-              ),
+              Container(width: 1, height: 40, color: Colors.grey.shade300),
               const SizedBox(width: 16),
               // Exercise info
               Expanded(
@@ -911,8 +1005,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     Text(
                       exerciseName,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Text(
                       '${session.totalSets}セット ${session.totalReps}回',
@@ -928,7 +1022,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: _getScoreColor(session.averageScore).withValues(alpha: 0.1),
+                  color: _getScoreColor(
+                    session.averageScore,
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -955,17 +1051,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.history,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
+            Icon(Icons.history, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

@@ -87,8 +87,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     });
 
     try {
-      final success =
-          await ref.read(consentStateProvider.notifier).acceptAllConsents();
+      final success = await ref
+          .read(consentStateProvider.notifier)
+          .acceptAllConsents();
 
       if (success) {
         if (mounted) {
@@ -131,9 +132,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('はい、ログアウトする'),
           ),
         ],
@@ -183,7 +182,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'サービスご利用の前に',
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
                               ],
                             ),
@@ -279,9 +280,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                     width: double.infinity,
                     child: TextButton(
                       onPressed: _isSubmitting ? null : _handleDecline,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey,
-                      ),
+                      style: TextButton.styleFrom(foregroundColor: Colors.grey),
                       child: const Text('同意しない'),
                     ),
                   ),
@@ -314,9 +313,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -338,7 +337,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           height: 200,
           decoration: BoxDecoration(
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.5),
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -369,7 +370,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Theme.of(context).colorScheme.surface.withValues(alpha: 0.0),
+                          Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.0),
                           Theme.of(context).colorScheme.surface,
                         ],
                       ),
@@ -385,7 +388,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                         const SizedBox(width: 4),
                         Text(
                           '下までスクロールしてください',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                         ),
@@ -407,9 +411,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
             ),
             Expanded(
               child: GestureDetector(
-                onTap: scrolledToEnd
-                    ? () => onChecked(!isChecked)
-                    : null,
+                onTap: scrolledToEnd ? () => onChecked(!isChecked) : null,
                 child: Text(
                   '$titleに同意します',
                   style: TextStyle(

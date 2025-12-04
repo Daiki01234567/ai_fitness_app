@@ -103,10 +103,7 @@ class ExportRequestNotifier extends StateNotifier<ExportRequestState> {
           break;
         case ExportScopeType.dateRange:
           if (state.startDate == null || state.endDate == null) {
-            state = state.copyWith(
-              isLoading: false,
-              error: '期間を選択してください',
-            );
+            state = state.copyWith(isLoading: false, error: '期間を選択してください');
             return false;
           }
           scope = ExportScope.dateRange(
@@ -134,16 +131,10 @@ class ExportRequestNotifier extends StateNotifier<ExportRequestState> {
         );
       }
 
-      state = state.copyWith(
-        isLoading: false,
-        lastRequest: request,
-      );
+      state = state.copyWith(isLoading: false, lastRequest: request);
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
@@ -162,9 +153,9 @@ class ExportRequestNotifier extends StateNotifier<ExportRequestState> {
 /// Export request notifier provider
 final exportRequestNotifierProvider =
     StateNotifierProvider<ExportRequestNotifier, ExportRequestState>((ref) {
-  final service = ref.watch(gdprServiceProvider);
-  return ExportRequestNotifier(service);
-});
+      final service = ref.watch(gdprServiceProvider);
+      return ExportRequestNotifier(service);
+    });
 
 /// Deletion request state
 class DeletionRequestState {
@@ -230,15 +221,9 @@ class DeletionRequestNotifier extends StateNotifier<DeletionRequestState> {
 
     try {
       final request = await _service.getDeletionStatus();
-      state = state.copyWith(
-        isLoading: false,
-        currentRequest: request,
-      );
+      state = state.copyWith(isLoading: false, currentRequest: request);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -268,16 +253,10 @@ class DeletionRequestNotifier extends StateNotifier<DeletionRequestState> {
         );
       }
 
-      state = state.copyWith(
-        isLoading: false,
-        currentRequest: request,
-      );
+      state = state.copyWith(isLoading: false, currentRequest: request);
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
@@ -305,10 +284,7 @@ class DeletionRequestNotifier extends StateNotifier<DeletionRequestState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
   }
@@ -327,9 +303,9 @@ class DeletionRequestNotifier extends StateNotifier<DeletionRequestState> {
 /// Deletion request notifier provider
 final deletionRequestNotifierProvider =
     StateNotifierProvider<DeletionRequestNotifier, DeletionRequestState>((ref) {
-  final service = ref.watch(gdprServiceProvider);
-  return DeletionRequestNotifier(service);
-});
+      final service = ref.watch(gdprServiceProvider);
+      return DeletionRequestNotifier(service);
+    });
 
 /// Account recovery state
 class AccountRecoveryState {
@@ -403,11 +379,7 @@ class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
   Future<RecoveryInfo?> requestRecoveryCode(String email) async {
     if (state.isLoading) return null;
 
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-      email: email,
-    );
+    state = state.copyWith(isLoading: true, error: null, email: email);
 
     try {
       // Try Cloud Functions first, fallback to local
@@ -427,10 +399,7 @@ class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
           codeExpiresAt: info.codeExpiresAt,
         );
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: '復元コードの送信に失敗しました',
-        );
+        state = state.copyWith(isLoading: false, error: '復元コードの送信に失敗しました');
       }
 
       return info;
@@ -452,10 +421,7 @@ class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
   }) async {
     if (state.isLoading) return false;
 
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-    );
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       // Try Cloud Functions first, fallback to local
@@ -464,13 +430,13 @@ class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
         success = await _service.recoverAccount(email: email, code: code);
       } catch (_) {
         // Fallback to local implementation
-        success = await _service.recoverAccountLocally(email: email, code: code);
+        success = await _service.recoverAccountLocally(
+          email: email,
+          code: code,
+        );
       }
 
-      state = state.copyWith(
-        isLoading: false,
-        isRecovered: success,
-      );
+      state = state.copyWith(isLoading: false, isRecovered: success);
 
       return success;
     } catch (e) {
@@ -504,10 +470,7 @@ class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
         isLoading: false,
         error: e.toString().replaceAll('Exception: ', ''),
       );
-      return RecoveryEligibility(
-        isEligible: false,
-        reason: e.toString(),
-      );
+      return RecoveryEligibility(isEligible: false, reason: e.toString());
     }
   }
 
@@ -525,6 +488,6 @@ class AccountRecoveryNotifier extends StateNotifier<AccountRecoveryState> {
 /// Account recovery notifier provider
 final accountRecoveryNotifierProvider =
     StateNotifierProvider<AccountRecoveryNotifier, AccountRecoveryState>((ref) {
-  final service = ref.watch(gdprServiceProvider);
-  return AccountRecoveryNotifier(service);
-});
+      final service = ref.watch(gdprServiceProvider);
+      return AccountRecoveryNotifier(service);
+    });

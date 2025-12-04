@@ -12,7 +12,10 @@
 // export * from "./rateLimitCleanup";
 
 // BigQuery DLQ 処理
-// export * from "./bigqueryDlq";
+export * from "./bigqueryDlq";
+
+// BigQuery 日次・週次集計
+export * from "./aggregation";
 
 // 日次使用量リセット（無料プラン制限用）
 // export * from "./usageReset";

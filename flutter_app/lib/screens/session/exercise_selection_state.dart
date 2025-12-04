@@ -197,5 +197,5 @@ class ExerciseSelectionNotifier extends StateNotifier<ExerciseSelectionState> {
 /// Provider for exercise selection state
 final exerciseSelectionProvider =
     StateNotifierProvider<ExerciseSelectionNotifier, ExerciseSelectionState>(
-  (ref) => ExerciseSelectionNotifier(),
-);
+      (ref) => ExerciseSelectionNotifier(),
+    );

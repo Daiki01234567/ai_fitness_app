@@ -115,12 +115,7 @@ class RecordedLandmark {
 
   /// JSONに変換
   Map<String, dynamic> toJson() {
-    return {
-      'x': x,
-      'y': y,
-      'z': z,
-      'l': likelihood,
-    };
+    return {'x': x, 'y': y, 'z': z, 'l': likelihood};
   }
 
   /// JSONから作成
@@ -235,11 +230,7 @@ class SessionMetadata {
 
 /// デバイス情報
 class DeviceInfo {
-  const DeviceInfo({
-    required this.platform,
-    this.model,
-    this.osVersion,
-  });
+  const DeviceInfo({required this.platform, this.model, this.osVersion});
 
   final String platform;
   final String? model;
@@ -256,19 +247,13 @@ class DeviceInfo {
 
 /// カメラ設定情報
 class CameraConfigInfo {
-  const CameraConfigInfo({
-    required this.resolution,
-    required this.targetFps,
-  });
+  const CameraConfigInfo({required this.resolution, required this.targetFps});
 
   final String resolution;
   final int targetFps;
 
   Map<String, dynamic> toJson() {
-    return {
-      'resolution': resolution,
-      'targetFps': targetFps,
-    };
+    return {'resolution': resolution, 'targetFps': targetFps};
   }
 }
 
@@ -312,8 +297,8 @@ class SessionRecorderState {
 /// セッションレコーダープロバイダー
 final sessionRecorderProvider =
     StateNotifierProvider<SessionRecorderNotifier, SessionRecorderState>((ref) {
-  return SessionRecorderNotifier();
-});
+      return SessionRecorderNotifier();
+    });
 
 /// セッションレコーダーNotifier
 class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
@@ -406,18 +391,14 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
   void recordDroppedFrame() {
     if (!state.isRecording) return;
 
-    state = state.copyWith(
-      droppedFrameCount: state.droppedFrameCount + 1,
-    );
+    state = state.copyWith(droppedFrameCount: state.droppedFrameCount + 1);
   }
 
   /// 記録を一時停止
   void pauseRecording() {
     if (!state.isRecording) return;
 
-    state = state.copyWith(
-      recordingState: RecordingState.paused,
-    );
+    state = state.copyWith(recordingState: RecordingState.paused);
 
     debugPrint('SessionRecorder: Recording paused');
   }
@@ -426,9 +407,7 @@ class SessionRecorderNotifier extends StateNotifier<SessionRecorderState> {
   void resumeRecording() {
     if (!state.isPaused) return;
 
-    state = state.copyWith(
-      recordingState: RecordingState.recording,
-    );
+    state = state.copyWith(recordingState: RecordingState.recording);
 
     debugPrint('SessionRecorder: Recording resumed');
   }

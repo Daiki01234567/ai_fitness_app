@@ -1,7 +1,7 @@
-/// Exercise Selection Screen Widget Tests
-///
-/// Tests for the exercise selection screen UI and interactions
-/// Reference: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (3.7)
+// Exercise Selection Screen Widget Tests
+//
+// Tests for the exercise selection screen UI and interactions
+// Reference: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (3.7)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -211,8 +211,9 @@ void main() {
       expect(inkWell, findsOneWidget);
     });
 
-    testWidgets('has proper accessibility with minimum tap targets',
-        (tester) async {
+    testWidgets('has proper accessibility with minimum tap targets', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -231,8 +232,9 @@ void main() {
       expect(cardSize.height, greaterThan(48));
     });
 
-    testWidgets('bottom navigation shows training tab as selected',
-        (tester) async {
+    testWidgets('bottom navigation shows training tab as selected', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -261,8 +263,9 @@ void main() {
       expect(find.textContaining('膝'), findsAtLeast(1));
     });
 
-    testWidgets('filter dropdown shows checkmark for selected item',
-        (tester) async {
+    testWidgets('filter dropdown shows checkmark for selected item', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -279,8 +282,9 @@ void main() {
   });
 
   group('Filter combinations', () {
-    testWidgets('category and difficulty filters combine correctly',
-        (tester) async {
+    testWidgets('category and difficulty filters combine correctly', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -317,8 +321,9 @@ void main() {
   });
 
   group('Visual feedback', () {
-    testWidgets('selected filter has different background color',
-        (tester) async {
+    testWidgets('selected filter has different background color', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 

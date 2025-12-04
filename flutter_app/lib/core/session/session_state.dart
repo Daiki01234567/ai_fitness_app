@@ -186,10 +186,7 @@ class TrainingSessionNotifier extends StateNotifier<TrainingSessionState> {
   void initializeSession(ExerciseType exerciseType, {SessionConfig? config}) {
     state = TrainingSessionState(
       phase: SessionPhase.setup,
-      config: config ??
-          SessionConfig(
-            exerciseType: exerciseType,
-          ),
+      config: config ?? SessionConfig(exerciseType: exerciseType),
       exerciseInfo: ExerciseInfo.fromType(exerciseType),
       setupChecklist: _createDefaultChecklist(),
     );
@@ -256,10 +253,7 @@ class TrainingSessionNotifier extends StateNotifier<TrainingSessionState> {
 
   /// Start countdown
   void startCountdown() {
-    state = state.copyWith(
-      phase: SessionPhase.countdown,
-      countdownValue: 3,
-    );
+    state = state.copyWith(phase: SessionPhase.countdown, countdownValue: 3);
   }
 
   /// Update countdown value
@@ -329,7 +323,8 @@ class TrainingSessionNotifier extends StateNotifier<TrainingSessionState> {
     final updatedSets = [...state.completedSets, setData];
 
     // Check if all sets are complete
-    if (state.config != null && updatedSets.length >= state.config!.targetSets) {
+    if (state.config != null &&
+        updatedSets.length >= state.config!.targetSets) {
       state = state.copyWith(
         phase: SessionPhase.completed,
         completedSets: updatedSets,
@@ -385,5 +380,5 @@ class TrainingSessionNotifier extends StateNotifier<TrainingSessionState> {
 /// Training session provider
 final trainingSessionProvider =
     StateNotifierProvider<TrainingSessionNotifier, TrainingSessionState>((ref) {
-  return TrainingSessionNotifier();
-});
+      return TrainingSessionNotifier();
+    });

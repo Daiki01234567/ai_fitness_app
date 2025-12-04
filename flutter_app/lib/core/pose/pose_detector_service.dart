@@ -24,10 +24,12 @@ final poseDetectorServiceProvider = Provider<PoseDetectorService>((ref) {
 
 /// 姿勢検出状態プロバイダー
 final poseDetectionStateProvider =
-    StateNotifierProvider<PoseDetectionStateNotifier, PoseDetectionState>((ref) {
-  final service = ref.watch(poseDetectorServiceProvider);
-  return PoseDetectionStateNotifier(service);
-});
+    StateNotifierProvider<PoseDetectionStateNotifier, PoseDetectionState>((
+      ref,
+    ) {
+      final service = ref.watch(poseDetectorServiceProvider);
+      return PoseDetectionStateNotifier(service);
+    });
 
 /// 姿勢検出状態
 class PoseDetectionState {
@@ -90,7 +92,9 @@ class PoseDetectionStateNotifier extends StateNotifier<PoseDetectionState> {
   final PoseDetectorService _service;
 
   /// 姿勢検出器を初期化
-  Future<bool> initialize([PoseDetectionConfig config = PoseDetectionConfig.realtime]) async {
+  Future<bool> initialize([
+    PoseDetectionConfig config = PoseDetectionConfig.realtime,
+  ]) async {
     try {
       await _service.initialize(config);
       state = state.copyWith(
@@ -100,16 +104,16 @@ class PoseDetectionStateNotifier extends StateNotifier<PoseDetectionState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isInitialized: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isInitialized: false, errorMessage: e.toString());
       return false;
     }
   }
 
   /// カメラ画像を処理
-  Future<PoseFrame?> processImage(CameraImage image, InputImageRotation rotation) async {
+  Future<PoseFrame?> processImage(
+    CameraImage image,
+    InputImageRotation rotation,
+  ) async {
     if (!state.isInitialized || state.isProcessing) {
       return null;
     }
@@ -130,10 +134,7 @@ class PoseDetectionStateNotifier extends StateNotifier<PoseDetectionState> {
 
       return poseFrame;
     } catch (e) {
-      state = state.copyWith(
-        isProcessing: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isProcessing: false, errorMessage: e.toString());
       return null;
     }
   }
@@ -150,7 +151,9 @@ class PoseDetectorService {
   mlkit.PoseDetector? _detector;
 
   /// 姿勢検出器を初期化
-  Future<void> initialize([PoseDetectionConfig config = PoseDetectionConfig.realtime]) async {
+  Future<void> initialize([
+    PoseDetectionConfig config = PoseDetectionConfig.realtime,
+  ]) async {
     await close(); // 既存の検出器があれば閉じる
 
     final options = mlkit.PoseDetectorOptions(
@@ -228,7 +231,9 @@ class PoseDetectorService {
     // 画像フォーマットを取得
     final format = _getInputImageFormat(image.format.group);
     if (format == null) {
-      debugPrint('PoseDetectorService: Unsupported image format: ${image.format.group}');
+      debugPrint(
+        'PoseDetectorService: Unsupported image format: ${image.format.group}',
+      );
       return null;
     }
 

@@ -21,15 +21,13 @@ import '../widgets/stats_card.dart';
 
 /// Screen displaying detailed session information
 class SessionDetailScreen extends ConsumerStatefulWidget {
-  const SessionDetailScreen({
-    super.key,
-    required this.session,
-  });
+  const SessionDetailScreen({super.key, required this.session});
 
   final HistorySession session;
 
   @override
-  ConsumerState<SessionDetailScreen> createState() => _SessionDetailScreenState();
+  ConsumerState<SessionDetailScreen> createState() =>
+      _SessionDetailScreenState();
 }
 
 class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
@@ -189,7 +187,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: _getScoreColor(session.averageScore).withValues(alpha: 0.1),
+                color: _getScoreColor(
+                  session.averageScore,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -222,9 +222,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       children: [
         Text(
           '概要',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Row(
@@ -265,9 +265,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       children: [
         Text(
           'セット別詳細',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         ...session.sets.map((set) => _buildSetCard(set)),
@@ -362,16 +362,18 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
                     spacing: 4,
                     runSpacing: 4,
                     children: set.issues
-                        .map((issue) => Chip(
-                              label: Text(
-                                issue,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              backgroundColor: Colors.orange.shade50,
-                              padding: EdgeInsets.zero,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                            ))
+                        .map(
+                          (issue) => Chip(
+                            label: Text(
+                              issue,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            backgroundColor: Colors.orange.shade50,
+                            padding: EdgeInsets.zero,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        )
                         .toList(),
                   ),
                 ],
@@ -389,16 +391,16 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
         ),
         Text(
           value,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -410,9 +412,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       children: [
         Text(
           '主な改善ポイント',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Card(
@@ -420,20 +422,22 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: session.primaryIssues
-                  .map((issue) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.warning_amber,
-                              color: Colors.orange.shade600,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(issue)),
-                          ],
-                        ),
-                      ))
+                  .map(
+                    (issue) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: Colors.orange.shade600,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(issue)),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -448,9 +452,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       children: [
         Text(
           '体調記録',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Card(
@@ -485,10 +489,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       children: [
         SizedBox(
           width: 100,
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
         ),
         Expanded(
           child: Row(
@@ -515,9 +516,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           children: [
             Text(
               'タグ',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
               onPressed: _showTagEditor,
@@ -531,18 +532,18 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             spacing: 8,
             runSpacing: 8,
             children: session.tags!
-                .map((tag) => Chip(
-                      label: Text(tag),
-                      onDeleted: () => _removeTag(tag),
-                    ))
+                .map(
+                  (tag) =>
+                      Chip(label: Text(tag), onDeleted: () => _removeTag(tag)),
+                )
                 .toList(),
           )
         else
           Text(
             'タグはまだありません',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
           ),
       ],
     );
@@ -557,9 +558,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           children: [
             Text(
               'メモ',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             if (!_isEditingNote)
               TextButton.icon(
@@ -620,8 +621,8 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
                     style: session.note?.isNotEmpty == true
                         ? null
                         : Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey.shade500,
-                            ),
+                            color: Colors.grey.shade500,
+                          ),
                   ),
           ),
         ),
@@ -696,23 +697,23 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
 
   void _exportToPdf() {
     // TODO: Implement PDF export
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PDF出力は今後実装予定です')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('PDF出力は今後実装予定です')));
   }
 
   void _exportToCsv() {
     // TODO: Implement CSV export
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('CSV出力は今後実装予定です')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('CSV出力は今後実装予定です')));
   }
 
   void _shareSession() {
     // TODO: Implement sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('共有機能は今後実装予定です')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('共有機能は今後実装予定です')));
   }
 
   void _confirmDelete() {
@@ -731,9 +732,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
               Navigator.pop(context);
               _deleteSession();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('削除'),
           ),
         ],
@@ -747,22 +746,21 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     if (userId == null) return;
 
     try {
-      await ref.read(historyServiceProvider).deleteSession(
-            userId: userId,
-            sessionId: widget.session.id,
-          );
+      await ref
+          .read(historyServiceProvider)
+          .deleteSession(userId: userId, sessionId: widget.session.id);
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('セッションを削除しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('セッションを削除しました')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('削除に失敗しました: $e')));
       }
     }
   }
@@ -777,9 +775,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'タグ名を入力',
-          ),
+          decoration: const InputDecoration(hintText: 'タグ名を入力'),
         ),
         actions: [
           TextButton(
@@ -809,22 +805,24 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     if (currentTags.contains(tag)) return;
 
     try {
-      await ref.read(historyServiceProvider).saveSessionTags(
+      await ref
+          .read(historyServiceProvider)
+          .saveSessionTags(
             userId: userId,
             sessionId: widget.session.id,
             tags: [...currentTags, tag],
           );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('タグ「$tag」を追加しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('タグ「$tag」を追加しました')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('タグの追加に失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('タグの追加に失敗しました: $e')));
       }
     }
   }
@@ -838,22 +836,24 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     final newTags = currentTags.where((t) => t != tag).toList();
 
     try {
-      await ref.read(historyServiceProvider).saveSessionTags(
+      await ref
+          .read(historyServiceProvider)
+          .saveSessionTags(
             userId: userId,
             sessionId: widget.session.id,
             tags: newTags,
           );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('タグ「$tag」を削除しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('タグ「$tag」を削除しました')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('タグの削除に失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('タグの削除に失敗しました: $e')));
       }
     }
   }
@@ -866,7 +866,9 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     setState(() => _isSaving = true);
 
     try {
-      await ref.read(historyServiceProvider).saveSessionNote(
+      await ref
+          .read(historyServiceProvider)
+          .saveSessionNote(
             userId: userId,
             sessionId: widget.session.id,
             note: _noteController.text,
@@ -877,16 +879,16 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           _isEditingNote = false;
           _isSaving = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('メモを保存しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('メモを保存しました')));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('メモの保存に失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('メモの保存に失敗しました: $e')));
       }
     }
   }

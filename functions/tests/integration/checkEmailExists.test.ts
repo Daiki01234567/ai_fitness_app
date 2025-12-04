@@ -1,11 +1,14 @@
 /**
  * メールアドレス存在チェック API テスト
  *
- * @version 1.0.0
- * @date 2025-12-02
+ * @version 1.3.0
+ * @date 2025-12-04
  */
 
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
+
+// Create mock functions before jest.mock calls
+const mockGetUserByEmail = jest.fn();
 
 // Mock firebase-admin before importing the function
 jest.mock("firebase-admin", () => ({
@@ -13,17 +16,16 @@ jest.mock("firebase-admin", () => ({
   initializeApp: jest.fn(),
 }));
 
-// Mock firebase-admin/auth
-const mockGetUserByEmail = jest.fn<() => Promise<{ uid: string; email: string }>>();
+// Mock firebase-admin/auth with factory function that captures current mock
 jest.mock("firebase-admin/auth", () => ({
-  getAuth: jest.fn(() => ({
+  getAuth: () => ({
     getUserByEmail: mockGetUserByEmail,
-  })),
+  }),
 }));
 
 // Mock rate limiter
-const mockCheckLimit = jest.fn<() => Promise<boolean>>();
-jest.mock("../../../src/middleware/rateLimiter.js", () => ({
+const mockCheckLimit = jest.fn();
+jest.mock("../../src/middleware/rateLimiter", () => ({
   rateLimiter: {
     checkLimit: mockCheckLimit,
   },
@@ -33,16 +35,19 @@ jest.mock("../../../src/middleware/rateLimiter.js", () => ({
 }));
 
 // Mock logger
-jest.mock("../../../src/utils/logger.js", () => ({
+const mockLoggerInfo = jest.fn();
+const mockLoggerWarn = jest.fn();
+const mockLoggerError = jest.fn();
+jest.mock("../../src/utils/logger", () => ({
   logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: mockLoggerInfo,
+    warn: mockLoggerWarn,
+    error: mockLoggerError,
   },
 }));
 
 // Mock firestore utils
-jest.mock("../../../src/utils/firestore.js", () => ({
+jest.mock("../../src/utils/firestore", () => ({
   getFirestore: jest.fn(() => ({
     collection: jest.fn(() => ({
       doc: jest.fn(),
@@ -50,6 +55,23 @@ jest.mock("../../../src/utils/firestore.js", () => ({
   })),
   serverTimestamp: jest.fn(),
 }));
+
+// Static import after mocks are set up
+import { auth_checkEmailExists } from "../../src/api/auth/checkEmailExists";
+import { RateLimitError } from "../../src/utils/errors";
+
+// Helper function to run the callable function
+type CallableRequest = {
+  data: Record<string, unknown>;
+  rawRequest: {
+    headers: Record<string, string>;
+    socket: { remoteAddress: string };
+  };
+};
+
+async function runCallable(request: CallableRequest): Promise<unknown> {
+  return (auth_checkEmailExists as unknown as { run: (req: CallableRequest) => Promise<unknown> }).run(request);
+}
 
 describe("auth_checkEmailExists", () => {
   beforeEach(() => {
@@ -64,11 +86,7 @@ describe("auth_checkEmailExists", () => {
 
   describe("input validation", () => {
     it("should reject missing email", async () => {
-      // Import after mocks are set up
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
-
-      // Create mock request
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: {},
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -76,16 +94,11 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      // The function should throw ValidationError for missing email
-      await expect(
-        (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<unknown> }).run(mockRequest)
-      ).rejects.toThrow();
+      await expect(runCallable(mockRequest)).rejects.toThrow();
     });
 
     it("should reject invalid email format", async () => {
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
-
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "invalid-email" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -93,19 +106,16 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      await expect(
-        (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<unknown> }).run(mockRequest)
-      ).rejects.toThrow();
+      await expect(runCallable(mockRequest)).rejects.toThrow();
     });
 
     it("should normalize email to lowercase", async () => {
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
       // Simulate user not found (email available)
       const notFoundError = new Error("User not found") as Error & { code: string };
       notFoundError.code = "auth/user-not-found";
       mockGetUserByEmail.mockRejectedValue(notFoundError);
 
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "TEST@Example.COM" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -113,7 +123,7 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      await (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<unknown> }).run(mockRequest);
+      await runCallable(mockRequest);
 
       expect(mockGetUserByEmail).toHaveBeenCalledWith("test@example.com");
     });
@@ -121,13 +131,12 @@ describe("auth_checkEmailExists", () => {
 
   describe("email existence check", () => {
     it("should return exists: false for new email", async () => {
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
       // Simulate user not found
       const notFoundError = new Error("User not found") as Error & { code: string };
       notFoundError.code = "auth/user-not-found";
       mockGetUserByEmail.mockRejectedValue(notFoundError);
 
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "new@example.com" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -135,7 +144,7 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      const result = await (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<{ exists: boolean }> }).run(mockRequest);
+      const result = await runCallable(mockRequest);
 
       expect(result).toEqual({
         exists: false,
@@ -143,11 +152,10 @@ describe("auth_checkEmailExists", () => {
     });
 
     it("should return exists: true for existing email", async () => {
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
-      // Simulate user found
+      // Simulate user found (getUserByEmail returns successfully)
       mockGetUserByEmail.mockResolvedValue({ uid: "test-uid", email: "existing@example.com" });
 
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "existing@example.com" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -155,7 +163,7 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      const result = await (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<{ exists: boolean; message?: string }> }).run(mockRequest);
+      const result = await runCallable(mockRequest) as { exists: boolean; message?: string };
 
       expect(result).toEqual({
         exists: true,
@@ -166,12 +174,11 @@ describe("auth_checkEmailExists", () => {
 
   describe("rate limiting", () => {
     it("should apply rate limiting based on IP", async () => {
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
       const notFoundError = new Error("User not found") as Error & { code: string };
       notFoundError.code = "auth/user-not-found";
       mockGetUserByEmail.mockRejectedValue(notFoundError);
 
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "test@example.com" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.100" },
@@ -179,7 +186,7 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      await (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<unknown> }).run(mockRequest);
+      await runCallable(mockRequest);
 
       expect(mockCheckLimit).toHaveBeenCalledWith(
         "EMAIL_CHECK:192.168.1.100",
@@ -188,12 +195,9 @@ describe("auth_checkEmailExists", () => {
     });
 
     it("should throw error when rate limit exceeded", async () => {
-      const { RateLimitError } = await import("../../../src/utils/errors.js");
       mockCheckLimit.mockRejectedValue(new RateLimitError());
 
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
-
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "test@example.com" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -201,21 +205,18 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      await expect(
-        (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<unknown> }).run(mockRequest)
-      ).rejects.toThrow();
+      await expect(runCallable(mockRequest)).rejects.toThrow();
     });
   });
 
   describe("error handling", () => {
     it("should return exists: false on unexpected Firebase Auth error", async () => {
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
       // Simulate unexpected error (not user-not-found)
       const unexpectedError = new Error("Internal error") as Error & { code: string };
       unexpectedError.code = "auth/internal-error";
       mockGetUserByEmail.mockRejectedValue(unexpectedError);
 
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "test@example.com" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -223,7 +224,7 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      const result = await (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<{ exists: boolean }> }).run(mockRequest);
+      const result = await runCallable(mockRequest) as { exists: boolean };
 
       // Should return false to avoid leaking information
       expect(result).toEqual({
@@ -234,13 +235,11 @@ describe("auth_checkEmailExists", () => {
 
   describe("security", () => {
     it("should mask email in logs", async () => {
-      const { logger } = await import("../../../src/utils/logger.js");
-      const { auth_checkEmailExists } = await import("../../../src/api/auth/checkEmailExists.js");
       const notFoundError = new Error("User not found") as Error & { code: string };
       notFoundError.code = "auth/user-not-found";
       mockGetUserByEmail.mockRejectedValue(notFoundError);
 
-      const mockRequest = {
+      const mockRequest: CallableRequest = {
         data: { email: "testuser@example.com" },
         rawRequest: {
           headers: { "x-forwarded-for": "192.168.1.1" },
@@ -248,10 +247,10 @@ describe("auth_checkEmailExists", () => {
         },
       };
 
-      await (auth_checkEmailExists as unknown as { run: (req: unknown) => Promise<unknown> }).run(mockRequest);
+      await runCallable(mockRequest);
 
       // Check that logged email is masked
-      expect(logger.info).toHaveBeenCalledWith(
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
         "Checking email existence",
         expect.objectContaining({
           maskedEmail: "te***@example.com",

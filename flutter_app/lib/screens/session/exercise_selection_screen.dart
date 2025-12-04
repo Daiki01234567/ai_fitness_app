@@ -46,9 +46,9 @@ class _ExerciseSelectionScreenState
   }
 
   void _onSearchChanged() {
-    ref.read(exerciseSelectionProvider.notifier).setSearchQuery(
-          _searchController.text,
-        );
+    ref
+        .read(exerciseSelectionProvider.notifier)
+        .setSearchQuery(_searchController.text);
   }
 
   void _clearSearch() {
@@ -102,14 +102,14 @@ class _ExerciseSelectionScreenState
               selectedCategory: state.selectedCategory,
               selectedDifficulty: state.selectedDifficulty,
               onCategoryChanged: (category) {
-                ref.read(exerciseSelectionProvider.notifier).setCategory(
-                      category,
-                    );
+                ref
+                    .read(exerciseSelectionProvider.notifier)
+                    .setCategory(category);
               },
               onDifficultyChanged: (difficulty) {
-                ref.read(exerciseSelectionProvider.notifier).setDifficulty(
-                      difficulty,
-                    );
+                ref
+                    .read(exerciseSelectionProvider.notifier)
+                    .setDifficulty(difficulty);
               },
             ),
 
@@ -228,8 +228,8 @@ class _FilterChips extends StatelessWidget {
           Text(
             'フィルタ:',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
 
@@ -435,8 +435,8 @@ class _EmptyState extends StatelessWidget {
             Text(
               '種目が見つかりません',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             if (hasActiveFilters) ...[
               const SizedBox(height: AppSpacing.md),
@@ -487,9 +487,9 @@ class _SectionHeader extends StatelessWidget {
           Text(
             _sectionTitle,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -578,12 +578,8 @@ class _ExerciseCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ),
                           Container(
@@ -592,8 +588,9 @@ class _ExerciseCard extends StatelessWidget {
                               vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
-                              color: _getDifficultyColor(context)
-                                  .withValues(alpha: 0.2),
+                              color: _getDifficultyColor(
+                                context,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Text(
@@ -611,17 +608,15 @@ class _ExerciseCard extends StatelessWidget {
                       Text(
                         bodyParts,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         description,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

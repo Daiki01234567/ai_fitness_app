@@ -177,7 +177,10 @@ class FormMathUtils {
 
   /// Calculate horizontal angle of a limb (relative to horizontal)
   /// Returns 0 when horizontal, 90 when vertical
-  static double calculateHorizontalAngle(PoseLandmark left, PoseLandmark right) {
+  static double calculateHorizontalAngle(
+    PoseLandmark left,
+    PoseLandmark right,
+  ) {
     final dx = right.x - left.x;
     final dy = right.y - left.y;
     return math.atan2(dy.abs(), dx.abs()) * 180 / math.pi;
@@ -188,11 +191,7 @@ class FormMathUtils {
     PoseLandmark a,
     PoseLandmark b,
   ) {
-    return (
-      x: (a.x + b.x) / 2,
-      y: (a.y + b.y) / 2,
-      z: (a.z + b.z) / 2,
-    );
+    return (x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2);
   }
 
   /// Check if a point is in front of a line (2D)
@@ -305,9 +304,7 @@ class OutlierRemover {
     final lowerBound = q1 - iqrMultiplier * iqr;
     final upperBound = q3 + iqrMultiplier * iqr;
 
-    return values
-        .where((v) => v >= lowerBound && v <= upperBound)
-        .toList();
+    return values.where((v) => v >= lowerBound && v <= upperBound).toList();
   }
 
   /// Check if a value is an outlier

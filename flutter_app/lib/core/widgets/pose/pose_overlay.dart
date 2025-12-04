@@ -89,7 +89,8 @@ class PoseOverlayConfig {
       landmarkRadius: landmarkRadius ?? this.landmarkRadius,
       boneWidth: boneWidth ?? this.boneWidth,
       highConfidenceColor: highConfidenceColor ?? this.highConfidenceColor,
-      mediumConfidenceColor: mediumConfidenceColor ?? this.mediumConfidenceColor,
+      mediumConfidenceColor:
+          mediumConfidenceColor ?? this.mediumConfidenceColor,
       lowConfidenceColor: lowConfidenceColor ?? this.lowConfidenceColor,
       boneColor: boneColor ?? this.boneColor,
       smoothingEnabled: smoothingEnabled ?? this.smoothingEnabled,
@@ -355,8 +356,10 @@ class SimplePosePainter extends CustomPainter {
       final start = pose.getLandmark(bone.$1);
       final end = pose.getLandmark(bone.$2);
 
-      if (start != null && end != null &&
-          start.meetsMinimumThreshold && end.meetsMinimumThreshold) {
+      if (start != null &&
+          end != null &&
+          start.meetsMinimumThreshold &&
+          end.meetsMinimumThreshold) {
         final startPoint = transformer.transformLandmark(start);
         final endPoint = transformer.transformLandmark(end);
         canvas.drawLine(startPoint, endPoint, paint);

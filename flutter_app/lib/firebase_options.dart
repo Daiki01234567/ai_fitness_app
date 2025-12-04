@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '895851221884',
     projectId: 'tokyo-list-478804-e5',
     storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
-    iosClientId: '895851221884-90cbim4om84oc32tl1hsllu2rc8pmra9.apps.googleusercontent.com',
+    iosClientId:
+        '895851221884-90cbim4om84oc32tl1hsllu2rc8pmra9.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApp',
   );
 
@@ -73,7 +74,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '895851221884',
     projectId: 'tokyo-list-478804-e5',
     storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
-    iosClientId: '895851221884-90cbim4om84oc32tl1hsllu2rc8pmra9.apps.googleusercontent.com',
+    iosClientId:
+        '895851221884-90cbim4om84oc32tl1hsllu2rc8pmra9.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApp',
   );
 
@@ -85,5 +87,4 @@ class DefaultFirebaseOptions {
     authDomain: 'tokyo-list-478804-e5.firebaseapp.com',
     storageBucket: 'tokyo-list-478804-e5.firebasestorage.app',
   );
-
 }

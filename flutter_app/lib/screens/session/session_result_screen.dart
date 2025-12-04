@@ -44,9 +44,7 @@ class SessionResultScreen extends ConsumerWidget {
 
               // Sets breakdown
               if (sessionState.completedSets.isNotEmpty)
-                Expanded(
-                  child: _buildSetsBreakdown(context, sessionState),
-                ),
+                Expanded(child: _buildSetsBreakdown(context, sessionState)),
 
               // Action buttons
               _buildActionButtons(context, ref),
@@ -67,28 +65,30 @@ class SessionResultScreen extends ConsumerWidget {
             color: Colors.green.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.check_circle,
-            size: 48,
-            color: Colors.green,
-          ),
+          child: const Icon(Icons.check_circle, size: 48, color: Colors.green),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
           'お疲れ様でした!',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
 
   Widget _buildSummaryCard(BuildContext context, TrainingSessionState state) {
-    final totalReps = state.completedSets.fold<int>(0, (sum, set) => sum + set.reps);
+    final totalReps = state.completedSets.fold<int>(
+      0,
+      (sum, set) => sum + set.reps,
+    );
     final avgScore = state.completedSets.isNotEmpty
-        ? state.completedSets.fold<double>(0, (sum, set) => sum + set.averageScore) /
-            state.completedSets.length
+        ? state.completedSets.fold<double>(
+                0,
+                (sum, set) => sum + set.averageScore,
+              ) /
+              state.completedSets.length
         : 0.0;
     final totalDuration = state.completedSets.fold<Duration>(
       Duration.zero,
@@ -103,9 +103,9 @@ class SessionResultScreen extends ConsumerWidget {
             // Exercise name
             Text(
               state.exerciseInfo?.name ?? 'トレーニング',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Divider(height: AppSpacing.xl),
 
@@ -171,16 +171,16 @@ class SessionResultScreen extends ConsumerWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
       ],
     );
@@ -195,9 +195,9 @@ class SessionResultScreen extends ConsumerWidget {
           children: [
             Text(
               'セット詳細',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Divider(),
             Expanded(
@@ -241,9 +241,7 @@ class SessionResultScreen extends ConsumerWidget {
           const SizedBox(width: AppSpacing.md),
 
           // Reps
-          Expanded(
-            child: Text('${setData.reps}回'),
-          ),
+          Expanded(child: Text('${setData.reps}回')),
 
           // Score
           Container(
@@ -252,7 +250,9 @@ class SessionResultScreen extends ConsumerWidget {
               vertical: AppSpacing.xs,
             ),
             decoration: BoxDecoration(
-              color: _getScoreColor(setData.averageScore).withValues(alpha: 0.2),
+              color: _getScoreColor(
+                setData.averageScore,
+              ).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
@@ -270,8 +270,8 @@ class SessionResultScreen extends ConsumerWidget {
           Text(
             _formatDuration(setData.duration),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -286,9 +286,7 @@ class SessionResultScreen extends ConsumerWidget {
             ref.read(trainingSessionProvider.notifier).resetSession();
             context.go(AppRoutes.training);
           },
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-          ),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           child: const Text('もう1セット'),
         ),
         const SizedBox(height: AppSpacing.sm),

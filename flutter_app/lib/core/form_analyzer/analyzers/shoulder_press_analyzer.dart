@@ -66,10 +66,8 @@ class ShoulderPressConfig {
 
 /// Shoulder press form analyzer implementation
 class ShoulderPressAnalyzer extends BaseFormAnalyzer {
-  ShoulderPressAnalyzer({
-    super.config,
-    ShoulderPressConfig? pressConfig,
-  }) : pressConfig = pressConfig ?? const ShoulderPressConfig();
+  ShoulderPressAnalyzer({super.config, ShoulderPressConfig? pressConfig})
+    : pressConfig = pressConfig ?? const ShoulderPressConfig();
 
   /// Press-specific configuration
   final ShoulderPressConfig pressConfig;
@@ -86,10 +84,10 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
 
   @override
   Map<String, double> get phaseThresholds => {
-        'down': pressConfig.downPhaseAngle,
-        'bottom': pressConfig.bottomPhaseAngle,
-        'up': pressConfig.upPhaseAngle,
-      };
+    'down': pressConfig.downPhaseAngle,
+    'bottom': pressConfig.bottomPhaseAngle,
+    'up': pressConfig.upPhaseAngle,
+  };
 
   @override
   FrameEvaluationResult evaluateFrame(PoseFrame frame) {
@@ -131,7 +129,9 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
       jointAngles['leftElbow'] = getFilter('leftElbow').filter(leftElbowAngle);
     }
     if (rightElbowAngle != null) {
-      jointAngles['rightElbow'] = getFilter('rightElbow').filter(rightElbowAngle);
+      jointAngles['rightElbow'] = getFilter(
+        'rightElbow',
+      ).filter(rightElbowAngle);
     }
 
     // 2. Evaluate elbow angle (range of motion)
@@ -144,21 +144,24 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
 
     // 3. Evaluate press path verticality
     if (leftWrist != null) {
-      final (leftVertScore, leftVertIssue) =
-          _evaluateVerticality(leftWrist, 'left');
+      final (leftVertScore, leftVertIssue) = _evaluateVerticality(
+        leftWrist,
+        'left',
+      );
       score -= (100 - leftVertScore) * 0.1;
       if (leftVertIssue != null) issues.add(leftVertIssue);
     }
     if (rightWrist != null) {
-      final (rightVertScore, rightVertIssue) =
-          _evaluateVerticality(rightWrist, 'right');
+      final (rightVertScore, rightVertIssue) = _evaluateVerticality(
+        rightWrist,
+        'right',
+      );
       score -= (100 - rightVertScore) * 0.1;
       if (rightVertIssue != null) issues.add(rightVertIssue);
     }
 
     // 4. Evaluate symmetry
-    if (jointAngles['leftElbow'] != null &&
-        jointAngles['rightElbow'] != null) {
+    if (jointAngles['leftElbow'] != null && jointAngles['rightElbow'] != null) {
       final (symmetryScore, symmetryIssue) = _evaluateSymmetry(
         jointAngles['leftElbow']!,
         jointAngles['rightElbow']!,
@@ -169,8 +172,10 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
 
     // 5. Evaluate wrist height balance
     if (leftWrist != null && rightWrist != null) {
-      final (heightScore, heightIssue) =
-          _evaluateWristHeightBalance(leftWrist, rightWrist);
+      final (heightScore, heightIssue) = _evaluateWristHeightBalance(
+        leftWrist,
+        rightWrist,
+      );
       score -= (100 - heightScore) * 0.1;
       if (heightIssue != null) issues.add(heightIssue);
     }
@@ -199,8 +204,9 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
     if (avgElbowAngle == null) return currentPhase;
 
     final smoothedAngle = getFilter('phaseAngle').filter(avgElbowAngle);
-    final velocity = getVelocityCalc('elbowAngle')
-        .calculateVelocity(smoothedAngle, frame.timestamp);
+    final velocity = getVelocityCalc(
+      'elbowAngle',
+    ).calculateVelocity(smoothedAngle, frame.timestamp);
 
     switch (currentPhase) {
       case ExercisePhase.start:
@@ -301,7 +307,10 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
     if (currentPhase == ExercisePhase.top || currentPhase == ExercisePhase.up) {
       if (angle < pressConfig.topElbowAngle - pressConfig.elbowAngleTolerance) {
         final deduction =
-            (pressConfig.topElbowAngle - pressConfig.elbowAngleTolerance - angle) / 2;
+            (pressConfig.topElbowAngle -
+                pressConfig.elbowAngleTolerance -
+                angle) /
+            2;
         return (
           (100 - deduction).clamp(60.0, 100.0),
           FormIssue(
@@ -321,9 +330,13 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
     // At bottom, check for proper depth
     if (currentPhase == ExercisePhase.bottom ||
         currentPhase == ExercisePhase.down) {
-      if (angle > pressConfig.bottomElbowAngle + pressConfig.elbowAngleTolerance) {
+      if (angle >
+          pressConfig.bottomElbowAngle + pressConfig.elbowAngleTolerance) {
         final deduction =
-            (angle - pressConfig.bottomElbowAngle - pressConfig.elbowAngleTolerance) / 2;
+            (angle -
+                pressConfig.bottomElbowAngle -
+                pressConfig.elbowAngleTolerance) /
+            2;
         return (
           (100 - deduction).clamp(70.0, 100.0),
           FormIssue(
@@ -345,8 +358,7 @@ class ShoulderPressAnalyzer extends BaseFormAnalyzer {
 
   /// Evaluate press path verticality
   (double, FormIssue?) _evaluateVerticality(PoseLandmark wrist, String side) {
-    final initialX =
-        side == 'left' ? _leftWristInitialX : _rightWristInitialX;
+    final initialX = side == 'left' ? _leftWristInitialX : _rightWristInitialX;
     if (initialX == null) return (100.0, null);
 
     final deviation = (wrist.x - initialX).abs();

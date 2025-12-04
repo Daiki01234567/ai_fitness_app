@@ -33,10 +33,7 @@ class DailySessionCount {
 }
 
 /// User plan type
-enum UserPlan {
-  free,
-  premium,
-}
+enum UserPlan { free, premium }
 
 /// Home screen state
 class HomeScreenState {
@@ -49,6 +46,8 @@ class HomeScreenState {
     this.todayUsageCount = 0,
     this.isLoading = false,
     this.error,
+    this.weeklySessionCount = 0,
+    this.weeklyAverageScore = 0.0,
   });
 
   /// Number of sessions completed today
@@ -57,7 +56,7 @@ class HomeScreenState {
   /// Weekly progress data (7 days)
   final List<DailySessionCount> weeklyProgress;
 
-  /// Most recent 2 sessions
+  /// Most recent 3 sessions
   final List<HistorySession> recentSessions;
 
   /// User's current plan
@@ -75,11 +74,18 @@ class HomeScreenState {
   /// Error message
   final String? error;
 
+  /// Total session count for this week
+  final int weeklySessionCount;
+
+  /// Average score for this week
+  final double weeklyAverageScore;
+
   /// Remaining sessions for free plan
   int get remainingSessions => dailyLimit - todayUsageCount;
 
   /// Whether user has reached daily limit
-  bool get hasReachedLimit => userPlan == UserPlan.free && todayUsageCount >= dailyLimit;
+  bool get hasReachedLimit =>
+      userPlan == UserPlan.free && todayUsageCount >= dailyLimit;
 
   /// Whether to show upgrade prompt
   bool get shouldShowUpgradePrompt => userPlan == UserPlan.free;
@@ -93,6 +99,8 @@ class HomeScreenState {
     int? todayUsageCount,
     bool? isLoading,
     String? error,
+    int? weeklySessionCount,
+    double? weeklyAverageScore,
   }) {
     return HomeScreenState(
       todaySessionCount: todaySessionCount ?? this.todaySessionCount,
@@ -103,6 +111,8 @@ class HomeScreenState {
       todayUsageCount: todayUsageCount ?? this.todayUsageCount,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      weeklySessionCount: weeklySessionCount ?? this.weeklySessionCount,
+      weeklyAverageScore: weeklyAverageScore ?? this.weeklyAverageScore,
     );
   }
 }
@@ -110,7 +120,7 @@ class HomeScreenState {
 /// Home state notifier
 class HomeStateNotifier extends StateNotifier<HomeScreenState> {
   HomeStateNotifier(this._historyService, this._userId, this._userData)
-      : super(const HomeScreenState()) {
+    : super(const HomeScreenState()) {
     _initializeUserPlan();
   }
 
@@ -122,10 +132,12 @@ class HomeStateNotifier extends StateNotifier<HomeScreenState> {
   void _initializeUserPlan() {
     if (_userData == null) return;
 
-    final subscriptionStatus = _userData['subscriptionStatus'] as String? ?? 'free';
+    final subscriptionStatus =
+        _userData['subscriptionStatus'] as String? ?? 'free';
     final dailyUsageCount = _userData['dailyUsageCount'] as int? ?? 0;
 
-    final userPlan = subscriptionStatus == 'active' || subscriptionStatus == 'premium'
+    final userPlan =
+        subscriptionStatus == 'active' || subscriptionStatus == 'premium'
         ? UserPlan.premium
         : UserPlan.free;
 
@@ -154,23 +166,56 @@ class HomeStateNotifier extends StateNotifier<HomeScreenState> {
       // Load weekly data (past 7 days)
       final weeklyProgress = await _loadWeeklyProgress(today);
 
-      // Load recent sessions (latest 2)
+      // Calculate weekly statistics
+      final weeklyStats = _calculateWeeklyStats(weeklyProgress);
+
+      // Load recent sessions (latest 3)
       final recentSessions = await _historyService.fetchSessions(
         userId: _userId,
-        limit: 2,
+        limit: 3,
       );
+
+      // Calculate weekly average score from recent sessions within this week
+      final weekStart = today.subtract(Duration(days: today.weekday - 1));
+      final weeklyAverageScore = await _calculateWeeklyAverageScore(weekStart);
 
       state = state.copyWith(
         todaySessionCount: todaySessions.length,
         weeklyProgress: weeklyProgress,
         recentSessions: recentSessions,
+        weeklySessionCount: weeklyStats,
+        weeklyAverageScore: weeklyAverageScore,
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'データの読み込みに失敗しました: $e',
+      state = state.copyWith(isLoading: false, error: 'データの読み込みに失敗しました: $e');
+    }
+  }
+
+  /// Calculate total weekly session count from progress data
+  int _calculateWeeklyStats(List<DailySessionCount> weeklyProgress) {
+    return weeklyProgress.fold(0, (sum, day) => sum + day.sessionCount);
+  }
+
+  /// Calculate weekly average score
+  Future<double> _calculateWeeklyAverageScore(DateTime weekStart) async {
+    try {
+      final weekEnd = weekStart.add(const Duration(days: 7));
+      final weeklySessions = await _historyService.fetchSessions(
+        userId: _userId,
+        filter: HistoryFilter(startDate: weekStart, endDate: weekEnd),
+        limit: 100,
       );
+
+      if (weeklySessions.isEmpty) return 0.0;
+
+      final totalScore = weeklySessions.fold<double>(
+        0.0,
+        (sum, session) => sum + session.averageScore,
+      );
+      return totalScore / weeklySessions.length;
+    } catch (e) {
+      return 0.0;
     }
   }
 
@@ -205,11 +250,13 @@ class HomeStateNotifier extends StateNotifier<HomeScreenState> {
       final weekday = date.weekday; // 1-7
       final summary = summaryMap[weekday];
 
-      weeklyProgress.add(DailySessionCount(
-        date: date,
-        sessionCount: summary?.sessionCount ?? 0,
-        dayLabel: dayLabels[i],
-      ));
+      weeklyProgress.add(
+        DailySessionCount(
+          date: date,
+          sessionCount: summary?.sessionCount ?? 0,
+          dayLabel: dayLabels[i],
+        ),
+      );
     }
 
     return weeklyProgress;
@@ -228,12 +275,14 @@ class HomeStateNotifier extends StateNotifier<HomeScreenState> {
 
 /// Home state provider
 final homeStateProvider =
-    StateNotifierProvider.autoDispose<HomeStateNotifier, HomeScreenState>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final historyService = ref.watch(historyServiceProvider);
+    StateNotifierProvider.autoDispose<HomeStateNotifier, HomeScreenState>((
+      ref,
+    ) {
+      final authState = ref.watch(authStateProvider);
+      final historyService = ref.watch(historyServiceProvider);
 
-  final userId = authState.user?.uid ?? '';
-  final userData = authState.userData;
+      final userId = authState.user?.uid ?? '';
+      final userData = authState.userData;
 
-  return HomeStateNotifier(historyService, userId, userData);
-});
+      return HomeStateNotifier(historyService, userId, userData);
+    });

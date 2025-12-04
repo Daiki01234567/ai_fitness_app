@@ -237,10 +237,11 @@ enum PerformanceAlertType {
 
 /// Performance monitor provider
 final performanceMonitorProvider =
-    StateNotifierProvider<PerformanceMonitorNotifier, PerformanceMonitorState>(
-        (ref) {
-  return PerformanceMonitorNotifier();
-});
+    StateNotifierProvider<PerformanceMonitorNotifier, PerformanceMonitorState>((
+      ref,
+    ) {
+      return PerformanceMonitorNotifier();
+    });
 
 /// Performance monitor notifier
 class PerformanceMonitorNotifier
@@ -276,10 +277,7 @@ class PerformanceMonitorNotifier
     _totalFrames = 0;
     _droppedFrames = 0;
 
-    state = state.copyWith(
-      isMonitoring: true,
-      alerts: [],
-    );
+    state = state.copyWith(isMonitoring: true, alerts: []);
 
     // Start periodic update (every 1 second)
     _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -302,10 +300,7 @@ class PerformanceMonitorNotifier
   }
 
   /// Record a frame (called for each processed frame)
-  void recordFrame({
-    required double fps,
-    required int processingTimeMs,
-  }) {
+  void recordFrame({required double fps, required int processingTimeMs}) {
     if (!state.isMonitoring) return;
 
     _totalFrames++;
@@ -338,9 +333,8 @@ class PerformanceMonitorNotifier
   }) {
     if (!state.isMonitoring) return;
 
-    final current = state.currentMetrics ?? PerformanceMetrics(
-      timestamp: DateTime.now(),
-    );
+    final current =
+        state.currentMetrics ?? PerformanceMetrics(timestamp: DateTime.now());
 
     state = state.copyWith(
       currentMetrics: current.copyWith(
@@ -365,11 +359,12 @@ class PerformanceMonitorNotifier
     final avgProcessingTime = _processingTimeHistory.isEmpty
         ? 0
         : (_processingTimeHistory.reduce((a, b) => a + b) /
-                _processingTimeHistory.length)
-            .round();
+                  _processingTimeHistory.length)
+              .round();
 
-    final frameDropRate =
-        _totalFrames > 0 ? _droppedFrames / _totalFrames : 0.0;
+    final frameDropRate = _totalFrames > 0
+        ? _droppedFrames / _totalFrames
+        : 0.0;
 
     // Create new metrics
     final metrics = PerformanceMetrics(
@@ -406,97 +401,117 @@ class PerformanceMonitorNotifier
 
     // FPS check
     if (metrics.fps < thresholds.criticalFps && metrics.fps > 0) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.lowFps,
-        level: PerformanceLevel.critical,
-        message: 'FPS が非常に低下しています (${metrics.fps.toStringAsFixed(1)})',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.lowFps,
+          level: PerformanceLevel.critical,
+          message: 'FPS が非常に低下しています (${metrics.fps.toStringAsFixed(1)})',
+          timestamp: now,
+        ),
+      );
     } else if (metrics.fps < thresholds.warningFps && metrics.fps > 0) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.lowFps,
-        level: PerformanceLevel.warning,
-        message: 'FPS が低下しています (${metrics.fps.toStringAsFixed(1)})',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.lowFps,
+          level: PerformanceLevel.warning,
+          message: 'FPS が低下しています (${metrics.fps.toStringAsFixed(1)})',
+          timestamp: now,
+        ),
+      );
     }
 
     // Processing time check
     if (metrics.processingTimeMs > thresholds.criticalProcessingTimeMs) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.highProcessingTime,
-        level: PerformanceLevel.critical,
-        message: '処理時間が非常に長くなっています (${metrics.processingTimeMs}ms)',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.highProcessingTime,
+          level: PerformanceLevel.critical,
+          message: '処理時間が非常に長くなっています (${metrics.processingTimeMs}ms)',
+          timestamp: now,
+        ),
+      );
     } else if (metrics.processingTimeMs > thresholds.warningProcessingTimeMs) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.highProcessingTime,
-        level: PerformanceLevel.warning,
-        message: '処理時間が長くなっています (${metrics.processingTimeMs}ms)',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.highProcessingTime,
+          level: PerformanceLevel.warning,
+          message: '処理時間が長くなっています (${metrics.processingTimeMs}ms)',
+          timestamp: now,
+        ),
+      );
     }
 
     // Memory check
     if (metrics.memoryUsageMb != null) {
       if (metrics.memoryUsageMb! > thresholds.memoryCriticalMb) {
-        alerts.add(PerformanceAlert(
-          type: PerformanceAlertType.highMemory,
-          level: PerformanceLevel.critical,
-          message:
-              'メモリ使用量が非常に高くなっています (${metrics.memoryUsageMb!.toStringAsFixed(0)}MB)',
-          timestamp: now,
-        ));
+        alerts.add(
+          PerformanceAlert(
+            type: PerformanceAlertType.highMemory,
+            level: PerformanceLevel.critical,
+            message:
+                'メモリ使用量が非常に高くなっています (${metrics.memoryUsageMb!.toStringAsFixed(0)}MB)',
+            timestamp: now,
+          ),
+        );
       } else if (metrics.memoryUsageMb! > thresholds.memoryWarningMb) {
-        alerts.add(PerformanceAlert(
-          type: PerformanceAlertType.highMemory,
-          level: PerformanceLevel.warning,
-          message:
-              'メモリ使用量が高くなっています (${metrics.memoryUsageMb!.toStringAsFixed(0)}MB)',
-          timestamp: now,
-        ));
+        alerts.add(
+          PerformanceAlert(
+            type: PerformanceAlertType.highMemory,
+            level: PerformanceLevel.warning,
+            message:
+                'メモリ使用量が高くなっています (${metrics.memoryUsageMb!.toStringAsFixed(0)}MB)',
+            timestamp: now,
+          ),
+        );
       }
     }
 
     // Thermal check
     if (metrics.thermalState == ThermalState.critical) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.highTemperature,
-        level: PerformanceLevel.critical,
-        message: 'デバイスが過熱しています',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.highTemperature,
+          level: PerformanceLevel.critical,
+          message: 'デバイスが過熱しています',
+          timestamp: now,
+        ),
+      );
     } else if (metrics.thermalState == ThermalState.serious) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.highTemperature,
-        level: PerformanceLevel.warning,
-        message: 'デバイス温度が上昇しています',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.highTemperature,
+          level: PerformanceLevel.warning,
+          message: 'デバイス温度が上昇しています',
+          timestamp: now,
+        ),
+      );
     }
 
     // Battery check
     if (metrics.batteryLevel != null &&
         metrics.batteryLevel! < 0.1 &&
         metrics.isCharging != true) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.lowBattery,
-        level: PerformanceLevel.warning,
-        message: 'バッテリー残量が少なくなっています',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.lowBattery,
+          level: PerformanceLevel.warning,
+          message: 'バッテリー残量が少なくなっています',
+          timestamp: now,
+        ),
+      );
     }
 
     // Frame drop check
     if (metrics.frameDropRate > 0.1) {
-      alerts.add(PerformanceAlert(
-        type: PerformanceAlertType.frameDrops,
-        level: PerformanceLevel.warning,
-        message:
-            'フレームドロップが発生しています (${(metrics.frameDropRate * 100).toStringAsFixed(1)}%)',
-        timestamp: now,
-      ));
+      alerts.add(
+        PerformanceAlert(
+          type: PerformanceAlertType.frameDrops,
+          level: PerformanceLevel.warning,
+          message:
+              'フレームドロップが発生しています (${(metrics.frameDropRate * 100).toStringAsFixed(1)}%)',
+          timestamp: now,
+        ),
+      );
     }
 
     return alerts;

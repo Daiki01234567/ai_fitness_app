@@ -104,41 +104,41 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : state.error != null
-              ? _buildErrorView(state.error!)
-              : RefreshIndicator(
-                  onRefresh: () =>
-                      ref.read(analyticsStateProvider.notifier).loadAnalytics(),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Overview section
-                        _buildOverviewSection(state),
-                        const SizedBox(height: 24),
+          ? _buildErrorView(state.error!)
+          : RefreshIndicator(
+              onRefresh: () =>
+                  ref.read(analyticsStateProvider.notifier).loadAnalytics(),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Overview section
+                    _buildOverviewSection(state),
+                    const SizedBox(height: 24),
 
-                        // Weekly comparison
-                        if (state.thisWeekStats != null)
-                          _buildWeeklyComparisonSection(state),
-                        const SizedBox(height: 24),
+                    // Weekly comparison
+                    if (state.thisWeekStats != null)
+                      _buildWeeklyComparisonSection(state),
+                    const SizedBox(height: 24),
 
-                        // Score progress chart
-                        _buildScoreProgressSection(state),
-                        const SizedBox(height: 24),
+                    // Score progress chart
+                    _buildScoreProgressSection(state),
+                    const SizedBox(height: 24),
 
-                        // Exercise breakdown
-                        if (state.exerciseStats.isNotEmpty)
-                          _buildExerciseBreakdownSection(state),
-                        const SizedBox(height: 24),
+                    // Exercise breakdown
+                    if (state.exerciseStats.isNotEmpty)
+                      _buildExerciseBreakdownSection(state),
+                    const SizedBox(height: 24),
 
-                        // Exercise details
-                        if (state.exerciseStats.isNotEmpty)
-                          _buildExerciseDetailsSection(state),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
+                    // Exercise details
+                    if (state.exerciseStats.isNotEmpty)
+                      _buildExerciseDetailsSection(state),
+                    const SizedBox(height: 32),
+                  ],
                 ),
+              ),
+            ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 2),
     );
   }
@@ -175,9 +175,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       children: [
         Text(
           '概要ダッシュボード',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
 
@@ -252,9 +252,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       children: [
         Text(
           '週間比較',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Card(
@@ -287,15 +287,13 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                   ? Icons.trending_up
                                   : Icons.trending_down,
                               size: 16,
-                              color:
-                                  change >= 0 ? Colors.green : Colors.red,
+                              color: change >= 0 ? Colors.green : Colors.red,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}%',
                               style: TextStyle(
-                                color:
-                                    change >= 0 ? Colors.green : Colors.red,
+                                color: change >= 0 ? Colors.green : Colors.red,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -440,9 +438,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       children: [
         Text(
           'スコア推移',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Card(
@@ -455,8 +453,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                       child: Text(
                         'データがありません',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey.shade500,
-                            ),
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                     ),
                   )
@@ -485,9 +483,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       children: [
         Text(
           '種目別内訳',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Card(
@@ -507,7 +505,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                         width: 100,
                         child: Text(
                           AnalyzerFactory.getDisplayName(
-                              exerciseStat.exerciseType),
+                            exerciseStat.exerciseType,
+                          ),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -550,9 +549,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       children: [
         Text(
           '種目別詳細',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         ...state.exerciseStats.map((stat) => _buildExerciseCard(stat)),
@@ -567,7 +566,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
         leading: CircleAvatar(
-          backgroundColor: _getExerciseColor(stat.exerciseType).withValues(alpha: 0.1),
+          backgroundColor: _getExerciseColor(
+            stat.exerciseType,
+          ).withValues(alpha: 0.1),
           child: Icon(
             _getExerciseIcon(stat.exerciseType),
             color: _getExerciseColor(stat.exerciseType),
@@ -616,24 +617,26 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                   Text(
                     'よくある改善ポイント',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: stat.commonIssues
-                        .map((issue) => Chip(
-                              label: Text(
-                                issue,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              backgroundColor: Colors.orange.shade50,
-                              padding: EdgeInsets.zero,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                            ))
+                        .map(
+                          (issue) => Chip(
+                            label: Text(
+                              issue,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            backgroundColor: Colors.orange.shade50,
+                            padding: EdgeInsets.zero,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        )
                         .toList(),
                   ),
                 ],
@@ -651,17 +654,17 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 4),
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
       ],
     );
@@ -682,9 +685,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             const SizedBox(height: 16),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
           ],
@@ -758,30 +761,34 @@ class _ScoreProgressPainter extends CustomPainter {
     // Draw grid lines
     for (var i = 0; i <= 4; i++) {
       final y = size.height * i / 4;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        gridPaint,
-      );
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
     // Calculate min/max for scaling
     final values = dataPoints.map((d) => d.value).toList();
-    final minVal = (values.reduce((a, b) => a < b ? a : b) - 10).clamp(0.0, 100.0);
-    final maxVal = (values.reduce((a, b) => a > b ? a : b) + 10).clamp(0.0, 100.0);
+    final minVal = (values.reduce((a, b) => a < b ? a : b) - 10).clamp(
+      0.0,
+      100.0,
+    );
+    final maxVal = (values.reduce((a, b) => a > b ? a : b) + 10).clamp(
+      0.0,
+      100.0,
+    );
     final range = maxVal - minVal;
 
     if (range == 0) return;
 
     final path = Path();
     final fillPath = Path();
-    final stepX = size.width / (dataPoints.length - 1).clamp(1, dataPoints.length);
+    final stepX =
+        size.width / (dataPoints.length - 1).clamp(1, dataPoints.length);
 
     fillPath.moveTo(0, size.height);
 
     for (var i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
-      final y = size.height - ((dataPoints[i].value - minVal) / range * size.height);
+      final y =
+          size.height - ((dataPoints[i].value - minVal) / range * size.height);
 
       if (i == 0) {
         path.moveTo(x, y);
@@ -805,14 +812,13 @@ class _ScoreProgressPainter extends CustomPainter {
 
     for (var i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
-      final y = size.height - ((dataPoints[i].value - minVal) / range * size.height);
+      final y =
+          size.height - ((dataPoints[i].value - minVal) / range * size.height);
       canvas.drawCircle(Offset(x, y), 4, dotPaint);
     }
 
     // Draw labels
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-    );
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
     // Y-axis labels
     for (var i = 0; i <= 4; i++) {
@@ -824,7 +830,10 @@ class _ScoreProgressPainter extends CustomPainter {
       textPainter.layout();
       textPainter.paint(
         canvas,
-        Offset(-textPainter.width - 4, size.height * i / 4 - textPainter.height / 2),
+        Offset(
+          -textPainter.width - 4,
+          size.height * i / 4 - textPainter.height / 2,
+        ),
       );
     }
   }

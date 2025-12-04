@@ -1,0 +1,85 @@
+{
+  "_metadata": {
+    "table_name": "pseudonymization_log",
+    "description": "仮名化処理ログ(障害対応と監査用)",
+    "source_spec": "docs/specs/04_BigQuery設計書_v3_3.md - セクション4.6",
+    "data_classification": "audit_log",
+    "partition": {
+      "type": "DAY",
+      "field": "created_at",
+      "expiration_days": 90,
+      "require_partition_filter": true
+    },
+    "clustering": {
+      "fields": ["status", "source_collection"]
+    },
+    "labels": {
+      "env": "production",
+      "data_type": "audit_log"
+    },
+    "purpose": "プロジェクト懸念点#4対応 - BigQueryの仮名化処理の耐障害性向上"
+  },
+  "schema": [
+    {
+      "name": "log_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ログID(UUIDv4形式)"
+    },
+    {
+      "name": "source_collection",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ソースコレクション(Firestore)"
+    },
+    {
+      "name": "source_document_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ソースドキュメントID"
+    },
+    {
+      "name": "target_table",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "ターゲットテーブル(BigQuery)"
+    },
+    {
+      "name": "status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "処理ステータス: success, failed, retrying"
+    },
+    {
+      "name": "error_message",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "エラーメッセージ"
+    },
+    {
+      "name": "retry_count",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "defaultValueExpression": "0",
+      "description": "リトライ回数"
+    },
+    {
+      "name": "processing_started_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "処理開始時刻"
+    },
+    {
+      "name": "processing_completed_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "処理完了時刻"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "ログ作成日時 - パーティションキー"
+    }
+  ]
+}

@@ -74,10 +74,8 @@ class PushUpConfig {
 
 /// Push-up form analyzer implementation
 class PushUpAnalyzer extends BaseFormAnalyzer {
-  PushUpAnalyzer({
-    super.config,
-    PushUpConfig? pushUpConfig,
-  }) : pushUpConfig = pushUpConfig ?? const PushUpConfig();
+  PushUpAnalyzer({super.config, PushUpConfig? pushUpConfig})
+    : pushUpConfig = pushUpConfig ?? const PushUpConfig();
 
   /// Push-up specific configuration
   final PushUpConfig pushUpConfig;
@@ -92,10 +90,10 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
 
   @override
   Map<String, double> get phaseThresholds => {
-        'down': pushUpConfig.downPhaseAngle,
-        'bottom': pushUpConfig.bottomPhaseAngle,
-        'up': pushUpConfig.upPhaseAngle,
-      };
+    'down': pushUpConfig.downPhaseAngle,
+    'bottom': pushUpConfig.bottomPhaseAngle,
+    'up': pushUpConfig.upPhaseAngle,
+  };
 
   @override
   FrameEvaluationResult evaluateFrame(PoseFrame frame) {
@@ -142,7 +140,9 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
       jointAngles['leftElbow'] = getFilter('leftElbow').filter(leftElbowAngle);
     }
     if (rightElbowAngle != null) {
-      jointAngles['rightElbow'] = getFilter('rightElbow').filter(rightElbowAngle);
+      jointAngles['rightElbow'] = getFilter(
+        'rightElbow',
+      ).filter(rightElbowAngle);
     }
 
     // 2. Calculate body line angle
@@ -168,8 +168,9 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
 
     // 4. Evaluate body alignment
     if (jointAngles['bodyLine'] != null) {
-      final (alignScore, alignIssue) =
-          _evaluateBodyAlignment(jointAngles['bodyLine']!);
+      final (alignScore, alignIssue) = _evaluateBodyAlignment(
+        jointAngles['bodyLine']!,
+      );
       score -= (100 - alignScore) * 0.25;
       if (alignIssue != null) issues.add(alignIssue);
     }
@@ -189,8 +190,7 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
     }
 
     // 6. Evaluate symmetry
-    if (jointAngles['leftElbow'] != null &&
-        jointAngles['rightElbow'] != null) {
+    if (jointAngles['leftElbow'] != null && jointAngles['rightElbow'] != null) {
       final (symmetryScore, symmetryIssue) = _evaluateSymmetry(
         jointAngles['leftElbow']!,
         jointAngles['rightElbow']!,
@@ -201,8 +201,11 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
 
     // 7. Check head/neck position
     if (nose != null && leftShoulder != null && rightShoulder != null) {
-      final (neckScore, neckIssue) =
-          _evaluateNeckPosition(nose, leftShoulder, rightShoulder);
+      final (neckScore, neckIssue) = _evaluateNeckPosition(
+        nose,
+        leftShoulder,
+        rightShoulder,
+      );
       score -= (100 - neckScore) * 0.15;
       if (neckIssue != null) issues.add(neckIssue);
     }
@@ -224,8 +227,9 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
     if (avgElbowAngle == null) return currentPhase;
 
     final smoothedAngle = getFilter('phaseAngle').filter(avgElbowAngle);
-    final velocity = getVelocityCalc('elbowAngle')
-        .calculateVelocity(smoothedAngle, frame.timestamp);
+    final velocity = getVelocityCalc(
+      'elbowAngle',
+    ).calculateVelocity(smoothedAngle, frame.timestamp);
 
     switch (currentPhase) {
       case ExercisePhase.start:
@@ -329,8 +333,10 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
     }
 
     // Calculate midpoints
-    final shoulderMid =
-        FormMathUtils.calculateMidpoint(leftShoulder, rightShoulder);
+    final shoulderMid = FormMathUtils.calculateMidpoint(
+      leftShoulder,
+      rightShoulder,
+    );
     final hipMid = FormMathUtils.calculateMidpoint(leftHip, rightHip);
     final ankleMid = FormMathUtils.calculateMidpoint(leftAnkle, rightAnkle);
 
@@ -376,9 +382,13 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
     // At bottom, check for proper depth
     if (currentPhase == ExercisePhase.bottom ||
         currentPhase == ExercisePhase.down) {
-      if (angle > pushUpConfig.bottomElbowAngle + pushUpConfig.elbowAngleTolerance) {
+      if (angle >
+          pushUpConfig.bottomElbowAngle + pushUpConfig.elbowAngleTolerance) {
         final deduction =
-            (angle - pushUpConfig.bottomElbowAngle - pushUpConfig.elbowAngleTolerance) / 2;
+            (angle -
+                pushUpConfig.bottomElbowAngle -
+                pushUpConfig.elbowAngleTolerance) /
+            2;
         return (
           (100 - deduction).clamp(50.0, 100.0),
           FormIssue(
@@ -397,9 +407,13 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
 
     // At top, check for full extension
     if (currentPhase == ExercisePhase.top || currentPhase == ExercisePhase.up) {
-      if (angle < pushUpConfig.topElbowAngle - pushUpConfig.elbowAngleTolerance) {
+      if (angle <
+          pushUpConfig.topElbowAngle - pushUpConfig.elbowAngleTolerance) {
         final deduction =
-            (pushUpConfig.topElbowAngle - pushUpConfig.elbowAngleTolerance - angle) / 2;
+            (pushUpConfig.topElbowAngle -
+                pushUpConfig.elbowAngleTolerance -
+                angle) /
+            2;
         return (
           (100 - deduction).clamp(60.0, 100.0),
           FormIssue(
@@ -431,9 +445,7 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
 
     // Determine if hip is too high (pike) or too low (sag)
     final issueType = bodyLineAngle < 150 ? 'body_pike' : 'body_sag';
-    final message = bodyLineAngle < 150
-        ? 'お尻が上がっています'
-        : '体のラインが崩れています';
+    final message = bodyLineAngle < 150 ? 'お尻が上がっています' : '体のラインが崩れています';
     final suggestion = bodyLineAngle < 150
         ? 'お尻を下げて体を一直線にしてください'
         : '腹筋に力を入れて体を一直線に保ってください';
@@ -471,8 +483,7 @@ class PushUpAnalyzer extends BaseFormAnalyzer {
     final currentHipY = (leftHip.y + rightHip.y) / 2;
 
     // Calculate expected hip Y based on straight line from shoulder to ankle
-    final expectedHipY =
-        (_referenceShoulderY! + _referenceAnkleY!) / 2;
+    final expectedHipY = (_referenceShoulderY! + _referenceAnkleY!) / 2;
 
     final deviation = currentHipY - expectedHipY;
 

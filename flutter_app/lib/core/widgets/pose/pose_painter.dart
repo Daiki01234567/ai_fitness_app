@@ -160,7 +160,10 @@ class PosePainter extends CustomPainter {
       final endLandmark = pose.getLandmark(bone.$2);
 
       if (startLandmark == null || endLandmark == null) continue;
-      if (!startLandmark.meetsMinimumThreshold || !endLandmark.meetsMinimumThreshold) continue;
+      if (!startLandmark.meetsMinimumThreshold ||
+          !endLandmark.meetsMinimumThreshold) {
+        continue;
+      }
 
       final startPoint = landmarks[bone.$1];
       final endPoint = landmarks[bone.$2];
@@ -169,14 +172,10 @@ class PosePainter extends CustomPainter {
 
       // 信頼度に基づいてグラデーションを適用
       if (config.showConfidence) {
-        bonePaint.shader = ui.Gradient.linear(
-          startPoint,
-          endPoint,
-          [
-            _getConfidenceColor(startLandmark.likelihood),
-            _getConfidenceColor(endLandmark.likelihood),
-          ],
-        );
+        bonePaint.shader = ui.Gradient.linear(startPoint, endPoint, [
+          _getConfidenceColor(startLandmark.likelihood),
+          _getConfidenceColor(endLandmark.likelihood),
+        ]);
       }
 
       canvas.drawLine(startPoint, endPoint, bonePaint);
@@ -395,8 +394,9 @@ class AnglePainter extends CustomPainter {
     }
   }
 
-  double cosine(double radians) => radians.isNaN ? 0 :
-      (radians >= 0 ? 1 : -1) * (1 - (radians * radians / 2));
+  double cosine(double radians) => radians.isNaN
+      ? 0
+      : (radians >= 0 ? 1 : -1) * (1 - (radians * radians / 2));
   double sine(double radians) => radians.isNaN ? 0 : radians;
 
   @override

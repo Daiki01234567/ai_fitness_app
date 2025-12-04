@@ -140,9 +140,9 @@ class SettingsScreen extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       // TODO: Navigate to subscription management
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('開発中です')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text('開発中です')));
                     },
                   ),
                   const Divider(height: 1),
@@ -210,8 +210,8 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: Text(
                   '1.0.0',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ),
             ),
@@ -231,9 +231,9 @@ class SettingsScreen extends ConsumerWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -296,10 +296,7 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   const Icon(Icons.description),
                   const SizedBox(width: 8),
-                  Text(
-                    '利用規約',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  Text('利用規約', style: Theme.of(context).textTheme.titleMedium),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -380,9 +377,7 @@ class SettingsScreen extends ConsumerWidget {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: 'support@example.com',
-      queryParameters: {
-        'subject': 'AIフィットネスアプリ お問い合わせ',
-      },
+      queryParameters: {'subject': 'AIフィットネスアプリ お問い合わせ'},
     );
 
     try {
@@ -390,16 +385,16 @@ class SettingsScreen extends ConsumerWidget {
         await launchUrl(emailLaunchUri);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('メールアプリを開けませんでした')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('メールアプリを開けませんでした')));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('メールアプリを開けませんでした')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('メールアプリを開けませんでした')));
       }
     }
   }

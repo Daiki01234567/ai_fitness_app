@@ -138,9 +138,8 @@ class AnalysisResult {
 
 /// Abstract base class for exercise form analyzers
 abstract class BaseFormAnalyzer {
-  BaseFormAnalyzer({
-    AnalyzerConfig? config,
-  }) : config = config ?? const AnalyzerConfig() {
+  BaseFormAnalyzer({AnalyzerConfig? config})
+    : config = config ?? const AnalyzerConfig() {
     _initFilters();
   }
 
@@ -184,7 +183,8 @@ abstract class BaseFormAnalyzer {
   ExerciseType get exerciseType;
 
   /// Required landmarks for this exercise
-  List<PoseLandmarkType> get requiredLandmarks => exerciseType.requiredLandmarks;
+  List<PoseLandmarkType> get requiredLandmarks =>
+      exerciseType.requiredLandmarks;
 
   /// Current phase getter
   ExercisePhase get currentPhase => _currentPhase;
@@ -246,7 +246,12 @@ abstract class BaseFormAnalyzer {
 
     // Update phase based on analysis
     final newPhase = determinePhase(frame, frameResult);
-    _handlePhaseTransition(_currentPhase, newPhase, frame.timestamp, frameResult);
+    _handlePhaseTransition(
+      _currentPhase,
+      newPhase,
+      frame.timestamp,
+      frameResult,
+    );
     _currentPhase = newPhase;
 
     // Track scores and issues for current rep
@@ -302,7 +307,8 @@ abstract class BaseFormAnalyzer {
   bool _isRepComplete(ExercisePhase oldPhase, ExercisePhase newPhase) {
     // Most exercises: down -> bottom -> up -> top/start = 1 rep
     return (oldPhase == ExercisePhase.up &&
-            (newPhase == ExercisePhase.top || newPhase == ExercisePhase.start)) ||
+            (newPhase == ExercisePhase.top ||
+                newPhase == ExercisePhase.start)) ||
         (oldPhase == ExercisePhase.top && newPhase == ExercisePhase.down);
   }
 
@@ -363,13 +369,15 @@ abstract class BaseFormAnalyzer {
         .toList();
 
     for (final issue in criticalIssues) {
-      messages.add(FeedbackMessage(
-        message: issue.suggestion ?? issue.message,
-        priority: issue.priority,
-        type: FeedbackType.realTimeAlert,
-        issueType: issue.issueType,
-        timestamp: timestamp,
-      ));
+      messages.add(
+        FeedbackMessage(
+          message: issue.suggestion ?? issue.message,
+          priority: issue.priority,
+          type: FeedbackType.realTimeAlert,
+          issueType: issue.issueType,
+          timestamp: timestamp,
+        ),
+      );
     }
 
     // Rate limit other feedback
@@ -384,13 +392,15 @@ abstract class BaseFormAnalyzer {
         .toList();
 
     for (final issue in highIssues) {
-      messages.add(FeedbackMessage(
-        message: issue.suggestion ?? issue.message,
-        priority: issue.priority,
-        type: FeedbackType.realTimeAlert,
-        issueType: issue.issueType,
-        timestamp: timestamp,
-      ));
+      messages.add(
+        FeedbackMessage(
+          message: issue.suggestion ?? issue.message,
+          priority: issue.priority,
+          type: FeedbackType.realTimeAlert,
+          issueType: issue.issueType,
+          timestamp: timestamp,
+        ),
+      );
       _lastFeedbackTime = timestamp;
     }
 
@@ -402,7 +412,7 @@ abstract class BaseFormAnalyzer {
     final avgScore = _repSummaries.isEmpty
         ? 0.0
         : _repSummaries.map((r) => r.score).reduce((a, b) => a + b) /
-            _repSummaries.length;
+              _repSummaries.length;
 
     // Find common issues
     final issueCounts = <String, int>{};
@@ -414,9 +424,11 @@ abstract class BaseFormAnalyzer {
 
     final commonIssues = issueCounts.entries
         .where((e) => e.value >= _repSummaries.length / 2)
-        .map((e) => _repSummaries
-            .expand((r) => r.issues)
-            .firstWhere((i) => i.issueType == e.key))
+        .map(
+          (e) => _repSummaries
+              .expand((r) => r.issues)
+              .firstWhere((i) => i.issueType == e.key),
+        )
         .toList();
 
     final setSummary = SetSummary(
@@ -449,7 +461,7 @@ abstract class BaseFormAnalyzer {
     final avgScore = _setSummaries.isEmpty
         ? 0.0
         : _setSummaries.map((s) => s.averageScore).reduce((a, b) => a + b) /
-            _setSummaries.length;
+              _setSummaries.length;
 
     // Find top issues across session
     final issueCounts = <String, int>{};
@@ -459,8 +471,7 @@ abstract class BaseFormAnalyzer {
       }
     }
 
-    final topIssues = issueCounts.entries
-        .toList()
+    final topIssues = issueCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     final topIssueList = topIssues.take(3).map((e) {
@@ -479,7 +490,9 @@ abstract class BaseFormAnalyzer {
       startTime: _setSummaries.isEmpty ? 0 : _setSummaries.first.startTime,
       endTime: _setSummaries.isEmpty ? 0 : _setSummaries.last.endTime,
       topIssues: topIssueList,
-      improvementAreas: topIssueList.map((i) => i.suggestion ?? i.message).toList(),
+      improvementAreas: topIssueList
+          .map((i) => i.suggestion ?? i.message)
+          .toList(),
     );
   }
 

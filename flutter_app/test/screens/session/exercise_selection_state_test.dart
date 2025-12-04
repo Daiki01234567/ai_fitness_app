@@ -1,7 +1,7 @@
-/// Exercise Selection State Tests
-///
-/// Unit tests for exercise selection state management
-/// Reference: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (3.7)
+// Exercise Selection State Tests
+//
+// Unit tests for exercise selection state management
+// Reference: docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md (3.7)
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -69,7 +69,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
-              child: _emailSent ? _buildSuccessView() : _buildFormView(authState),
+              child: _emailSent
+                  ? _buildSuccessView()
+                  : _buildFormView(authState),
             ),
           ),
         ),
@@ -94,9 +96,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
           // Title
           Text(
             'パスワードをお忘れですか？',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -105,8 +107,8 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
           Text(
             '登録したメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -148,8 +150,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
           // Back to login link
           TextButton(
-            onPressed:
-                authState.isLoading ? null : () => context.go(AppRoutes.login),
+            onPressed: authState.isLoading
+                ? null
+                : () => context.go(AppRoutes.login),
             child: const Text('ログイン画面に戻る'),
           ),
         ],
@@ -182,9 +185,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         // Title
         Text(
           'メールを送信しました',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -192,9 +195,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
         // Description
         Text(
           '${_emailController.text} 宛にパスワードリセット用のメールを送信しました。\n\nメール内のリンクをクリックして、新しいパスワードを設定してください。',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -206,17 +209,14 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                Icon(Icons.info_outline, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'メールが届かない場合は、迷惑メールフォルダをご確認ください。',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],

@@ -125,10 +125,8 @@ typedef RepCompletedCallback = void Function(int repNumber, double score);
 
 /// Manages feedback delivery during exercise sessions
 class FeedbackManager {
-  FeedbackManager({
-    this.ttsService,
-    FeedbackConfig? config,
-  }) : config = config ?? const FeedbackConfig();
+  FeedbackManager({this.ttsService, FeedbackConfig? config})
+    : config = config ?? const FeedbackConfig();
 
   /// TTS service (optional - can be null for visual-only feedback)
   final TtsService? ttsService;
@@ -179,7 +177,9 @@ class FeedbackManager {
   /// Start processing feedback
   void start() {
     if (!_initialized) {
-      throw StateError('FeedbackManager not initialized. Call initialize() first.');
+      throw StateError(
+        'FeedbackManager not initialized. Call initialize() first.',
+      );
     }
 
     _active = true;
@@ -292,10 +292,7 @@ class FeedbackManager {
       _removeLowPriorityItem();
     }
 
-    _feedbackQueue.add(FeedbackItem(
-      issue: issue,
-      timestamp: DateTime.now(),
-    ));
+    _feedbackQueue.add(FeedbackItem(issue: issue, timestamp: DateTime.now()));
   }
 
   /// Queue custom voice feedback message

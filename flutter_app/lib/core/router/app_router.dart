@@ -1,4 +1,4 @@
-// アプリルーター設定
+﻿// アプリルーター設定
 // 認証状態を考慮したGoRouterベースのナビゲーション
 //
 // 同意画面チラつき防止のため、認証状態と同意状態を統合管理
@@ -96,7 +96,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 強制ログアウトの場合は即座にログイン画面へ
       if (appInitState.status == AppInitializationStatus.forceLoggedOut) {
         debugPrint('[Router] Force logout detected, redirecting to login');
-        Future.microtask(() => authNotifier.clearForceLogout());
         return AppRoutes.login;
       }
 

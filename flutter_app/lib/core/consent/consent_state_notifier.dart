@@ -75,10 +75,10 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     ConsentService? consentService,
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  })  : _consentService = consentService ?? ConsentService(),
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance,
-        super(const ConsentState()) {
+  }) : _consentService = consentService ?? ConsentService(),
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _auth = auth ?? FirebaseAuth.instance,
+       super(const ConsentState()) {
     _init();
   }
 
@@ -133,51 +133,55 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
         .doc(userId)
         .snapshots()
         .listen(
-      (snapshot) {
-        if (snapshot.exists) {
-          final data = snapshot.data()!;
+          (snapshot) {
+            if (snapshot.exists) {
+              final data = snapshot.data()!;
 
-          final tosAccepted = data['tosAccepted'] == true;
-          final ppAccepted = data['ppAccepted'] == true;
-          final tosVersion = data['tosVersion'] as String?;
-          final ppVersion = data['ppVersion'] as String?;
+              final tosAccepted = data['tosAccepted'] == true;
+              final ppAccepted = data['ppAccepted'] == true;
+              final tosVersion = data['tosVersion'] as String?;
+              final ppVersion = data['ppVersion'] as String?;
 
-          // 更新が必要かチェック
-          final tosNeedsUpdate =
-              tosAccepted && tosVersion != currentTosVersion;
-          final ppNeedsUpdate = ppAccepted && ppVersion != currentPpVersion;
+              // 更新が必要かチェック
+              final tosNeedsUpdate =
+                  tosAccepted && tosVersion != currentTosVersion;
+              final ppNeedsUpdate = ppAccepted && ppVersion != currentPpVersion;
 
-          state = state.copyWith(
-            isLoading: false,
-            tosAccepted: tosAccepted,
-            tosAcceptedAt: _parseTimestamp(data['tosAcceptedAt']),
-            tosVersion: tosVersion,
-            ppAccepted: ppAccepted,
-            ppAcceptedAt: _parseTimestamp(data['ppAcceptedAt']),
-            ppVersion: ppVersion,
-            needsConsent: !tosAccepted || !ppAccepted,
-            needsUpdate: tosNeedsUpdate || ppNeedsUpdate,
-            error: null,
-          );
-        } else {
-          // Document doesn't exist yet (newly registered user)
-          // Keep loading state to wait for document creation by Cloud Function
-          // The register_screen waits for document creation, so this should resolve quickly
-          state = state.copyWith(
-            isLoading: false,
-            needsConsent: true,
-            tosAccepted: false,
-            ppAccepted: false,
-          );
-        }
-      },
-      onError: (error) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Failed to load consent status: $error',
+              state = state.copyWith(
+                isLoading: false,
+                tosAccepted: tosAccepted,
+                tosAcceptedAt: _parseTimestamp(data['tosAcceptedAt']),
+                tosVersion: tosVersion,
+                ppAccepted: ppAccepted,
+                ppAcceptedAt: _parseTimestamp(data['ppAcceptedAt']),
+                ppVersion: ppVersion,
+                needsConsent: !tosAccepted || !ppAccepted,
+                needsUpdate: tosNeedsUpdate || ppNeedsUpdate,
+                error: null,
+              );
+            } else {
+              // Document doesn't exist yet (newly registered user)
+              // Keep loading state to wait for document creation by Cloud Function
+              // The register_screen waits for document creation and then calls
+              // setConsentAccepted(), so we should NOT override the state here.
+              // Only set needsConsent if consent has not already been set locally.
+              if (!state.tosAccepted && !state.ppAccepted) {
+                // Consent not set yet - keep loading to prevent consent screen flash
+                // The router will show splash screen while loading
+                debugPrint('[ConsentState] Document not found, keeping loading state');
+                // Do not change state - keep isLoading: true
+              }
+              // If tosAccepted or ppAccepted is already true (set by setConsentAccepted),
+              // do nothing - the correct state is already set
+            }
+          },
+          onError: (error) {
+            state = state.copyWith(
+              isLoading: false,
+              error: 'Failed to load consent status: $error',
+            );
+          },
         );
-      },
-    );
   }
 
   /// Firestoreタイムスタンプをパース
@@ -321,6 +325,30 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
     state = state.copyWith(successMessage: null);
   }
 
+  /// 同意状態を即座に設定（新規登録時のチラつき防止用）
+  ///
+  /// 新規登録時にFirestoreへの書き込みと同時にローカル状態を更新することで、
+  /// Firestoreリスナーからのデータ取得を待たずに正しいルーティングを行う。
+  /// これにより同意画面のチラつきを防止する。
+  void setConsentAccepted({
+    required bool tosAccepted,
+    required bool ppAccepted,
+    String? tosVersion,
+    String? ppVersion,
+  }) {
+    debugPrint('[ConsentState] setConsentAccepted: tos=$tosAccepted, pp=$ppAccepted');
+    state = state.copyWith(
+      isLoading: false,
+      tosAccepted: tosAccepted,
+      tosVersion: tosVersion ?? currentTosVersion,
+      ppAccepted: ppAccepted,
+      ppVersion: ppVersion ?? currentPpVersion,
+      needsConsent: !tosAccepted || !ppAccepted,
+      needsUpdate: false,
+      error: null,
+    );
+  }
+
   @override
   void dispose() {
     _userSubscription?.cancel();
@@ -332,8 +360,8 @@ class ConsentStateNotifier extends StateNotifier<ConsentState> {
 /// 同意状態プロバイダー
 final consentStateProvider =
     StateNotifierProvider<ConsentStateNotifier, ConsentState>(
-  (ref) => ConsentStateNotifier(),
-);
+      (ref) => ConsentStateNotifier(),
+    );
 
 /// 同意必要プロバイダー
 final needsConsentProvider = Provider<bool>((ref) {

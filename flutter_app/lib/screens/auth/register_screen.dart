@@ -11,6 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/auth/auth_state_notifier.dart';
+import '../../core/consent/consent_state_notifier.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
@@ -181,24 +182,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     // Validate birthdate
     final birthdateError = AgeValidator.validateBirthdate(_birthDate);
     if (birthdateError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(birthdateError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(birthdateError)));
       return;
     }
 
     // Validate goal selection
     if (_selectedGoal == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('目標を選択してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('目標を選択してください')));
       return;
     }
 
-    // IMPORTANT: Get authService BEFORE registration
+    // IMPORTANT: Get services BEFORE registration
     // After registration, the router may redirect and dispose this widget
     final authService = ref.read(authServiceProvider);
     final authNotifier = ref.read(authStateProvider.notifier);
+    final consentNotifier = ref.read(consentStateProvider.notifier);
 
     // Prepare profile data BEFORE registration (widget may be disposed after)
     final profileData = <String, dynamic>{
@@ -243,16 +245,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     try {
       // Step 1: Create Firebase Auth account
       await authNotifier.signUpWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            displayName: _nameController.text.trim(),
-          );
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        displayName: _nameController.text.trim(),
+      );
 
       // Step 2: Wait for user document to be created by onCreate trigger
       // This prevents race condition where updateProfile is called before document exists
       // Note: onCreate trigger runs in us-central1 (Firebase v1 API limitation)
       // which may cause delays when accessed from Japan
       await _waitForUserDocument();
+
+      // Step 2.5: Immediately set consent state to prevent consent screen flickering
+      // The onCreate trigger creates user document with tosAccepted=true, ppAccepted=true
+      // Set local state immediately so router doesn't redirect to consent screen
+      // while waiting for Firestore listener to receive the update
+      consentNotifier.setConsentAccepted(
+        tosAccepted: true,
+        ppAccepted: true,
+      );
 
       // Step 3: Save profile data to Firestore via Cloud Function
       // Note: This runs even if widget is disposed - that's intentional
@@ -294,7 +305,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     final firestore = FirebaseFirestore.instance;
-    const maxRetries = 30;  // Increased for cross-region latency (us-central1 → Japan)
+    const maxRetries =
+        30; // Increased for cross-region latency (us-central1 → Japan)
     const retryDelay = Duration(seconds: 1);
 
     for (int i = 0; i < maxRetries; i++) {
@@ -314,8 +326,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _selectBirthDate() async {
     final now = DateTime.now();
-    final initialDate = _birthDate ??
-        DateTime(now.year - 25, now.month, now.day);
+    final initialDate =
+        _birthDate ?? DateTime(now.year - 25, now.month, now.day);
 
     final picked = await showDatePicker(
       context: context,
@@ -341,9 +353,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     try {
       // TODO: Implement Google Sign In
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Googleログインは準備中です')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Googleログインは準備中です')));
       }
     } finally {
       if (mounted) {
@@ -358,9 +370,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     try {
       // TODO: Implement Apple Sign In
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appleログインは準備中です')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Appleログインは準備中です')));
       }
     } finally {
       if (mounted) {
@@ -385,9 +397,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             }
           },
         ),
-        title: Text(
-          _currentStep == RegisterStep.auth ? '新規登録' : 'プロフィール設定',
-        ),
+        title: Text(_currentStep == RegisterStep.auth ? '新規登録' : 'プロフィール設定'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -484,11 +494,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
           child: Center(
             child: isCompleted
-                ? Icon(
-                    Icons.check,
-                    size: 16,
-                    color: colorScheme.onPrimary,
-                  )
+                ? Icon(Icons.check, size: 16, color: colorScheme.onPrimary)
                 : Text(
                     number,
                     style: TextStyle(
@@ -504,11 +510,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isActive
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              ),
+            color: isActive
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ],
     );
@@ -583,11 +589,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           controller: _passwordConfirmController,
           label: 'パスワード（確認）',
           textInputAction: TextInputAction.done,
-          validator: (value) =>
-              PasswordValidator.validateConfirmation(
-                value,
-                _passwordController.text,
-              ),
+          validator: (value) => PasswordValidator.validateConfirmation(
+            value,
+            _passwordController.text,
+          ),
           enabled: !authState.isLoading,
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -620,11 +625,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         SocialSignInButton(
           onPressed: _handleAppleSignIn,
           label: 'Appleで登録',
-          icon: Icon(
-            Icons.apple,
-            size: 24,
-            color: colorScheme.onSurface,
-          ),
+          icon: Icon(Icons.apple, size: 24, color: colorScheme.onSurface),
           isLoading: _isAppleLoading,
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -654,10 +655,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Gender selection
-        Text(
-          '性別',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('性別', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         _buildGenderSelection(authState),
         const SizedBox(height: AppSpacing.lg),
@@ -693,19 +691,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         const SizedBox(height: AppSpacing.lg),
 
         // Fitness level selection
-        Text(
-          '運動経験',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('運動経験', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         _buildFitnessLevelSelection(authState),
         const SizedBox(height: AppSpacing.lg),
 
         // Goal selection
-        Text(
-          '目標を選択',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('目標を選択', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         _buildGoalSelection(authState),
         const SizedBox(height: AppSpacing.xl),
@@ -831,16 +823,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Row(
                   children: [
                     // Radio managed by RadioGroup ancestor
-                    Radio<FitnessLevel>.adaptive(
-                      value: level,
-                    ),
+                    Radio<FitnessLevel>.adaptive(value: level),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             level.label,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
                                   fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.normal,
@@ -848,9 +839,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ),
                           Text(
                             level.description,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),

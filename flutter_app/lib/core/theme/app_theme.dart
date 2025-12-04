@@ -56,23 +56,15 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-          ),
+          borderSide: BorderSide(color: colorScheme.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -120,9 +112,7 @@ class AppTheme {
       // FloatingActionButtonテーマ
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       // BottomNavigationBarテーマ
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -140,9 +130,7 @@ class AppTheme {
       // SnackBarテーマ
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       // Dialogテーマ
       dialogTheme: const DialogThemeData(
@@ -152,9 +140,7 @@ class AppTheme {
       ),
       // Checkboxテーマ
       checkboxTheme: CheckboxThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
       // Dividerテーマ
       dividerTheme: DividerThemeData(
@@ -208,23 +194,15 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-          ),
+          borderSide: BorderSide(color: colorScheme.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -272,9 +250,7 @@ class AppTheme {
       // FloatingActionButtonテーマ
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       // BottomNavigationBarテーマ
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -292,9 +268,7 @@ class AppTheme {
       // SnackBarテーマ
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       // Dialogテーマ
       dialogTheme: const DialogThemeData(
@@ -304,9 +278,7 @@ class AppTheme {
       ),
       // Checkboxテーマ
       checkboxTheme: CheckboxThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
       // Dividerテーマ
       dividerTheme: DividerThemeData(

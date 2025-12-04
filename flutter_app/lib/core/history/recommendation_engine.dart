@@ -185,13 +185,15 @@ class RecommendationEngine {
 
       if (recentSessions.isEmpty && previousWeekSessions.isEmpty) {
         // First-time user
-        recommendations.add(const Recommendation(
-          type: RecommendationType.nextWorkout,
-          title: 'トレーニングを始めましょう',
-          description: 'スクワットから始めることをお勧めします。基本的な動作を学びながら、下半身全体を鍛えられます。',
-          exerciseType: ExerciseType.squat,
-          priority: 1,
-        ));
+        recommendations.add(
+          const Recommendation(
+            type: RecommendationType.nextWorkout,
+            title: 'トレーニングを始めましょう',
+            description: 'スクワットから始めることをお勧めします。基本的な動作を学びながら、下半身全体を鍛えられます。',
+            exerciseType: ExerciseType.squat,
+            priority: 1,
+          ),
+        );
         return recommendations;
       }
 
@@ -210,7 +212,10 @@ class RecommendationEngine {
       recommendations.add(nextWorkoutRec);
 
       // Form improvement recommendations
-      final formRecs = await _getFormImprovementRecommendations(userId, recentSessions);
+      final formRecs = await _getFormImprovementRecommendations(
+        userId,
+        recentSessions,
+      );
       recommendations.addAll(formRecs);
 
       // Supplementary exercise recommendations
@@ -243,20 +248,32 @@ class RecommendationEngine {
 
     // Count consecutive training days
     final today = DateTime.now();
-    final dates = recentSessions
-        .map((s) => DateTime(s.startTime.year, s.startTime.month, s.startTime.day))
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
+    final dates =
+        recentSessions
+            .map(
+              (s) => DateTime(
+                s.startTime.year,
+                s.startTime.month,
+                s.startTime.day,
+              ),
+            )
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
 
     var consecutiveDays = 0;
     for (var i = 0; i < dates.length; i++) {
-      final expectedDate = DateTime(today.year, today.month, today.day)
-          .subtract(Duration(days: i));
-      if (dates.any((d) =>
-          d.year == expectedDate.year &&
-          d.month == expectedDate.month &&
-          d.day == expectedDate.day)) {
+      final expectedDate = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).subtract(Duration(days: i));
+      if (dates.any(
+        (d) =>
+            d.year == expectedDate.year &&
+            d.month == expectedDate.month &&
+            d.day == expectedDate.day,
+      )) {
         consecutiveDays++;
       } else {
         break;
@@ -313,11 +330,11 @@ class RecommendationEngine {
     final currentAvgScore = currentWeek.isEmpty
         ? 0.0
         : currentWeek.map((s) => s.averageScore).reduce((a, b) => a + b) /
-            currentWeek.length;
+              currentWeek.length;
     final double previousAvgScore = previousWeek.isEmpty
         ? 0.0
         : previousWeek.map((s) => s.averageScore).reduce((a, b) => a + b) /
-            previousWeek.length;
+              previousWeek.length;
 
     if (currentSessions == 0 && previousSessions == 0) {
       adjustment = LoadAdjustment.maintain;
@@ -326,12 +343,14 @@ class RecommendationEngine {
       // Significant decrease in activity
       adjustment = LoadAdjustment.increase;
       reason = '先週と比べてトレーニング頻度が減少しています。可能であれば頻度を上げましょう。';
-    } else if (currentReps > previousReps * 1.5 && currentAvgScore < previousAvgScore - 5) {
+    } else if (currentReps > previousReps * 1.5 &&
+        currentAvgScore < previousAvgScore - 5) {
       // Volume up but performance down = potential overtraining
       adjustment = LoadAdjustment.decrease;
       reason = 'トレーニング量が増えていますが、パフォーマンスが低下傾向にあります。回復に注力しましょう。';
       overtrainingRisk = true;
-    } else if (currentAvgScore >= _excellentScoreThreshold && currentSessions >= 3) {
+    } else if (currentAvgScore >= _excellentScoreThreshold &&
+        currentSessions >= 3) {
       // Excellent performance, can progress
       adjustment = LoadAdjustment.increase;
       reason = '素晴らしいパフォーマンスです！徐々に負荷を上げていきましょう。';
@@ -368,13 +387,16 @@ class RecommendationEngine {
       title: title,
       description: analysis.reason,
       priority: analysis.overtrainingRisk ? 1 : 3,
-      reason: '今週: ${analysis.currentWeekSessions}セッション/${analysis.currentWeekReps}レップ、'
+      reason:
+          '今週: ${analysis.currentWeekSessions}セッション/${analysis.currentWeekReps}レップ、'
           '先週: ${analysis.previousWeekSessions}セッション/${analysis.previousWeekReps}レップ',
     );
   }
 
   /// Get next workout recommendation
-  Recommendation _getNextWorkoutRecommendation(List<HistorySession> recentSessions) {
+  Recommendation _getNextWorkoutRecommendation(
+    List<HistorySession> recentSessions,
+  ) {
     if (recentSessions.isEmpty) {
       return const Recommendation(
         type: RecommendationType.nextWorkout,
@@ -392,7 +414,8 @@ class RecommendationEngine {
     for (final session in recentSessions) {
       exerciseCounts[session.exerciseType] =
           (exerciseCounts[session.exerciseType] ?? 0) + 1;
-      exerciseScores.putIfAbsent(session.exerciseType, () => [])
+      exerciseScores
+          .putIfAbsent(session.exerciseType, () => [])
           .add(session.averageScore);
     }
 
@@ -434,9 +457,12 @@ class RecommendationEngine {
     } else {
       // Most recent exercise type - suggest variation
       final lastExercise = recentSessions.first.exerciseType;
-      final different = ExerciseType.values.where((e) => e != lastExercise).first;
+      final different = ExerciseType.values
+          .where((e) => e != lastExercise)
+          .first;
       final differentName = AnalyzerFactory.getDisplayName(different);
-      description = '前回は${AnalyzerFactory.getDisplayName(lastExercise)}を行いました。$differentNameで違う筋肉群を鍛えましょう。';
+      description =
+          '前回は${AnalyzerFactory.getDisplayName(lastExercise)}を行いました。$differentNameで違う筋肉群を鍛えましょう。';
       return Recommendation(
         type: RecommendationType.nextWorkout,
         title: '次回のおすすめ: $differentName',
@@ -476,32 +502,40 @@ class RecommendationEngine {
         if (stats.totalSessions < _minSessionsForRecommendation) continue;
 
         // Check for plateau
-        final isPlateauing = stats.scoreImprovement.abs() < _plateauThreshold &&
+        final isPlateauing =
+            stats.scoreImprovement.abs() < _plateauThreshold &&
             stats.totalSessions >= 5;
 
         if (isPlateauing && stats.averageScore < _excellentScoreThreshold) {
-          recommendations.add(Recommendation(
-            type: RecommendationType.formImprovement,
-            title: '${AnalyzerFactory.getDisplayName(type)}のプラトー',
-            description: 'スコアの改善が停滞しています。フォームの細部に注目し、'
-                '${stats.commonIssues.isNotEmpty ? stats.commonIssues.first : "動作の質"}を意識してみましょう。',
-            exerciseType: type,
-            priority: 3,
-            reason: '過去${stats.totalSessions}セッションで改善率: '
-                '${stats.scoreImprovement.toStringAsFixed(1)}%',
-          ));
+          recommendations.add(
+            Recommendation(
+              type: RecommendationType.formImprovement,
+              title: '${AnalyzerFactory.getDisplayName(type)}のプラトー',
+              description:
+                  'スコアの改善が停滞しています。フォームの細部に注目し、'
+                  '${stats.commonIssues.isNotEmpty ? stats.commonIssues.first : "動作の質"}を意識してみましょう。',
+              exerciseType: type,
+              priority: 3,
+              reason:
+                  '過去${stats.totalSessions}セッションで改善率: '
+                  '${stats.scoreImprovement.toStringAsFixed(1)}%',
+            ),
+          );
         }
 
         // Add specific issue recommendations
         if (stats.commonIssues.isNotEmpty) {
-          recommendations.add(Recommendation(
-            type: RecommendationType.formImprovement,
-            title: '${AnalyzerFactory.getDisplayName(type)}の改善ポイント',
-            description: '「${stats.commonIssues.first}」が頻繁に検出されています。'
-                'この点を意識してトレーニングを行いましょう。',
-            exerciseType: type,
-            priority: 4,
-          ));
+          recommendations.add(
+            Recommendation(
+              type: RecommendationType.formImprovement,
+              title: '${AnalyzerFactory.getDisplayName(type)}の改善ポイント',
+              description:
+                  '「${stats.commonIssues.first}」が頻繁に検出されています。'
+                  'この点を意識してトレーニングを行いましょう。',
+              exerciseType: type,
+              priority: 4,
+            ),
+          );
         }
       } catch (e) {
         // Skip on error
@@ -556,23 +590,28 @@ class RecommendationEngine {
 
       final supplement = supplementaryExercises[mostPracticed];
       if (supplement != null) {
-        recommendations.add(Recommendation(
-          type: RecommendationType.supplementaryExercise,
-          title: '補助エクササイズ: ${supplement['title']}',
-          description: supplement['description']!,
-          priority: 5,
-          reason: '${AnalyzerFactory.getDisplayName(mostPracticed)}を頻繁に行っているため',
-        ));
+        recommendations.add(
+          Recommendation(
+            type: RecommendationType.supplementaryExercise,
+            title: '補助エクササイズ: ${supplement['title']}',
+            description: supplement['description']!,
+            priority: 5,
+            reason:
+                '${AnalyzerFactory.getDisplayName(mostPracticed)}を頻繁に行っているため',
+          ),
+        );
       }
     }
 
     // Add stretch recommendation
-    recommendations.add(const Recommendation(
-      type: RecommendationType.stretchRecommendation,
-      title: 'ストレッチの推奨',
-      description: 'トレーニング後は必ずストレッチを行いましょう。筋肉の回復を促進し、柔軟性を維持できます。',
-      priority: 6,
-    ));
+    recommendations.add(
+      const Recommendation(
+        type: RecommendationType.stretchRecommendation,
+        title: 'ストレッチの推奨',
+        description: 'トレーニング後は必ずストレッチを行いましょう。筋肉の回復を促進し、柔軟性を維持できます。',
+        priority: 6,
+      ),
+    );
 
     return recommendations;
   }
@@ -609,7 +648,8 @@ class RecommendationEngine {
 
         // Estimate days based on improvement rate
         final dailyImprovement = stats.scoreImprovement > 0
-            ? stats.scoreImprovement / 30 // Per day
+            ? stats.scoreImprovement /
+                  30 // Per day
             : 0.5; // Default assumption
         final scoreGap = targetScore - currentScore;
         final estimatedDays = dailyImprovement > 0
@@ -622,20 +662,24 @@ class RecommendationEngine {
 
         for (var i = 1; i <= 3; i++) {
           final milestoneScore = currentScore + (step * i);
-          milestones.add(GoalMilestone(
-            score: milestoneScore,
-            label: i == 3 ? '目標達成！' : 'ステップ$i',
-            estimatedDays: (estimatedDays * i / 3).ceil(),
-          ));
+          milestones.add(
+            GoalMilestone(
+              score: milestoneScore,
+              label: i == 3 ? '目標達成！' : 'ステップ$i',
+              estimatedDays: (estimatedDays * i / 3).ceil(),
+            ),
+          );
         }
 
-        suggestions.add(GoalSuggestion(
-          exerciseType: type,
-          currentScore: currentScore,
-          targetScore: targetScore,
-          estimatedDays: estimatedDays.clamp(7, 180), // 1 week to 6 months
-          milestones: milestones,
-        ));
+        suggestions.add(
+          GoalSuggestion(
+            exerciseType: type,
+            currentScore: currentScore,
+            targetScore: targetScore,
+            estimatedDays: estimatedDays.clamp(7, 180), // 1 week to 6 months
+            milestones: milestones,
+          ),
+        );
       } catch (e) {
         continue;
       }
@@ -652,19 +696,15 @@ final recommendationEngineProvider = Provider<RecommendationEngine>((ref) {
 });
 
 /// Recommendations state provider
-final recommendationsProvider =
-    FutureProvider.autoDispose.family<List<Recommendation>, String>(
-  (ref, userId) async {
-    final engine = ref.watch(recommendationEngineProvider);
-    return engine.getRecommendations(userId: userId);
-  },
-);
+final recommendationsProvider = FutureProvider.autoDispose
+    .family<List<Recommendation>, String>((ref, userId) async {
+      final engine = ref.watch(recommendationEngineProvider);
+      return engine.getRecommendations(userId: userId);
+    });
 
 /// Goal suggestions provider
-final goalSuggestionsProvider =
-    FutureProvider.autoDispose.family<List<GoalSuggestion>, String>(
-  (ref, userId) async {
-    final engine = ref.watch(recommendationEngineProvider);
-    return engine.getGoalSuggestions(userId: userId);
-  },
-);
+final goalSuggestionsProvider = FutureProvider.autoDispose
+    .family<List<GoalSuggestion>, String>((ref, userId) async {
+      final engine = ref.watch(recommendationEngineProvider);
+      return engine.getGoalSuggestions(userId: userId);
+    });

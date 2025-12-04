@@ -17,8 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// フレームレートモニタープロバイダー
 final frameRateMonitorProvider =
     StateNotifierProvider<FrameRateMonitorNotifier, FrameRateState>((ref) {
-  return FrameRateMonitorNotifier();
-});
+      return FrameRateMonitorNotifier();
+    });
 
 /// フレームレート状態
 class FrameRateState {
@@ -167,9 +167,7 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
 
   /// ドロップされたフレームを記録
   void recordDroppedFrame() {
-    state = state.copyWith(
-      droppedFrames: state.droppedFrames + 1,
-    );
+    state = state.copyWith(droppedFrames: state.droppedFrames + 1);
   }
 
   /// FPS読み取り値を追加し状態を更新
@@ -220,16 +218,21 @@ class FrameRateMonitorNotifier extends StateNotifier<FrameRateState> {
 
     // クールダウンをチェック
     if (_lastFallbackTime != null) {
-      final timeSinceLastFallback = DateTime.now().difference(_lastFallbackTime!);
+      final timeSinceLastFallback = DateTime.now().difference(
+        _lastFallbackTime!,
+      );
       if (timeSinceLastFallback < _fallbackCooldown) return;
     }
 
     // フォールバックが必要か判定
-    if (status == FrameRateStatus.warning || status == FrameRateStatus.critical) {
+    if (status == FrameRateStatus.warning ||
+        status == FrameRateStatus.critical) {
       final nextLevel = _getNextFallbackLevel();
       if (nextLevel != null && nextLevel != state.fallbackLevel) {
-        debugPrint('FrameRateMonitor: Performance degraded (${averageFps.toStringAsFixed(1)} fps), '
-            'applying fallback level: $nextLevel');
+        debugPrint(
+          'FrameRateMonitor: Performance degraded (${averageFps.toStringAsFixed(1)} fps), '
+          'applying fallback level: $nextLevel',
+        );
 
         _lastFallbackTime = DateTime.now();
         state = state.copyWith(

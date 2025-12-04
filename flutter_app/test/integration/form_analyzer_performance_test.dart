@@ -449,8 +449,5 @@ PoseFrame _createTestPoseFrame() {
     );
   }
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }

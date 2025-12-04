@@ -141,9 +141,9 @@ class HistorySyncService {
     _prefs = await SharedPreferences.getInstance();
 
     // Monitor connectivity
-    _connectivitySubscription = Connectivity()
-        .onConnectivityChanged
-        .listen(_handleConnectivityChange);
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      _handleConnectivityChange,
+    );
 
     // Check initial connectivity
     final connectivity = await Connectivity().checkConnectivity();
@@ -157,9 +157,11 @@ class HistorySyncService {
     // Load last sync time
     final lastSyncMs = _prefs?.getInt(_lastSyncKey);
     if (lastSyncMs != null) {
-      _updateState(_currentState.copyWith(
-        lastSyncTime: DateTime.fromMillisecondsSinceEpoch(lastSyncMs),
-      ));
+      _updateState(
+        _currentState.copyWith(
+          lastSyncTime: DateTime.fromMillisecondsSinceEpoch(lastSyncMs),
+        ),
+      );
     }
 
     // Process pending operations if online
@@ -177,10 +179,12 @@ class HistorySyncService {
   /// Handle connectivity changes
   void _handleConnectivityChange(List<ConnectivityResult> results) {
     final isOnline = !results.contains(ConnectivityResult.none);
-    _updateState(_currentState.copyWith(
-      isOnline: isOnline,
-      status: isOnline ? SyncStatus.synced : SyncStatus.offline,
-    ));
+    _updateState(
+      _currentState.copyWith(
+        isOnline: isOnline,
+        status: isOnline ? SyncStatus.synced : SyncStatus.offline,
+      ),
+    );
 
     if (isOnline) {
       _processPendingOperations();
@@ -276,7 +280,9 @@ class HistorySyncService {
 
     try {
       // Fetch from Firestore
-      final startDate = DateTime.now().subtract(const Duration(days: _maxCacheDays));
+      final startDate = DateTime.now().subtract(
+        const Duration(days: _maxCacheDays),
+      );
       final sessions = await _historyService.fetchSessions(
         userId: userId,
         filter: HistoryFilter(startDate: startDate),
@@ -290,17 +296,18 @@ class HistorySyncService {
       final now = DateTime.now();
       await _prefs?.setInt(_lastSyncKey, now.millisecondsSinceEpoch);
 
-      _updateState(_currentState.copyWith(
-        status: SyncStatus.synced,
-        lastSyncTime: now,
-      ));
+      _updateState(
+        _currentState.copyWith(status: SyncStatus.synced, lastSyncTime: now),
+      );
 
       return sessions;
     } catch (e) {
-      _updateState(_currentState.copyWith(
-        status: SyncStatus.error,
-        errorMessage: '同期に失敗しました: $e',
-      ));
+      _updateState(
+        _currentState.copyWith(
+          status: SyncStatus.error,
+          errorMessage: '同期に失敗しました: $e',
+        ),
+      );
 
       // Return cached data on error
       return getCachedSessions(userId: userId);
@@ -334,12 +341,16 @@ class HistorySyncService {
 
     final cacheKey = '${_summariesCacheKey}_$userId';
 
-    final jsonList = summaries.map((s) => {
-      'date': s.date.toIso8601String(),
-      'sessionCount': s.sessionCount,
-      'totalReps': s.totalReps,
-      'averageScore': s.averageScore,
-    }).toList();
+    final jsonList = summaries
+        .map(
+          (s) => {
+            'date': s.date.toIso8601String(),
+            'sessionCount': s.sessionCount,
+            'totalReps': s.totalReps,
+            'averageScore': s.averageScore,
+          },
+        )
+        .toList();
 
     await _prefs?.setString(cacheKey, jsonEncode(jsonList));
   }
@@ -366,10 +377,12 @@ class HistorySyncService {
     operations.add(operation);
     await _savePendingOperations(operations);
 
-    _updateState(_currentState.copyWith(
-      status: SyncStatus.pending,
-      pendingCount: operations.length,
-    ));
+    _updateState(
+      _currentState.copyWith(
+        status: SyncStatus.pending,
+        pendingCount: operations.length,
+      ),
+    );
 
     // Try to process immediately if online
     final connectivity = await Connectivity().checkConnectivity();
@@ -426,10 +439,12 @@ class HistorySyncService {
     // Save remaining operations
     await _savePendingOperations(failed);
 
-    _updateState(_currentState.copyWith(
-      status: failed.isEmpty ? SyncStatus.synced : SyncStatus.pending,
-      pendingCount: failed.length,
-    ));
+    _updateState(
+      _currentState.copyWith(
+        status: failed.isEmpty ? SyncStatus.synced : SyncStatus.pending,
+        pendingCount: failed.length,
+      ),
+    );
   }
 
   /// Execute a single pending operation

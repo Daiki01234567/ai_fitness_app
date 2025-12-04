@@ -43,11 +43,11 @@ class ReportSection {
   final Map<String, dynamic>? data;
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'content': content,
-        'type': type,
-        'data': data,
-      };
+    'title': title,
+    'content': content,
+    'type': type,
+    'data': data,
+  };
 }
 
 /// Generated report
@@ -126,15 +126,15 @@ class TrainingReport {
 
   /// Convert to structured JSON for future PDF export
   Map<String, dynamic> toJson() => {
-        'type': type.name,
-        'title': title,
-        'period': period,
-        'generatedAt': generatedAt.toIso8601String(),
-        'summary': summary,
-        'highlights': highlights,
-        'sections': sections.map((s) => s.toJson()).toList(),
-        'nextWeekGoals': nextWeekGoals,
-      };
+    'type': type.name,
+    'title': title,
+    'period': period,
+    'generatedAt': generatedAt.toIso8601String(),
+    'summary': summary,
+    'highlights': highlights,
+    'sections': sections.map((s) => s.toJson()).toList(),
+    'nextWeekGoals': nextWeekGoals,
+  };
 }
 
 /// Report generator service
@@ -191,7 +191,8 @@ class ReportGenerator {
     return TrainingReport(
       type: ReportType.weekly,
       title: '週次トレーニングレポート',
-      period: '${dateFormat.format(start)} - ${dateFormat.format(end.subtract(const Duration(days: 1)))}',
+      period:
+          '${dateFormat.format(start)} - ${dateFormat.format(end.subtract(const Duration(days: 1)))}',
       generatedAt: DateTime.now(),
       sections: sections,
       summary: summary,
@@ -269,8 +270,11 @@ class ReportGenerator {
 
   DateTime _getWeekStart(DateTime date) {
     final dayOfWeek = date.weekday;
-    return DateTime(date.year, date.month, date.day)
-        .subtract(Duration(days: dayOfWeek - 1));
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).subtract(Duration(days: dayOfWeek - 1));
   }
 
   ReportSection _generateVolumeSection(
@@ -282,7 +286,8 @@ class ReportGenerator {
         ? 0
         : totalMinutes ~/ sessions.length;
 
-    final content = '''
+    final content =
+        '''
 トレーニング回数: ${sessions.length}回
 総レップ数: ${stats.totalReps}回
 総セット数: ${stats.totalSets}セット
@@ -326,9 +331,11 @@ class ReportGenerator {
       final firstHalf = sorted.take(sorted.length ~/ 2).toList();
       final secondHalf = sorted.skip(sorted.length ~/ 2).toList();
 
-      final firstAvg = firstHalf.map((s) => s.averageScore).reduce((a, b) => a + b) /
+      final firstAvg =
+          firstHalf.map((s) => s.averageScore).reduce((a, b) => a + b) /
           firstHalf.length;
-      final secondAvg = secondHalf.map((s) => s.averageScore).reduce((a, b) => a + b) /
+      final secondAvg =
+          secondHalf.map((s) => s.averageScore).reduce((a, b) => a + b) /
           secondHalf.length;
 
       if (secondAvg > firstAvg + 3) {
@@ -338,7 +345,8 @@ class ReportGenerator {
       }
     }
 
-    final content = '''
+    final content =
+        '''
 平均フォームスコア: ${avgScore.toStringAsFixed(1)}点
 最高スコア: ${maxScore.toStringAsFixed(1)}点
 最低スコア: ${minScore.toStringAsFixed(1)}点
@@ -358,12 +366,11 @@ class ReportGenerator {
     );
   }
 
-  ReportSection _generateExerciseBreakdownSection(List<HistorySession> sessions) {
+  ReportSection _generateExerciseBreakdownSection(
+    List<HistorySession> sessions,
+  ) {
     if (sessions.isEmpty) {
-      return const ReportSection(
-        title: '種目別内訳',
-        content: 'データがありません。',
-      );
+      return const ReportSection(title: '種目別内訳', content: 'データがありません。');
     }
 
     final breakdown = <ExerciseType, List<HistorySession>>{};
@@ -377,7 +384,8 @@ class ReportGenerator {
     for (final entry in breakdown.entries) {
       final name = AnalyzerFactory.getDisplayName(entry.key);
       final count = entry.value.length;
-      final avgScore = entry.value.map((s) => s.averageScore).reduce((a, b) => a + b) /
+      final avgScore =
+          entry.value.map((s) => s.averageScore).reduce((a, b) => a + b) /
           entry.value.length;
       final totalReps = entry.value.fold(0, (sum, s) => sum + s.totalReps);
 
@@ -403,10 +411,7 @@ class ReportGenerator {
 
   ReportSection _generateIssuesSection(List<HistorySession> sessions) {
     if (sessions.isEmpty) {
-      return const ReportSection(
-        title: '改善ポイント',
-        content: 'データがありません。',
-      );
+      return const ReportSection(title: '改善ポイント', content: 'データがありません。');
     }
 
     // Collect all issues
@@ -432,22 +437,32 @@ class ReportGenerator {
 
     for (var i = 0; i < sorted.length.clamp(0, 5); i++) {
       final entry = sorted[i];
-      final percentage = (entry.value / sessions.length * 100).toStringAsFixed(0);
-      buffer.writeln('  ${i + 1}. ${entry.key} (${entry.value}回検出, $percentage%)');
+      final percentage = (entry.value / sessions.length * 100).toStringAsFixed(
+        0,
+      );
+      buffer.writeln(
+        '  ${i + 1}. ${entry.key} (${entry.value}回検出, $percentage%)',
+      );
     }
 
     return ReportSection(
       title: '改善ポイント',
       content: buffer.toString(),
       type: 'list',
-      data: {'issues': sorted.take(5).map((e) => {'issue': e.key, 'count': e.value}).toList()},
+      data: {
+        'issues': sorted
+            .take(5)
+            .map((e) => {'issue': e.key, 'count': e.value})
+            .toList(),
+      },
     );
   }
 
   ReportSection _generateMonthlyOverviewSection(MonthlyStats stats) {
     final totalHours = stats.totalDuration.inMinutes / 60;
 
-    final content = '''
+    final content =
+        '''
 総セッション数: ${stats.totalSessions}回
 総レップ数: ${stats.totalReps}回
 総セット数: ${stats.totalSets}セット
@@ -477,10 +492,7 @@ class ReportGenerator {
 
   ReportSection _generateVolumeTrendsSection(MonthlyStats stats) {
     if (stats.weeklyStats.isEmpty) {
-      return const ReportSection(
-        title: 'ボリューム推移',
-        content: 'データがありません。',
-      );
+      return const ReportSection(title: 'ボリューム推移', content: 'データがありません。');
     }
 
     final buffer = StringBuffer();
@@ -489,7 +501,9 @@ class ReportGenerator {
     for (var i = 0; i < stats.weeklyStats.length; i++) {
       final week = stats.weeklyStats[i];
       final weekEnd = week.weekStart.add(const Duration(days: 6));
-      buffer.writeln('Week ${i + 1} (${dateFormat.format(week.weekStart)}〜${dateFormat.format(weekEnd)}):');
+      buffer.writeln(
+        'Week ${i + 1} (${dateFormat.format(week.weekStart)}〜${dateFormat.format(weekEnd)}):',
+      );
       buffer.writeln('  セッション: ${week.totalSessions}回');
       buffer.writeln('  レップ: ${week.totalReps}回');
       buffer.writeln('  平均スコア: ${week.averageScore.toStringAsFixed(1)}点');
@@ -500,12 +514,16 @@ class ReportGenerator {
       content: buffer.toString(),
       type: 'chart_data',
       data: {
-        'weeks': stats.weeklyStats.map((w) => {
-          'weekStart': w.weekStart.toIso8601String(),
-          'sessions': w.totalSessions,
-          'reps': w.totalReps,
-          'avgScore': w.averageScore,
-        }).toList(),
+        'weeks': stats.weeklyStats
+            .map(
+              (w) => {
+                'weekStart': w.weekStart.toIso8601String(),
+                'sessions': w.totalSessions,
+                'reps': w.totalReps,
+                'avgScore': w.averageScore,
+              },
+            )
+            .toList(),
       },
     );
   }
@@ -515,10 +533,7 @@ class ReportGenerator {
     MonthlyStats stats,
   ) {
     if (sessions.isEmpty) {
-      return const ReportSection(
-        title: 'パフォーマンス推移',
-        content: 'データがありません。',
-      );
+      return const ReportSection(title: 'パフォーマンス推移', content: 'データがありません。');
     }
 
     final sorted = sessions.toList()
@@ -537,10 +552,11 @@ class ReportGenerator {
     final improvementText = improvement > 0
         ? '+${improvement.toStringAsFixed(1)}点の改善'
         : improvement < 0
-            ? '${improvement.toStringAsFixed(1)}点の変動'
-            : '変動なし';
+        ? '${improvement.toStringAsFixed(1)}点の変動'
+        : '変動なし';
 
-    final content = '''
+    final content =
+        '''
 月初スコア: ${sorted.first.averageScore.toStringAsFixed(1)}点
 月末スコア: ${sorted.last.averageScore.toStringAsFixed(1)}点
 改善幅: $improvementText
@@ -558,18 +574,19 @@ class ReportGenerator {
     );
   }
 
-  ReportSection _generateExerciseAnalysisSection(List<HistorySession> sessions) {
+  ReportSection _generateExerciseAnalysisSection(
+    List<HistorySession> sessions,
+  ) {
     if (sessions.isEmpty) {
-      return const ReportSection(
-        title: '種目別分析',
-        content: 'データがありません。',
-      );
+      return const ReportSection(title: '種目別分析', content: 'データがありません。');
     }
 
     final analysis = <ExerciseType, Map<String, dynamic>>{};
 
     for (final type in ExerciseType.values) {
-      final typeSessions = sessions.where((s) => s.exerciseType == type).toList();
+      final typeSessions = sessions
+          .where((s) => s.exerciseType == type)
+          .toList();
       if (typeSessions.isEmpty) continue;
 
       final scores = typeSessions.map((s) => s.averageScore).toList();
@@ -589,7 +606,11 @@ class ReportGenerator {
         'avgScore': avgScore,
         'bestScore': bestScore,
         'improvement': improvement,
-        'issues': typeSessions.expand((s) => s.primaryIssues).toSet().take(3).toList(),
+        'issues': typeSessions
+            .expand((s) => s.primaryIssues)
+            .toSet()
+            .take(3)
+            .toList(),
       };
     }
 
@@ -601,12 +622,18 @@ class ReportGenerator {
 
       buffer.writeln('$name:');
       buffer.writeln('  セッション数: ${data['sessions']}回');
-      buffer.writeln('  平均スコア: ${(data['avgScore'] as double).toStringAsFixed(1)}点');
-      buffer.writeln('  ベストスコア: ${(data['bestScore'] as double).toStringAsFixed(1)}点');
+      buffer.writeln(
+        '  平均スコア: ${(data['avgScore'] as double).toStringAsFixed(1)}点',
+      );
+      buffer.writeln(
+        '  ベストスコア: ${(data['bestScore'] as double).toStringAsFixed(1)}点',
+      );
 
       final improvement = data['improvement'] as double;
       if (improvement != 0) {
-        buffer.writeln('  月間改善: ${improvement >= 0 ? '+' : ''}${improvement.toStringAsFixed(1)}点');
+        buffer.writeln(
+          '  月間改善: ${improvement >= 0 ? '+' : ''}${improvement.toStringAsFixed(1)}点',
+        );
       }
 
       final issues = data['issues'] as List;
@@ -640,8 +667,10 @@ class ReportGenerator {
     final first5 = sorted.take(5).toList();
     final last5 = sorted.reversed.take(5).toList();
 
-    final first5Avg = first5.map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
-    final last5Avg = last5.map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
+    final first5Avg =
+        first5.map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
+    final last5Avg =
+        last5.map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
 
     final first5Reps = first5.fold<int>(0, (sum, s) => sum + s.totalReps);
     final last5Reps = last5.fold<int>(0, (sum, s) => sum + s.totalReps);
@@ -662,7 +691,8 @@ class ReportGenerator {
       evaluation = '安定したパフォーマンスを維持しています。新しい刺激を加えてみるのも良いでしょう。';
     }
 
-    final content = '''
+    final content =
+        '''
 月初5セッション平均スコア: ${first5Avg.toStringAsFixed(1)}点
 月末5セッション平均スコア: ${last5Avg.toStringAsFixed(1)}点
 スコア変化: ${scoreChange >= 0 ? '+' : ''}${scoreChange.toStringAsFixed(1)}点
@@ -733,13 +763,14 @@ $evaluation
       title: '種目別改善ポイント',
       content: buffer.toString(),
       type: 'list',
-      data: issuesByExercise.map(
-        (k, v) => MapEntry(k.name, v),
-      ),
+      data: issuesByExercise.map((k, v) => MapEntry(k.name, v)),
     );
   }
 
-  String _generateWeeklySummary(List<HistorySession> sessions, WeeklyStats stats) {
+  String _generateWeeklySummary(
+    List<HistorySession> sessions,
+    WeeklyStats stats,
+  ) {
     if (sessions.isEmpty) {
       return 'この週はトレーニングがありませんでした。来週は少しずつでも始めてみましょう。';
     }
@@ -771,7 +802,11 @@ $evaluation
     }
 
     final avgScore = stats.averageScore;
-    final consistency = stats.activeDays >= 12 ? '高い' : stats.activeDays >= 8 ? '中程度の' : '低い';
+    final consistency = stats.activeDays >= 12
+        ? '高い'
+        : stats.activeDays >= 8
+        ? '中程度の'
+        : '低い';
 
     return '今月は${stats.totalSessions}回のセッション、'
         '${stats.activeDays}日のアクティブ日を記録しました。'
@@ -789,23 +824,35 @@ $evaluation
     if (sessions.isEmpty) return highlights;
 
     // Best session
-    final best = sessions.reduce((a, b) => a.averageScore > b.averageScore ? a : b);
+    final best = sessions.reduce(
+      (a, b) => a.averageScore > b.averageScore ? a : b,
+    );
     final dateFormat = DateFormat('M/d');
-    highlights.add('ベストセッション: ${dateFormat.format(best.startTime)} - '
-        '${AnalyzerFactory.getDisplayName(best.exerciseType)} '
-        '${best.averageScore.toStringAsFixed(0)}点');
+    highlights.add(
+      'ベストセッション: ${dateFormat.format(best.startTime)} - '
+      '${AnalyzerFactory.getDisplayName(best.exerciseType)} '
+      '${best.averageScore.toStringAsFixed(0)}点',
+    );
 
     // Highest volume day
     final byDate = <DateTime, int>{};
     for (final s in sessions) {
-      final date = DateTime(s.startTime.year, s.startTime.month, s.startTime.day);
+      final date = DateTime(
+        s.startTime.year,
+        s.startTime.month,
+        s.startTime.day,
+      );
       byDate[date] = (byDate[date] ?? 0) + s.totalReps;
     }
 
     if (byDate.isNotEmpty) {
-      final maxEntry = byDate.entries.reduce((a, b) => a.value > b.value ? a : b);
-      highlights.add('最高ボリューム: ${dateFormat.format(maxEntry.key)} - '
-          '${maxEntry.value}レップ');
+      final maxEntry = byDate.entries.reduce(
+        (a, b) => a.value > b.value ? a : b,
+      );
+      highlights.add(
+        '最高ボリューム: ${dateFormat.format(maxEntry.key)} - '
+        '${maxEntry.value}レップ',
+      );
     }
 
     // Streak
@@ -825,10 +872,14 @@ $evaluation
     if (sessions.isEmpty) return highlights;
 
     // Best session
-    final best = sessions.reduce((a, b) => a.averageScore > b.averageScore ? a : b);
+    final best = sessions.reduce(
+      (a, b) => a.averageScore > b.averageScore ? a : b,
+    );
     final dateFormat = DateFormat('M/d');
-    highlights.add('月間ベストセッション: ${dateFormat.format(best.startTime)} - '
-        '${best.averageScore.toStringAsFixed(0)}点');
+    highlights.add(
+      '月間ベストセッション: ${dateFormat.format(best.startTime)} - '
+      '${best.averageScore.toStringAsFixed(0)}点',
+    );
 
     // Best streak
     if (stats.bestStreakDays >= 3) {
@@ -838,19 +889,25 @@ $evaluation
     // Most practiced exercise
     final exerciseCounts = <ExerciseType, int>{};
     for (final s in sessions) {
-      exerciseCounts[s.exerciseType] = (exerciseCounts[s.exerciseType] ?? 0) + 1;
+      exerciseCounts[s.exerciseType] =
+          (exerciseCounts[s.exerciseType] ?? 0) + 1;
     }
 
     if (exerciseCounts.isNotEmpty) {
-      final mostPracticed = exerciseCounts.entries
-          .reduce((a, b) => a.value > b.value ? a : b);
-      highlights.add('最多種目: ${AnalyzerFactory.getDisplayName(mostPracticed.key)} '
-          '(${mostPracticed.value}回)');
+      final mostPracticed = exerciseCounts.entries.reduce(
+        (a, b) => a.value > b.value ? a : b,
+      );
+      highlights.add(
+        '最多種目: ${AnalyzerFactory.getDisplayName(mostPracticed.key)} '
+        '(${mostPracticed.value}回)',
+      );
     }
 
     // Consistency
-    highlights.add('継続率: ${(stats.activeDays / 30 * 100).toStringAsFixed(0)}% '
-        '(${stats.activeDays}日)');
+    highlights.add(
+      '継続率: ${(stats.activeDays / 30 * 100).toStringAsFixed(0)}% '
+      '(${stats.activeDays}日)',
+    );
 
     return highlights;
   }
@@ -892,8 +949,9 @@ $evaluation
         issueCounts[issue] = (issueCounts[issue] ?? 0) + 1;
       }
 
-      final topIssue = issueCounts.entries
-          .reduce((a, b) => a.value > b.value ? a : b);
+      final topIssue = issueCounts.entries.reduce(
+        (a, b) => a.value > b.value ? a : b,
+      );
       goals.add('「${topIssue.key}」の改善に注力する');
     }
 
@@ -908,23 +966,22 @@ final reportGeneratorProvider = Provider<ReportGenerator>((ref) {
 });
 
 /// Weekly report provider
-final weeklyReportProvider =
-    FutureProvider.autoDispose.family<TrainingReport, String>(
-  (ref, userId) async {
-    final generator = ref.watch(reportGeneratorProvider);
-    return generator.generateWeeklyReport(userId: userId);
-  },
-);
+final weeklyReportProvider = FutureProvider.autoDispose
+    .family<TrainingReport, String>((ref, userId) async {
+      final generator = ref.watch(reportGeneratorProvider);
+      return generator.generateWeeklyReport(userId: userId);
+    });
 
 /// Monthly report provider
-final monthlyReportProvider =
-    FutureProvider.autoDispose.family<TrainingReport, ({String userId, int year, int month})>(
-  (ref, params) async {
-    final generator = ref.watch(reportGeneratorProvider);
-    return generator.generateMonthlyReport(
-      userId: params.userId,
-      year: params.year,
-      month: params.month,
-    );
-  },
-);
+final monthlyReportProvider = FutureProvider.autoDispose
+    .family<TrainingReport, ({String userId, int year, int month})>((
+      ref,
+      params,
+    ) async {
+      final generator = ref.watch(reportGeneratorProvider);
+      return generator.generateMonthlyReport(
+        userId: params.userId,
+        year: params.year,
+        month: params.month,
+      );
+    });

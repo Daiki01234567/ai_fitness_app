@@ -122,15 +122,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             Text(
               'AI Fitness',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimary,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onPrimary,
+              ),
             ),
             const SizedBox(height: 48),
             // Loading indicator
-            CircularProgressIndicator(
-              color: colorScheme.onPrimary,
-            ),
+            CircularProgressIndicator(color: colorScheme.onPrimary),
           ],
         ),
       ),

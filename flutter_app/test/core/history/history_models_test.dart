@@ -290,8 +290,10 @@ void main() {
         expect(restored.sets.length, equals(original.sets.length));
         expect(restored.note, equals(original.note));
         expect(restored.tags, equals(original.tags));
-        expect(restored.bodyCondition?.energyLevel,
-            equals(original.bodyCondition?.energyLevel));
+        expect(
+          restored.bodyCondition?.energyLevel,
+          equals(original.bodyCondition?.energyLevel),
+        );
       });
 
       test('toJsonがnull値を正しく処理する', () {
@@ -696,10 +698,7 @@ void main() {
           totalSets: 60,
           totalDuration: const Duration(hours: 6),
           averageScore: 82.0,
-          exerciseBreakdown: {
-            ExerciseType.squat: 8,
-            ExerciseType.armCurl: 7,
-          },
+          exerciseBreakdown: {ExerciseType.squat: 8, ExerciseType.armCurl: 7},
           weeklyStats: [
             WeeklyStats(
               weekStart: DateTime(2025, 1, 6),
@@ -733,7 +732,10 @@ void main() {
               totalSets: 16,
               totalDuration: const Duration(hours: 2),
               averageScore: 83.0,
-              exerciseBreakdown: {ExerciseType.squat: 2, ExerciseType.armCurl: 2},
+              exerciseBreakdown: {
+                ExerciseType.squat: 2,
+                ExerciseType.armCurl: 2,
+              },
               dailySummaries: [
                 DailySummary(
                   date: DateTime(2025, 1, 13),
@@ -805,9 +807,7 @@ void main() {
       });
 
       test('isEmptyがexerciseTypesが設定されている場合falseを返す', () {
-        const filter = HistoryFilter(
-          exerciseTypes: [ExerciseType.squat],
-        );
+        const filter = HistoryFilter(exerciseTypes: [ExerciseType.squat]);
         expect(filter.isEmpty, isFalse);
       });
 
@@ -846,10 +846,7 @@ void main() {
           minScore: 60.0,
         );
 
-        final updated = original.copyWith(
-          minScore: 70.0,
-          maxScore: 95.0,
-        );
+        final updated = original.copyWith(minScore: 70.0, maxScore: 95.0);
 
         expect(updated.startDate, equals(original.startDate));
         expect(updated.endDate, equals(original.endDate));
@@ -931,10 +928,7 @@ void main() {
     });
 
     test('ProgressDataPointがexerciseType nullで作成できる', () {
-      final point = ProgressDataPoint(
-        date: DateTime(2025, 1, 15),
-        value: 85.0,
-      );
+      final point = ProgressDataPoint(date: DateTime(2025, 1, 15), value: 85.0);
 
       expect(point.exerciseType, isNull);
     });

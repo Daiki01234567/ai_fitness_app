@@ -64,16 +64,27 @@ export * from "./api";
 // ========================================
 // - triggers_onConsentCreated: 同意の作成/撤回を処理
 // - triggers_onUserConsentWithdrawn: 全同意の撤回を監視
+// - triggers_onSessionCreated: セッション作成時にPub/Subへ発行
+// - triggers_onSessionUpdated: セッション完了時にPub/Subへ発行
 export * from "./triggers";
+
+// ========================================
+// Pub/Sub トリガー
+// ========================================
+// - pubsub_processTrainingSession: セッションを仮名化してBigQueryへ挿入
+export * from "./pubsub";
 
 // ========================================
 // スケジュール関数
 // ========================================
-// 実装時にコメントを解除:
+// - scheduled_dailyAggregation: 毎日2時に前日データを集計
+// - scheduled_weeklyAggregation: 毎週月曜3時に週次集計
+// - scheduled_processBigQueryDlq: 毎日5時にDLQメッセージをリトライ
+// - admin_processDlq: 管理者用DLQ手動リトライ
+// TODO: 実装時にコメントを解除:
 // - scheduled_processDeletedUsers: 30日間の削除クリーンアップ
 // - scheduled_cleanupRateLimits: 期限切れレート制限レコードを削除
-// - scheduled_processDLQ: 失敗した BigQuery 同期をリトライ
-// export * from "./scheduled";
+export * from "./scheduled";
 
 // ========================================
 // Webhook ハンドラー

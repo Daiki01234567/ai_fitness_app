@@ -26,10 +26,7 @@ import '../widgets/bottom_nav_bar.dart';
 
 /// Exercise detail screen
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
-  const ExerciseDetailScreen({
-    required this.exerciseType,
-    super.key,
-  });
+  const ExerciseDetailScreen({required this.exerciseType, super.key});
 
   final ExerciseType exerciseType;
 
@@ -98,7 +95,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     final targetReps = int.tryParse(_targetRepsController.text) ?? 10;
 
     // Update session config with target reps
-    ref.read(trainingSessionProvider.notifier).initializeSession(
+    ref
+        .read(trainingSessionProvider.notifier)
+        .initializeSession(
           widget.exerciseType,
           config: SessionConfig(
             exerciseType: widget.exerciseType,
@@ -245,18 +244,17 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               Text(
                 '動作イメージ',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 '(準備中)',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onPrimaryContainer
-                          .withValues(alpha: 0.7),
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                ),
               ),
             ],
           ),
@@ -277,8 +275,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         Text(
           description,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
@@ -321,8 +319,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 Text(
                   '推奨向き',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -357,27 +355,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            ...(_getOrientationHints().map((hint) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle_outline,
-                        size: 16,
+            ...(_getOrientationHints().map(
+              (hint) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      hint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        hint,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ))),
+                    ),
+                  ],
+                ),
+              ),
+            )),
           ],
         ),
       ),
@@ -407,8 +405,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 Text(
                   '前回の記録',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -417,8 +415,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               Text(
                 '2024/11/22',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Row(
@@ -449,8 +447,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   child: Text(
                     'まだ記録がありません',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -478,14 +476,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         Text(
           '$label: ',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -510,8 +508,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 Text(
                   '今回の目標',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -519,9 +517,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             TextFormField(
               controller: _targetRepsController,
               keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
                 labelText: 'レップ数 (回)',
                 hintText: '例: 10、15、20',
@@ -546,8 +542,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             Text(
               '例: 10、15、20',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

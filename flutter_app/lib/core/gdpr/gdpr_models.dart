@@ -7,26 +7,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Export request status
-enum ExportStatus {
-  pending,
-  processing,
-  completed,
-  failed,
-  expired,
-}
+enum ExportStatus { pending, processing, completed, failed, expired }
 
 /// Export format type
-enum ExportFormat {
-  json,
-  csv,
-}
+enum ExportFormat { json, csv }
 
 /// Export scope type
-enum ExportScopeType {
-  all,
-  dateRange,
-  specific,
-}
+enum ExportScopeType { all, dateRange, specific }
 
 /// Deletion type
 enum DeletionType {
@@ -36,13 +23,7 @@ enum DeletionType {
 }
 
 /// Deletion status
-enum DeletionStatus {
-  pending,
-  scheduled,
-  processing,
-  completed,
-  cancelled,
-}
+enum DeletionStatus { pending, scheduled, processing, completed, cancelled }
 
 /// Export scope configuration
 class ExportScope {
@@ -73,13 +54,8 @@ class ExportScope {
     );
   }
 
-  factory ExportScope.specific({
-    required List<String> dataTypes,
-  }) {
-    return ExportScope(
-      type: ExportScopeType.specific,
-      dataTypes: dataTypes,
-    );
+  factory ExportScope.specific({required List<String> dataTypes}) {
+    return ExportScope(type: ExportScopeType.specific, dataTypes: dataTypes);
   }
 
   Map<String, dynamic> toMap() {
@@ -173,8 +149,7 @@ class ExportRequest {
       'scope': scope.toMap(),
       'status': status.name,
       'requestedAt': Timestamp.fromDate(requestedAt),
-      if (completedAt != null)
-        'completedAt': Timestamp.fromDate(completedAt!),
+      if (completedAt != null) 'completedAt': Timestamp.fromDate(completedAt!),
       if (downloadUrl != null) 'downloadUrl': downloadUrl,
       if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
       if (errorMessage != null) 'error': errorMessage,

@@ -24,10 +24,7 @@ final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 
 /// Bottom navigation bar with 4 tabs
 class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({
-    super.key,
-    required this.currentIndex,
-  });
+  const BottomNavBar({super.key, required this.currentIndex});
 
   /// Current selected tab index (0-3)
   final int currentIndex;

@@ -31,15 +31,10 @@ void main() {
     return ProviderScope(
       overrides: [
         authStateProvider.overrideWith(
-          (ref) => AuthStateNotifier(
-            auth: mockAuth,
-            firestore: fakeFirestore,
-          ),
+          (ref) => AuthStateNotifier(auth: mockAuth, firestore: fakeFirestore),
         ),
       ],
-      child: const MaterialApp(
-        home: LoginScreen(),
-      ),
+      child: const MaterialApp(home: LoginScreen()),
     );
   }
 
@@ -89,7 +84,9 @@ void main() {
       expect(find.text('メールアドレスの形式が正しくありません'), findsOneWidget);
     });
 
-    testWidgets('has minimum tap target size for accessibility', (tester) async {
+    testWidgets('has minimum tap target size for accessibility', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 

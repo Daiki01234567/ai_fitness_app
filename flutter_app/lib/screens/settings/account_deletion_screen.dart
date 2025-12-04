@@ -54,7 +54,8 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     final currentIndex = ref.watch(bottomNavIndexProvider);
 
     // Check if deletion is already scheduled
-    final hasPendingDeletion = deletionState.currentRequest != null &&
+    final hasPendingDeletion =
+        deletionState.currentRequest != null &&
         (deletionState.currentRequest!.status == DeletionStatus.scheduled ||
             deletionState.currentRequest!.status == DeletionStatus.pending);
 
@@ -115,8 +116,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
               ],
 
               // Deletion warning from auth state
-              if (authState.isDeletionScheduled &&
-                  !hasPendingDeletion) ...[
+              if (authState.isDeletionScheduled && !hasPendingDeletion) ...[
                 const SizedBox(height: AppSpacing.lg),
                 _buildLegacyDeletionWarning(context, ref),
               ],
@@ -295,9 +295,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -328,14 +328,14 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
           RadioListTile<DeletionType>(
             title: Text(
               '即時削除（復元不可）',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             subtitle: Text(
               '全データが即座に削除されます',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+                color: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.8),
               ),
             ),
             value: DeletionType.hard,
@@ -451,9 +451,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
-                ref
-                    .read(deletionRequestNotifierProvider.notifier)
-                    .clearError();
+                ref.read(deletionRequestNotifierProvider.notifier).clearError();
               },
             ),
           ],
@@ -462,10 +460,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     );
   }
 
-  Widget _buildDeleteButton(
-    BuildContext context,
-    DeletionRequestState state,
-  ) {
+  Widget _buildDeleteButton(BuildContext context, DeletionRequestState state) {
     final isHardDelete = state.selectedType == DeletionType.hard;
 
     return FilledButton(
@@ -490,9 +485,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
               children: [
                 const Icon(Icons.delete_forever),
                 const SizedBox(width: AppSpacing.sm),
-                Text(
-                  isHardDelete ? '今すぐ削除する' : 'アカウントを削除する',
-                ),
+                Text(isHardDelete ? '今すぐ削除する' : 'アカウントを削除する'),
               ],
             ),
     );
@@ -556,10 +549,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(
-              Icons.warning,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.warning, color: Theme.of(context).colorScheme.error),
             const SizedBox(width: AppSpacing.sm),
             const Text('最終確認'),
           ],
@@ -569,18 +559,14 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isHardDelete
-                  ? 'アカウントを今すぐ削除しますか？'
-                  : 'アカウントの削除を予約しますか？',
+              isHardDelete ? 'アカウントを今すぐ削除しますか？' : 'アカウントの削除を予約しますか？',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppSpacing.md),
             if (isHardDelete)
               Text(
                 'この操作は取り消せません。すべてのデータが即座に削除されます。',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               )
             else
               const Text('30日後にすべてのデータが削除されます。期間中はキャンセル可能です。'),
@@ -610,11 +596,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              isHardDelete
-                  ? 'アカウントを削除しました'
-                  : 'アカウント削除を予約しました',
-            ),
+            content: Text(isHardDelete ? 'アカウントを削除しました' : 'アカウント削除を予約しました'),
             backgroundColor: Colors.green,
           ),
         );

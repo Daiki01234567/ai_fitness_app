@@ -26,10 +26,7 @@ class HistoryService {
 
   /// Get sessions collection reference
   CollectionReference<Map<String, dynamic>> _sessionsRef(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('sessions');
+    return _firestore.collection('users').doc(userId).collection('sessions');
   }
 
   /// Fetch session records with optional filter
@@ -39,8 +36,9 @@ class HistoryService {
     int limit = 50,
     DocumentSnapshot? startAfter,
   }) async {
-    Query<Map<String, dynamic>> query = _sessionsRef(userId)
-        .orderBy('startTime', descending: true);
+    Query<Map<String, dynamic>> query = _sessionsRef(
+      userId,
+    ).orderBy('startTime', descending: true);
 
     // Apply date filters
     if (filter?.startDate != null) {
@@ -108,7 +106,10 @@ class HistoryService {
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     final snapshot = await _sessionsRef(userId)
-        .where('startTime', isGreaterThanOrEqualTo: startOfDay.toIso8601String())
+        .where(
+          'startTime',
+          isGreaterThanOrEqualTo: startOfDay.toIso8601String(),
+        )
         .where('startTime', isLessThan: endOfDay.toIso8601String())
         .orderBy('startTime', descending: true)
         .get();
@@ -119,14 +120,20 @@ class HistoryService {
   }
 
   /// Get daily summaries for a date range (for calendar view)
+  /// Optionally filter by exercise types for calendar marker display
   Future<List<DailySummary>> fetchDailySummaries({
     required String userId,
     required DateTime startDate,
     required DateTime endDate,
+    List<ExerciseType>? exerciseTypes,
   }) async {
     final sessions = await fetchSessions(
       userId: userId,
-      filter: HistoryFilter(startDate: startDate, endDate: endDate),
+      filter: HistoryFilter(
+        startDate: startDate,
+        endDate: endDate,
+        exerciseTypes: exerciseTypes,
+      ),
       limit: 500, // Sufficient for a month
     );
 
@@ -148,15 +155,17 @@ class HistoryService {
       return DailySummary(
         date: date,
         sessionCount: daySessions.length,
-        totalReps: daySessions.fold<int>(0, (s, session) => s + session.totalReps),
+        totalReps: daySessions.fold<int>(
+          0,
+          (s, session) => s + session.totalReps,
+        ),
         averageScore: daySessions.isEmpty
             ? 0
             : daySessions.map((s) => s.averageScore).reduce((a, b) => a + b) /
-                daySessions.length,
+                  daySessions.length,
         exerciseTypes: daySessions.map((s) => s.exerciseType).toSet().toList(),
       );
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
   }
 
   /// Get weekly statistics
@@ -189,14 +198,11 @@ class HistoryService {
       totalSessions: sessions.length,
       totalReps: sessions.fold(0, (acc, s) => acc + s.totalReps),
       totalSets: sessions.fold(0, (acc, s) => acc + s.totalSets),
-      totalDuration: sessions.fold(
-        Duration.zero,
-        (acc, s) => acc + s.duration,
-      ),
+      totalDuration: sessions.fold(Duration.zero, (acc, s) => acc + s.duration),
       averageScore: sessions.isEmpty
           ? 0
           : sessions.map((s) => s.averageScore).reduce((a, b) => a + b) /
-              sessions.length,
+                sessions.length,
       exerciseBreakdown: exerciseBreakdown,
       dailySummaries: dailySummaries,
     );
@@ -223,9 +229,14 @@ class HistoryService {
     while (currentWeekStart.isBefore(endDate)) {
       // Adjust to Monday if needed
       final dayOfWeek = currentWeekStart.weekday;
-      final weekStart = currentWeekStart.subtract(Duration(days: dayOfWeek - 1));
+      final weekStart = currentWeekStart.subtract(
+        Duration(days: dayOfWeek - 1),
+      );
 
-      final stats = await fetchWeeklyStats(userId: userId, weekStart: weekStart);
+      final stats = await fetchWeeklyStats(
+        userId: userId,
+        weekStart: weekStart,
+      );
       weeklyStats.add(stats);
 
       currentWeekStart = currentWeekStart.add(const Duration(days: 7));
@@ -247,14 +258,11 @@ class HistoryService {
       totalSessions: sessions.length,
       totalReps: sessions.fold(0, (acc, s) => acc + s.totalReps),
       totalSets: sessions.fold(0, (acc, s) => acc + s.totalSets),
-      totalDuration: sessions.fold(
-        Duration.zero,
-        (acc, s) => acc + s.duration,
-      ),
+      totalDuration: sessions.fold(Duration.zero, (acc, s) => acc + s.duration),
       averageScore: sessions.isEmpty
           ? 0
           : sessions.map((s) => s.averageScore).reduce((a, b) => a + b) /
-              sessions.length,
+                sessions.length,
       exerciseBreakdown: exerciseBreakdown,
       weeklyStats: weeklyStats,
       streakDays: streakInfo.$1,
@@ -263,15 +271,24 @@ class HistoryService {
   }
 
   /// Calculate current and best streak from sessions
-  (int currentStreak, int bestStreak) _calculateStreak(List<HistorySession> sessions) {
+  (int currentStreak, int bestStreak) _calculateStreak(
+    List<HistorySession> sessions,
+  ) {
     if (sessions.isEmpty) return (0, 0);
 
     // Get unique dates
-    final dates = sessions
-        .map((s) => DateTime(s.startTime.year, s.startTime.month, s.startTime.day))
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a)); // Most recent first
+    final dates =
+        sessions
+            .map(
+              (s) => DateTime(
+                s.startTime.year,
+                s.startTime.month,
+                s.startTime.day,
+              ),
+            )
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a)); // Most recent first
 
     if (dates.isEmpty) return (0, 0);
 
@@ -363,22 +380,31 @@ class HistoryService {
     }
 
     // Calculate score history
-    final scoreHistory = sessions
-        .map((s) => ProgressDataPoint(
-              date: s.startTime,
-              value: s.averageScore,
-              exerciseType: exerciseType,
-            ))
-        .toList()
-      ..sort((a, b) => a.date.compareTo(b.date));
+    final scoreHistory =
+        sessions
+            .map(
+              (s) => ProgressDataPoint(
+                date: s.startTime,
+                value: s.averageScore,
+                exerciseType: exerciseType,
+              ),
+            )
+            .toList()
+          ..sort((a, b) => a.date.compareTo(b.date));
 
     // Calculate improvement (comparing first 5 and last 5 sessions)
     double scoreImprovement = 0;
     if (sessions.length >= 5) {
       final sorted = sessions.toList()
         ..sort((a, b) => a.startTime.compareTo(b.startTime));
-      final first5Avg = sorted.take(5).map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
-      final last5Avg = sorted.reversed.take(5).map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
+      final first5Avg =
+          sorted.take(5).map((s) => s.averageScore).reduce((a, b) => a + b) / 5;
+      final last5Avg =
+          sorted.reversed
+              .take(5)
+              .map((s) => s.averageScore)
+              .reduce((a, b) => a + b) /
+          5;
       scoreImprovement = ((last5Avg - first5Avg) / first5Avg) * 100;
     }
 
@@ -397,9 +423,12 @@ class HistoryService {
       exerciseType: exerciseType,
       totalSessions: sessions.length,
       totalReps: sessions.fold(0, (acc, s) => acc + s.totalReps),
-      averageScore: sessions.map((s) => s.averageScore).reduce((a, b) => a + b) /
+      averageScore:
+          sessions.map((s) => s.averageScore).reduce((a, b) => a + b) /
           sessions.length,
-      bestScore: sessions.map((s) => s.averageScore).reduce((a, b) => a > b ? a : b),
+      bestScore: sessions
+          .map((s) => s.averageScore)
+          .reduce((a, b) => a > b ? a : b),
       scoreImprovement: scoreImprovement,
       scoreHistory: scoreHistory,
       commonIssues: commonIssues,
@@ -442,11 +471,13 @@ class HistoryService {
     );
 
     return sessions
-        .map((s) => ProgressDataPoint(
-              date: s.startTime,
-              value: s.averageScore,
-              exerciseType: s.exerciseType,
-            ))
+        .map(
+          (s) => ProgressDataPoint(
+            date: s.startTime,
+            value: s.averageScore,
+            exerciseType: s.exerciseType,
+          ),
+        )
         .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
@@ -475,9 +506,9 @@ class HistoryService {
     required String sessionId,
     required BodyCondition condition,
   }) async {
-    await _sessionsRef(userId).doc(sessionId).update({
-      'bodyCondition': condition.toJson(),
-    });
+    await _sessionsRef(
+      userId,
+    ).doc(sessionId).update({'bodyCondition': condition.toJson()});
   }
 
   /// Delete session

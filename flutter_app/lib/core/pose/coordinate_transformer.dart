@@ -122,27 +122,15 @@ class CoordinateTransformer {
     switch (fit) {
       case BoxFit.cover:
         if (imageAspectRatio > screenAspectRatio) {
-          return Size(
-            screenSize.height * imageAspectRatio,
-            screenSize.height,
-          );
+          return Size(screenSize.height * imageAspectRatio, screenSize.height);
         } else {
-          return Size(
-            screenSize.width,
-            screenSize.width / imageAspectRatio,
-          );
+          return Size(screenSize.width, screenSize.width / imageAspectRatio);
         }
       case BoxFit.contain:
         if (imageAspectRatio > screenAspectRatio) {
-          return Size(
-            screenSize.width,
-            screenSize.width / imageAspectRatio,
-          );
+          return Size(screenSize.width, screenSize.width / imageAspectRatio);
         } else {
-          return Size(
-            screenSize.height * imageAspectRatio,
-            screenSize.height,
-          );
+          return Size(screenSize.height * imageAspectRatio, screenSize.height);
         }
       default:
         return screenSize;

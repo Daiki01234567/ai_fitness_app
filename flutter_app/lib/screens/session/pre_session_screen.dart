@@ -34,10 +34,7 @@ import '../../core/form_analyzer/form_analyzer.dart';
 
 /// Pre-session screen for camera setup
 class PreSessionScreen extends ConsumerStatefulWidget {
-  const PreSessionScreen({
-    required this.exerciseType,
-    super.key,
-  });
+  const PreSessionScreen({required this.exerciseType, super.key});
 
   final ExerciseType exerciseType;
 
@@ -87,7 +84,9 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
         setState(() {
           _countdownValue--;
         });
-        ref.read(trainingSessionProvider.notifier).updateCountdown(_countdownValue);
+        ref
+            .read(trainingSessionProvider.notifier)
+            .updateCountdown(_countdownValue);
       } else {
         timer.cancel();
         _navigateToActiveSession();
@@ -103,13 +102,29 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
     });
   }
 
+  /// Switch between front and back camera
+  Future<void> _switchCamera() async {
+    // Stop the pose session temporarily
+    await ref.read(poseSessionControllerProvider.notifier).pauseSession();
+
+    // Switch camera
+    final success = await ref.read(cameraStateProvider.notifier).switchCamera();
+
+    if (success) {
+      // Resume the pose session with new camera
+      await ref.read(poseSessionControllerProvider.notifier).resumeSession();
+    }
+  }
+
   void _navigateToActiveSession() {
     ref.read(trainingSessionProvider.notifier).startActiveSession();
     context.goToActiveTraining();
   }
 
   void _handleChecklistChange(String itemId, bool checked) {
-    ref.read(trainingSessionProvider.notifier).setChecklistItem(itemId, checked);
+    ref
+        .read(trainingSessionProvider.notifier)
+        .setChecklistItem(itemId, checked);
 
     final sessionState = ref.read(trainingSessionProvider);
     if (sessionState.isSetupComplete && !_isCountingDown) {
@@ -137,6 +152,15 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
           },
         ),
         title: const Text('カメラ設定'),
+        actions: [
+          // Camera switch button
+          if (cameraState.isReady && cameraState.availableCameras.length > 1)
+            IconButton(
+              icon: const Icon(Icons.flip_camera_ios),
+              tooltip: 'カメラを切り替え',
+              onPressed: _isCountingDown ? null : _switchCamera,
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -152,10 +176,7 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
               _buildExerciseInfo(sessionState.exerciseInfo!),
 
             // Checklist section
-            Expanded(
-              flex: 2,
-              child: _buildChecklistSection(sessionState),
-            ),
+            Expanded(flex: 2, child: _buildChecklistSection(sessionState)),
 
             // Action button
             Padding(
@@ -175,14 +196,18 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
     context.goToTraining();
   }
 
-  Widget _buildCameraPreview(CameraServiceState cameraState, PoseSessionState poseState) {
+  Widget _buildCameraPreview(
+    CameraServiceState cameraState,
+    PoseSessionState poseState,
+  ) {
     if (poseState.isInitializing) {
       return _buildLoadingState();
     }
 
     // Check for errors using the structured error first, then fallback to message
     if (poseState.hasError) {
-      final error = poseState.error ??
+      final error =
+          poseState.error ??
           (poseState.errorMessage != null
               ? CameraError.fromMessage(poseState.errorMessage!)
               : const CameraError(
@@ -218,9 +243,7 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
               // Camera preview
               Transform.scale(
                 scale: 1.0,
-                child: Center(
-                  child: CameraPreview(controller),
-                ),
+                child: Center(child: CameraPreview(controller)),
               ),
 
               // Skeleton overlay
@@ -251,7 +274,8 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
                           scale: scale,
                           child: Text(
                             '$_countdownValue',
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            style: Theme.of(context).textTheme.displayLarge
+                                ?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 120,
@@ -280,9 +304,9 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
           Expanded(
             child: Text(
               info.name,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           Container(
@@ -317,9 +341,9 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
           children: [
             Text(
               '確認事項',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Divider(),
             Expanded(
@@ -359,8 +383,8 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
           Text(
             '3秒後に自動開始...',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           OutlinedButton(
@@ -376,9 +400,7 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
 
     return FilledButton(
       onPressed: sessionState.isSetupComplete ? _navigateToActiveSession : null,
-      style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(48),
-      ),
+      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       child: const Text('開始'),
     );
   }
@@ -394,15 +416,17 @@ class _PreSessionScreenState extends ConsumerState<PreSessionScreen> {
           Text(
             'カメラを起動中...',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'しばらくお待ちください',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
           ),
         ],
       ),

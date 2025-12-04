@@ -5,17 +5,18 @@
 ///
 /// Displays:
 /// - User greeting
-/// - Today's session count (large display)
-/// - Weekly progress bar chart (7 days)
-/// - Recent sessions (latest 2)
-/// - Training start button
+/// - Today's training status (remaining/total with plan info)
+/// - Training start button (large and prominent)
+/// - Quick access shortcuts for exercise selection
+/// - Recent sessions (latest 3)
+/// - Weekly statistics (session count + average score)
 /// - Free plan limits and upgrade link
 ///
 /// Legal notice: This is NOT a medical device.
 /// All feedback is for reference purposes only.
 ///
-/// @version 2.1.0
-/// @date 2025-12-03
+/// @version 2.2.0
+/// @date 2025-12-04
 library;
 
 import 'package:flutter/material.dart';
@@ -91,27 +92,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: AppSpacing.lg),
                 ],
 
-                // Today's session count
-                _buildTodaySessionCard(context, homeState),
+                // Today's training status (remaining/total with plan info)
+                _buildTodayTrainingCard(context, homeState),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Training start button (large and prominent)
+                _buildTrainingStartButton(context, homeState),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Quick access shortcuts for exercise selection
+                _buildQuickAccessSection(context),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Recent sessions (latest 3)
+                _buildRecentSessionsSection(context, homeState),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Weekly statistics (session count + average score)
+                _buildWeeklyStatsCard(context, homeState),
                 const SizedBox(height: AppSpacing.lg),
 
                 // Weekly progress chart
                 _buildWeeklyProgressCard(context, homeState),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Recent sessions
-                _buildRecentSessionsSection(context, homeState),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Training start button
-                _buildTrainingStartButton(context),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Free plan limit display
-                if (homeState.shouldShowUpgradePrompt) ...[
-                  _buildPlanLimitCard(context, homeState),
-                  const SizedBox(height: AppSpacing.md),
-                ],
+                const SizedBox(height: AppSpacing.md),
               ],
             ),
           ),
@@ -145,16 +148,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'こんにちは！',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  Text('こんにちは！', style: Theme.of(context).textTheme.bodyMedium),
                   Text(
                     '${user?.displayName ?? userData?['displayName'] as String? ?? 'ユーザー'}さん',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -202,11 +201,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             TextButton(
               onPressed: () {
                 ref.read(authStateProvider.notifier).sendEmailVerification();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('確認メールを再送信しました'),
-                  ),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('確認メールを再送信しました')));
               },
               child: const Text('再送信'),
             ),
@@ -262,9 +259,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// Build today's session count card with large number display
-  Widget _buildTodaySessionCard(BuildContext context, HomeScreenState state) {
+  /// Build today's training status card with usage limits
+  /// Shows remaining/total for free plan, unlimited for premium
+  Widget _buildTodayTrainingCard(BuildContext context, HomeScreenState state) {
     final theme = Theme.of(context);
+    final isPremium = state.userPlan == UserPlan.premium;
+    final remaining = state.remainingSessions;
+    final limit = state.dailyLimit;
+    final used = state.todayUsageCount;
 
     return Card(
       child: Padding(
@@ -274,14 +276,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.today,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
+                Icon(Icons.today, color: theme.colorScheme.primary, size: 20),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
-                  '今日のセッション',
+                  '今日のトレーニング',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -289,27 +287,125 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            Center(
-              child: state.isLoading
-                  ? const CircularProgressIndicator()
-                  : Column(
-                      children: [
-                        Text(
-                          '${state.todaySessionCount}',
-                          style: theme.textTheme.displayLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
+            if (state.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Column(
+                children: [
+                  // Progress bar for free plan
+                  if (!isPremium) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: used / limit,
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation(
+                          remaining > 0
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.error,
                         ),
-                        Text(
-                          '回',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                        minHeight: 12,
+                      ),
                     ),
-            ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  // Usage display
+                  Center(
+                    child: isPremium
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.all_inclusive,
+                                size: 36,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                '無制限',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  style: theme.textTheme.bodyLarge,
+                                  children: [
+                                    TextSpan(
+                                      text: '残り ',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: '$remaining',
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: remaining > 0
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.error,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: ' 回 / $limit回',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                  vertical: AppSpacing.xs,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                ),
+                                child: Text(
+                                  '無料プラン',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                  // Upgrade prompt when limit reached
+                  if (!isPremium && remaining <= 0) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton.tonal(
+                      onPressed: () {
+                        // Navigate to subscription screen
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('プレミアムプランは準備中です')),
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, size: 18),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            'プレミアムで無制限に',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
           ],
         ),
       ),
@@ -356,9 +452,240 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  /// Build weekly statistics card showing session count and average score
+  Widget _buildWeeklyStatsCard(BuildContext context, HomeScreenState state) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.analytics_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  '今週の統計',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            if (state.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Row(
+                children: [
+                  // Weekly session count
+                  Expanded(
+                    child: _buildStatItem(
+                      context,
+                      icon: Icons.fitness_center,
+                      label: 'セッション数',
+                      value: '${state.weeklySessionCount}',
+                      unit: '回',
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 60,
+                    color: theme.colorScheme.outlineVariant,
+                  ),
+                  // Weekly average score
+                  Expanded(
+                    child: _buildStatItem(
+                      context,
+                      icon: Icons.star_outline,
+                      label: '平均スコア',
+                      value: state.weeklyAverageScore > 0
+                          ? state.weeklyAverageScore.toStringAsFixed(0)
+                          : '-',
+                      unit: '点',
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build a single stat item for the weekly stats card
+  Widget _buildStatItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required String unit,
+  }) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Icon(
+          icon,
+          size: 24,
+          color: theme.colorScheme.primary,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        RichText(
+          text: TextSpan(
+            style: theme.textTheme.bodyLarge,
+            children: [
+              TextSpan(
+                text: value,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              TextSpan(
+                text: unit,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build quick access section for exercise selection shortcuts
+  Widget _buildQuickAccessSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final exercises = ExerciseType.values;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.flash_on,
+              color: theme.colorScheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'クイックアクセス',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          height: 100,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: exercises.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(width: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final exercise = exercises[index];
+              return _buildExerciseShortcut(context, exercise);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build a single exercise shortcut button
+  Widget _buildExerciseShortcut(BuildContext context, ExerciseType exercise) {
+    final theme = Theme.of(context);
+    final exerciseName = AnalyzerFactory.getDisplayName(exercise);
+    final icon = _getExerciseIcon(exercise);
+
+    return InkWell(
+      onTap: () {
+        context.goToExerciseDetail(exercise);
+      },
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 24,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              exerciseName,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Get icon for exercise type
+  IconData _getExerciseIcon(ExerciseType type) {
+    switch (type) {
+      case ExerciseType.squat:
+        return Icons.accessibility_new;
+      case ExerciseType.armCurl:
+        return Icons.fitness_center;
+      case ExerciseType.sideRaise:
+        return Icons.pan_tool_outlined;
+      case ExerciseType.shoulderPress:
+        return Icons.keyboard_double_arrow_up;
+      case ExerciseType.pushUp:
+        return Icons.sports_gymnastics;
+    }
+  }
+
   /// Build recent sessions section
   Widget _buildRecentSessionsSection(
-      BuildContext context, HomeScreenState state) {
+    BuildContext context,
+    HomeScreenState state,
+  ) {
     final theme = Theme.of(context);
 
     return Column(
@@ -369,11 +696,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.history,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
+                Icon(Icons.history, color: theme.colorScheme.primary, size: 20),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   '直近の履歴',
@@ -426,7 +749,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'トレーニングを開始して\n記録を始めましょう！',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.7,
+                ),
               ),
               textAlign: TextAlign.center,
             ),
@@ -506,116 +831,95 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// Build training start button
-  Widget _buildTrainingStartButton(BuildContext context) {
+  /// Build training start button (large and prominent)
+  /// Handles free plan limit check
+  Widget _buildTrainingStartButton(BuildContext context, HomeScreenState state) {
+    final theme = Theme.of(context);
+    final hasReachedLimit = state.hasReachedLimit;
+
     return FilledButton(
-      onPressed: () {
-        context.goToTraining();
-      },
+      onPressed: hasReachedLimit
+          ? () {
+              // Show upgrade dialog when limit reached
+              _showUpgradeDialog(context);
+            }
+          : () {
+              context.goToTraining();
+            },
       style: FilledButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        minimumSize: const Size(double.infinity, 56),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        backgroundColor: hasReachedLimit
+            ? theme.colorScheme.surfaceContainerHighest
+            : theme.colorScheme.primary,
+        foregroundColor: hasReachedLimit
+            ? theme.colorScheme.onSurfaceVariant
+            : theme.colorScheme.onPrimary,
+        minimumSize: const Size(double.infinity, 64),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
+        elevation: hasReachedLimit ? 0 : 2,
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.play_arrow, size: 28),
-          SizedBox(width: AppSpacing.sm),
+          Icon(
+            hasReachedLimit ? Icons.lock : Icons.play_arrow,
+            size: 32,
+          ),
+          const SizedBox(width: AppSpacing.sm),
           Text(
-            'トレーニング開始',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            hasReachedLimit ? '本日の上限に達しました' : 'トレーニングを始める',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  /// Build free plan limit display card
-  Widget _buildPlanLimitCard(BuildContext context, HomeScreenState state) {
+  /// Show upgrade dialog when daily limit is reached
+  void _showUpgradeDialog(BuildContext context) {
     final theme = Theme.of(context);
-    final remaining = state.remainingSessions;
-    final limit = state.dailyLimit;
-    final used = state.todayUsageCount;
 
-    return Card(
-      color: theme.colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('本日の上限に達しました'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  '無料プラン: 残り $remaining回/$limit回',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            // Progress bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: used / limit,
-                backgroundColor: theme.colorScheme.outlineVariant,
-                valueColor: AlwaysStoppedAnimation(
-                  remaining > 0 ? theme.colorScheme.primary : theme.colorScheme.error,
-                ),
-                minHeight: 6,
-              ),
+            Text(
+              '無料プランでは1日3回までトレーニングできます。',
+              style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.md),
-            TextButton(
-              onPressed: () {
-                // Navigate to subscription screen
-                // TODO: Implement when subscription screen is ready
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('プレミアムプランは準備中です'),
-                  ),
-                );
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.star,
-                    size: 16,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    'プレミアムにアップグレード',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+            Text(
+              'プレミアムプランにアップグレードすると、無制限でトレーニングできます。',
+              style: theme.textTheme.bodyMedium,
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('閉じる'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // TODO: Navigate to subscription screen when ready
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('プレミアムプランは準備中です')),
+              );
+            },
+            child: const Text('アップグレード'),
+          ),
+        ],
       ),
     );
   }
+
 }
 
 /// Weekly bar chart widget for progress display
@@ -640,11 +944,14 @@ class _WeeklyBarChart extends StatelessWidget {
     }
 
     // Calculate max value for scaling
-    final maxCount = data.map((d) => d.sessionCount).fold(1, (a, b) => a > b ? a : b);
+    final maxCount = data
+        .map((d) => d.sessionCount)
+        .fold(1, (a, b) => a > b ? a : b);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final barWidth = (constraints.maxWidth - 48) / 7; // 48 = padding between bars
+        final barWidth =
+            (constraints.maxWidth - 48) / 7; // 48 = padding between bars
         final maxHeight = constraints.maxHeight - 24; // 24 = label height
 
         return Row(
@@ -652,7 +959,10 @@ class _WeeklyBarChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: data.map((dayData) {
             final barHeight = maxCount > 0
-                ? (dayData.sessionCount / maxCount * maxHeight).clamp(4.0, maxHeight)
+                ? (dayData.sessionCount / maxCount * maxHeight).clamp(
+                    4.0,
+                    maxHeight,
+                  )
                 : 4.0;
             final isToday = _isToday(dayData.date);
 

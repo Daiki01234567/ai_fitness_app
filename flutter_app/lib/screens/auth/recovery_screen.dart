@@ -60,24 +60,21 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
 
   /// Start countdown timer for recovery deadline
   void _startCountdownTimer() {
-    _countdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (_recoveryDeadline != null) {
-          final remaining = _recoveryDeadline!.difference(DateTime.now());
-          if (remaining.isNegative) {
-            setState(() {
-              _remainingTime = Duration.zero;
-            });
-            _countdownTimer?.cancel();
-          } else {
-            setState(() {
-              _remainingTime = remaining;
-            });
-          }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_recoveryDeadline != null) {
+        final remaining = _recoveryDeadline!.difference(DateTime.now());
+        if (remaining.isNegative) {
+          setState(() {
+            _remainingTime = Duration.zero;
+          });
+          _countdownTimer?.cancel();
+        } else {
+          setState(() {
+            _remainingTime = remaining;
+          });
         }
-      },
-    );
+      }
+    });
   }
 
   @override
@@ -197,7 +194,8 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   }
 
   Widget _buildDeadlineCard(BuildContext context) {
-    final isExpired = _remainingTime.isNegative || _remainingTime == Duration.zero;
+    final isExpired =
+        _remainingTime.isNegative || _remainingTime == Duration.zero;
 
     return Card(
       color: isExpired
@@ -311,7 +309,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
               style: TextStyle(
                 color: isActive
                     ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -324,17 +324,16 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
             fontSize: 12,
             color: isActive
                 ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildEmailSection(
-    BuildContext context,
-    AccountRecoveryState state,
-  ) {
+  Widget _buildEmailSection(BuildContext context, AccountRecoveryState state) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -344,9 +343,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
             Text(
               'Step 1: メールアドレス',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             TextFormField(
@@ -405,10 +404,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     );
   }
 
-  Widget _buildCodeSection(
-    BuildContext context,
-    AccountRecoveryState state,
-  ) {
+  Widget _buildCodeSection(BuildContext context, AccountRecoveryState state) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -418,16 +414,16 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
             Text(
               'Step 2: 復元コード',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'メールに送信された6桁の復元コードを入力してください',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             TextFormField(
@@ -435,9 +431,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
               keyboardType: TextInputType.number,
               maxLength: 6,
               enabled: !state.isLoading,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(
                 labelText: '復元コード',
                 hintText: '123456',
@@ -478,10 +472,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                     padding: EdgeInsets.zero,
                     minimumSize: const Size(0, 0),
                   ),
-                  child: const Text(
-                    '再送信',
-                    style: TextStyle(fontSize: 12),
-                  ),
+                  child: const Text('再送信', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -526,16 +517,11 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     );
   }
 
-  Widget _buildActionButtons(
-    BuildContext context,
-    AccountRecoveryState state,
-  ) {
+  Widget _buildActionButtons(BuildContext context, AccountRecoveryState state) {
     if (!_codeSent) {
       // Step 1: Request recovery code
       return FilledButton(
-        onPressed: state.isLoading || _isLoading
-            ? null
-            : _requestRecoveryCode,
+        onPressed: state.isLoading || _isLoading ? null : _requestRecoveryCode,
         child: state.isLoading || _isLoading
             ? const SizedBox(
                 width: 24,
@@ -559,9 +545,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
       return Column(
         children: [
           FilledButton(
-            onPressed: state.isLoading || _isLoading
-                ? null
-                : _recoverAccount,
+            onPressed: state.isLoading || _isLoading ? null : _recoverAccount,
             child: state.isLoading || _isLoading
                 ? const SizedBox(
                     width: 24,
@@ -582,7 +566,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           OutlinedButton(
-            onPressed: state.isLoading ? null : () => context.go(AppRoutes.login),
+            onPressed: state.isLoading
+                ? null
+                : () => context.go(AppRoutes.login),
             child: const Text('キャンセル'),
           ),
         ],

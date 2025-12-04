@@ -114,7 +114,9 @@ class HistorySession {
       note: json['note'] as String?,
       tags: (json['tags'] as List<dynamic>?)?.cast<String>(),
       bodyCondition: json['bodyCondition'] != null
-          ? BodyCondition.fromJson(json['bodyCondition'] as Map<String, dynamic>)
+          ? BodyCondition.fromJson(
+              json['bodyCondition'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -266,8 +268,7 @@ class WeeklyStats {
   final List<DailySummary> dailySummaries;
 
   /// Get active days count
-  int get activeDays =>
-      dailySummaries.where((d) => d.sessionCount > 0).length;
+  int get activeDays => dailySummaries.where((d) => d.sessionCount > 0).length;
 }
 
 /// Monthly statistics
@@ -299,8 +300,7 @@ class MonthlyStats {
   final int bestStreakDays;
 
   /// Get active days count
-  int get activeDays =>
-      weeklyStats.fold(0, (sum, w) => sum + w.activeDays);
+  int get activeDays => weeklyStats.fold(0, (sum, w) => sum + w.activeDays);
 }
 
 /// Progress data point for charts
@@ -317,13 +317,7 @@ class ProgressDataPoint {
 }
 
 /// Analysis period for filtering
-enum AnalysisPeriod {
-  week,
-  month,
-  threeMonths,
-  year,
-  custom,
-}
+enum AnalysisPeriod { week, month, threeMonths, year, custom }
 
 /// History filter options
 class HistoryFilter {
@@ -390,7 +384,8 @@ class ExerciseStats {
   final int totalReps;
   final double averageScore;
   final double bestScore;
-  final double scoreImprovement; // Percentage change from first to last 5 sessions
+  final double
+  scoreImprovement; // Percentage change from first to last 5 sessions
   final List<ProgressDataPoint> scoreHistory;
   final List<String> commonIssues;
 }

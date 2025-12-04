@@ -1,4 +1,4 @@
-// Login Screen
+﻿// Login Screen
 // Email/password authentication with social login options
 //
 // @version 1.0.0
@@ -27,6 +27,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Clear force logout flag when login screen is displayed
+    // This ensures the flag is cleared after successful navigation to login
+    // and prevents redirect loops caused by timing issues in router
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authStateProvider.notifier).clearForceLogout();
+    });
+  }
 
   @override
   void dispose() {

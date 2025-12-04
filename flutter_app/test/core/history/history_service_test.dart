@@ -54,18 +54,18 @@ void main() {
         .collection('sessions')
         .doc(id)
         .set({
-      'id': id,
-      'userId': userId,
-      'exerciseType': exerciseType.name,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
-      'totalReps': totalReps,
-      'totalSets': totalSets,
-      'averageScore': averageScore,
-      'sets': sets ?? [],
-      'note': note,
-      'tags': tags,
-    });
+          'id': id,
+          'userId': userId,
+          'exerciseType': exerciseType.name,
+          'startTime': startTime.toIso8601String(),
+          'endTime': endTime.toIso8601String(),
+          'totalReps': totalReps,
+          'totalSets': totalSets,
+          'averageScore': averageScore,
+          'sets': sets ?? [],
+          'note': note,
+          'tags': tags,
+        });
   }
 
   /// Helper to create multiple sessions for a date range
@@ -95,7 +95,7 @@ void main() {
             'averageScore': 75.0 + i * 2,
             'durationMs': 300000,
             'issues': ['issue_$i'],
-          }
+          },
         ],
       );
     }
@@ -234,7 +234,10 @@ void main() {
       );
 
       expect(sessions.length, equals(2));
-      expect(sessions.every((s) => s.exerciseType == ExerciseType.squat), isTrue);
+      expect(
+        sessions.every((s) => s.exerciseType == ExerciseType.squat),
+        isTrue,
+      );
     });
 
     test('スコアレンジでセッションをフィルタリングする（クライアントサイド）', () async {
@@ -694,7 +697,7 @@ void main() {
               'averageScore': 75.0 + i * 3,
               'durationMs': 300000,
               'issues': ['knee_over_toe'],
-            }
+            },
           ],
         );
       }
@@ -719,7 +722,9 @@ void main() {
           userId: testUserId,
           exerciseType: ExerciseType.armCurl,
           startTime: DateTime.now().subtract(Duration(days: 10 - i)),
-          endTime: DateTime.now().subtract(Duration(days: 10 - i, minutes: -30)),
+          endTime: DateTime.now().subtract(
+            Duration(days: 10 - i, minutes: -30),
+          ),
           totalReps: 30,
           totalSets: 3,
           averageScore: 70.0 + i * 2, // Improving from 70 to 88
@@ -730,7 +735,7 @@ void main() {
               'averageScore': 70.0 + i * 2,
               'durationMs': 300000,
               'issues': [],
-            }
+            },
           ],
         );
       }
@@ -948,7 +953,8 @@ void main() {
           .doc('session-123')
           .get();
 
-      final bodyCondition = doc.data()!['bodyCondition'] as Map<String, dynamic>;
+      final bodyCondition =
+          doc.data()!['bodyCondition'] as Map<String, dynamic>;
       expect(bodyCondition['energyLevel'], equals(5));
       expect(bodyCondition['sleepQuality'], equals(4));
       expect(bodyCondition['muscleStiffness'], equals(2));
@@ -1063,7 +1069,10 @@ void main() {
       );
 
       expect(progress.length, equals(3));
-      expect(progress.every((p) => p.exerciseType == ExerciseType.squat), isTrue);
+      expect(
+        progress.every((p) => p.exerciseType == ExerciseType.squat),
+        isTrue,
+      );
     });
 
     test('日付順にソートされたデータを返す', () async {

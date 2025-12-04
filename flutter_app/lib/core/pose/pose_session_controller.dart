@@ -21,16 +21,18 @@ import 'pose_detector_service.dart';
 /// 姿勢セッションコントローラープロバイダー
 final poseSessionControllerProvider =
     StateNotifierProvider<PoseSessionController, PoseSessionState>((ref) {
-  final cameraStateNotifier = ref.watch(cameraStateProvider.notifier);
-  final poseDetectionNotifier = ref.watch(poseDetectionStateProvider.notifier);
-  final frameRateMonitor = ref.watch(frameRateMonitorProvider.notifier);
+      final cameraStateNotifier = ref.watch(cameraStateProvider.notifier);
+      final poseDetectionNotifier = ref.watch(
+        poseDetectionStateProvider.notifier,
+      );
+      final frameRateMonitor = ref.watch(frameRateMonitorProvider.notifier);
 
-  return PoseSessionController(
-    cameraStateNotifier: cameraStateNotifier,
-    poseDetectionNotifier: poseDetectionNotifier,
-    frameRateMonitor: frameRateMonitor,
-  );
-});
+      return PoseSessionController(
+        cameraStateNotifier: cameraStateNotifier,
+        poseDetectionNotifier: poseDetectionNotifier,
+        frameRateMonitor: frameRateMonitor,
+      );
+    });
 
 /// 姿勢セッション状態
 class PoseSessionState {
@@ -107,10 +109,10 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     required CameraStateNotifier cameraStateNotifier,
     required PoseDetectionStateNotifier poseDetectionNotifier,
     required FrameRateMonitorNotifier frameRateMonitor,
-  })  : _cameraStateNotifier = cameraStateNotifier,
-        _poseDetectionNotifier = poseDetectionNotifier,
-        _frameRateMonitor = frameRateMonitor,
-        super(const PoseSessionState()) {
+  }) : _cameraStateNotifier = cameraStateNotifier,
+       _poseDetectionNotifier = poseDetectionNotifier,
+       _frameRateMonitor = frameRateMonitor,
+       super(const PoseSessionState()) {
     // フォールバックコールバックを設定
     _frameRateMonitor.onFallbackNeeded = _handleFallback;
   }
@@ -212,22 +214,25 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     final rotation = _getImageRotation();
 
     // フレームを非同期で処理
-    _poseDetectionNotifier.processImage(image, rotation).then((poseFrame) {
-      if (poseFrame != null) {
-        // FPS計算用にフレームを記録
-        _frameRateMonitor.recordFrame(poseFrame.timestamp);
+    _poseDetectionNotifier
+        .processImage(image, rotation)
+        .then((poseFrame) {
+          if (poseFrame != null) {
+            // FPS計算用にフレームを記録
+            _frameRateMonitor.recordFrame(poseFrame.timestamp);
 
-        // 新しい姿勢で状態を更新
-        state = state.copyWith(
-          currentPose: poseFrame,
-          totalFramesProcessed: state.totalFramesProcessed + 1,
-        );
-      }
-      _isProcessingFrame = false;
-    }).catchError((e) {
-      debugPrint('PoseSessionController: Frame processing error: $e');
-      _isProcessingFrame = false;
-    });
+            // 新しい姿勢で状態を更新
+            state = state.copyWith(
+              currentPose: poseFrame,
+              totalFramesProcessed: state.totalFramesProcessed + 1,
+            );
+          }
+          _isProcessingFrame = false;
+        })
+        .catchError((e) {
+          debugPrint('PoseSessionController: Frame processing error: $e');
+          _isProcessingFrame = false;
+        });
   }
 
   /// デバイスの向きに基づいて画像回転を取得
@@ -269,11 +274,15 @@ class PoseSessionController extends StateNotifier<PoseSessionState> {
     final fallbackConfig = currentConfig.fallback;
 
     if (fallbackConfig == null) {
-      debugPrint('PoseSessionController: No more fallback configurations available');
+      debugPrint(
+        'PoseSessionController: No more fallback configurations available',
+      );
       return;
     }
 
-    debugPrint('PoseSessionController: Applying fallback config: $fallbackConfig');
+    debugPrint(
+      'PoseSessionController: Applying fallback config: $fallbackConfig',
+    );
 
     // 現在のセッションを一時停止
     await pauseSession();

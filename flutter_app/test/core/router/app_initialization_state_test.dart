@@ -96,14 +96,8 @@ void main() {
         isConsentLoading: false,
       );
 
-      expect(
-        state.toString(),
-        contains('AppInitializationState'),
-      );
-      expect(
-        state.toString(),
-        contains('ready'),
-      );
+      expect(state.toString(), contains('AppInitializationState'));
+      expect(state.toString(), contains('ready'));
     });
   });
 

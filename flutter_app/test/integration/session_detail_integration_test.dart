@@ -84,35 +84,37 @@ void main() {
       totalReps: totalReps,
       totalSets: totalSets,
       averageScore: averageScore,
-      sets: sets ?? [
-        const HistorySetRecord(
-          setNumber: 1,
-          reps: 15,
-          averageScore: 88.0,
-          duration: Duration(minutes: 5),
-          issues: ['knee_over_toe'],
-          bestRepScore: 92.0,
-          worstRepScore: 75.0,
-        ),
-        const HistorySetRecord(
-          setNumber: 2,
-          reps: 15,
-          averageScore: 85.0,
-          duration: Duration(minutes: 5),
-          issues: [],
-          bestRepScore: 90.0,
-          worstRepScore: 78.0,
-        ),
-        const HistorySetRecord(
-          setNumber: 3,
-          reps: 15,
-          averageScore: 82.0,
-          duration: Duration(minutes: 5),
-          issues: ['back_rounding'],
-          bestRepScore: 88.0,
-          worstRepScore: 72.0,
-        ),
-      ],
+      sets:
+          sets ??
+          [
+            const HistorySetRecord(
+              setNumber: 1,
+              reps: 15,
+              averageScore: 88.0,
+              duration: Duration(minutes: 5),
+              issues: ['knee_over_toe'],
+              bestRepScore: 92.0,
+              worstRepScore: 75.0,
+            ),
+            const HistorySetRecord(
+              setNumber: 2,
+              reps: 15,
+              averageScore: 85.0,
+              duration: Duration(minutes: 5),
+              issues: [],
+              bestRepScore: 90.0,
+              worstRepScore: 78.0,
+            ),
+            const HistorySetRecord(
+              setNumber: 3,
+              reps: 15,
+              averageScore: 82.0,
+              duration: Duration(minutes: 5),
+              issues: ['back_rounding'],
+              bestRepScore: 88.0,
+              worstRepScore: 72.0,
+            ),
+          ],
       note: note,
       tags: tags,
       bodyCondition: bodyCondition,
@@ -149,9 +151,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('ja', 'JP'),
-        ],
+        supportedLocales: const [Locale('ja', 'JP')],
         locale: const Locale('ja', 'JP'),
         home: SessionDetailScreen(session: session),
       ),
@@ -228,14 +228,14 @@ void main() {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            supportedLocales: const [
-              Locale('ja', 'JP'),
-            ],
+            supportedLocales: const [Locale('ja', 'JP')],
             locale: const Locale('ja', 'JP'),
             home: Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => SessionDetailScreen(session: session)),
+                  MaterialPageRoute(
+                    builder: (_) => SessionDetailScreen(session: session),
+                  ),
                 ),
                 child: const Text('Navigate'),
               ),
@@ -361,7 +361,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down to find section
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -200));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -200),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('主な改善ポイント'), findsOneWidget);
@@ -373,7 +376,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -200));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -200),
+      );
       await tester.pumpAndSettle();
 
       // Should show warning icons
@@ -395,7 +401,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -300),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('体調記録'), findsOneWidget);
@@ -413,7 +422,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -300),
+      );
       await tester.pumpAndSettle();
 
       // Should show star icons for ratings
@@ -432,7 +444,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -300),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('元気度'), findsOneWidget);
@@ -448,7 +463,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('タグ'), findsOneWidget);
@@ -460,7 +478,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(Chip), findsNWidgets(3));
@@ -475,7 +496,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('タグはまだありません'), findsOneWidget);
@@ -487,7 +511,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('追加'), findsOneWidget);
@@ -500,7 +527,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       // Tap add button
@@ -520,7 +550,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('メモ'), findsOneWidget);
@@ -532,7 +565,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Great workout today!'), findsOneWidget);
@@ -544,7 +580,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('メモはまだありません'), findsOneWidget);
@@ -556,7 +595,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('編集'), findsOneWidget);
@@ -568,7 +610,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       // Tap edit button
@@ -587,7 +632,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       // Enter edit mode
@@ -615,7 +663,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       // Enter edit mode
@@ -812,16 +863,15 @@ void main() {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            supportedLocales: const [
-              Locale('ja', 'JP'),
-            ],
+            supportedLocales: const [Locale('ja', 'JP')],
             locale: const Locale('ja', 'JP'),
             home: Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => SessionDetailScreen(session: session),
+                      builder: (context) =>
+                          SessionDetailScreen(session: session),
                     ),
                   );
                 },

@@ -49,10 +49,7 @@ void main() {
         tosAccepted: true,
         tosVersion: '3.2',
       );
-      final updated = state.copyWith(
-        ppAccepted: true,
-        ppVersion: '3.1',
-      );
+      final updated = state.copyWith(ppAccepted: true, ppVersion: '3.1');
 
       expect(updated.isLoading, false);
       expect(updated.tosAccepted, true);
@@ -64,10 +61,7 @@ void main() {
 
   group('ConsentResult', () {
     test('success result has correct properties', () {
-      final result = ConsentResult(
-        success: true,
-        message: 'Consent recorded',
-      );
+      final result = ConsentResult(success: true, message: 'Consent recorded');
 
       expect(result.success, true);
       expect(result.message, 'Consent recorded');
@@ -86,10 +80,7 @@ void main() {
     });
 
     test('forceLogout is set correctly', () {
-      final result = ConsentResult(
-        success: true,
-        forceLogout: true,
-      );
+      final result = ConsentResult(success: true, forceLogout: true);
 
       expect(result.forceLogout, true);
     });

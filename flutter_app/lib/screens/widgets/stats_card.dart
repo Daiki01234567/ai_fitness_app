@@ -175,18 +175,12 @@ class LargeStatsCard extends StatelessWidget {
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(
-                        icon,
-                        color: theme.colorScheme.primary,
-                      ),
+                      child: Icon(icon, color: theme.colorScheme.primary),
                     ),
                     const SizedBox(width: 12),
                   ],
                   Expanded(
-                    child: Text(
-                      title,
-                      style: theme.textTheme.titleMedium,
-                    ),
+                    child: Text(title, style: theme.textTheme.titleMedium),
                   ),
                 ],
               ),
@@ -234,10 +228,7 @@ class LargeStatsCard extends StatelessWidget {
 
 /// A horizontal row of mini stats
 class MiniStatsRow extends StatelessWidget {
-  const MiniStatsRow({
-    super.key,
-    required this.items,
-  });
+  const MiniStatsRow({super.key, required this.items});
 
   final List<MiniStatItem> items;
 
@@ -245,9 +236,7 @@ class MiniStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: items
-          .map((item) => Expanded(
-                child: _MiniStatCard(item: item),
-              ))
+          .map((item) => Expanded(child: _MiniStatCard(item: item)))
           .toList(),
     );
   }
@@ -255,11 +244,7 @@ class MiniStatsRow extends StatelessWidget {
 
 /// Data class for mini stat items
 class MiniStatItem {
-  const MiniStatItem({
-    required this.label,
-    required this.value,
-    this.color,
-  });
+  const MiniStatItem({required this.label, required this.value, this.color});
 
   final String label;
   final String value;

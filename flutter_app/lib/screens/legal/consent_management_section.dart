@@ -41,8 +41,8 @@ class ConsentManagementSection extends ConsumerWidget {
                 Text(
                   '同意状態',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -83,22 +83,20 @@ class ConsentManagementSection extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.update,
-                      color: Colors.orange,
-                      size: 20,
-                    ),
+                    const Icon(Icons.update, color: Colors.orange, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         '新しいバージョンの規約があります。確認をお願いします。',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.orange.shade800,
-                            ),
+                          color: Colors.orange.shade800,
+                        ),
                       ),
                     ),
                   ],
@@ -184,18 +182,19 @@ class ConsentManagementSection extends ConsumerWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -209,8 +208,8 @@ class ConsentManagementSection extends ConsumerWidget {
                 Text(
                   '同意日: ${dateFormat.format(acceptedAt)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
             ],
           ),
@@ -319,13 +318,9 @@ class ConsentManagementSection extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '同意を解除すると、サービスを利用できなくなります。',
-              ),
+              const Text('同意を解除すると、サービスを利用できなくなります。'),
               const SizedBox(height: 8),
-              const Text(
-                'この操作を行うと、自動的にログアウトされます。',
-              ),
+              const Text('この操作を行うと、自動的にログアウトされます。'),
               const SizedBox(height: 16),
               CheckboxListTile(
                 value: requestDeletion,
@@ -354,10 +349,8 @@ class ConsentManagementSection extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
-              child: const Text('解除する'),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('同意を解除してログアウト'),
             ),
           ],
         ),
@@ -369,9 +362,7 @@ class ConsentManagementSection extends ConsumerWidget {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       debugPrint('[ConsentRevoke] Starting consent revocation...');
@@ -381,7 +372,9 @@ class ConsentManagementSection extends ConsumerWidget {
           .read(consentStateProvider.notifier)
           .revokeAllConsents(requestDataDeletion: requestDeletion);
 
-      debugPrint('[ConsentRevoke] Cloud Function result: success=${result.success}, error=${result.error}');
+      debugPrint(
+        '[ConsentRevoke] Cloud Function result: success=${result.success}, error=${result.error}',
+      );
 
       // Close loading dialog first
       if (context.mounted) {
@@ -404,9 +397,7 @@ class ConsentManagementSection extends ConsumerWidget {
       if (!result.success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              result.error ?? '同意解除の記録に問題が発生しました。ログアウトします。',
-            ),
+            content: Text(result.error ?? '同意解除の記録に問題が発生しました。ログアウトします。'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),

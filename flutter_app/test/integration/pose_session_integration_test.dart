@@ -123,13 +123,15 @@ void main() {
       );
 
       // Test reliability checks using values property
-      final reliableLandmarks =
-          frame.landmarks.values.where((l) => l.isReliable).toList();
+      final reliableLandmarks = frame.landmarks.values
+          .where((l) => l.isReliable)
+          .toList();
       expect(reliableLandmarks.length, 1); // Only leftShoulder is reliable
 
       // Test minimum threshold
-      final meetsMinimum =
-          frame.landmarks.values.where((l) => l.meetsMinimumThreshold).toList();
+      final meetsMinimum = frame.landmarks.values
+          .where((l) => l.meetsMinimumThreshold)
+          .toList();
       expect(meetsMinimum.length, 2); // leftShoulder and rightShoulder
     });
 
@@ -291,9 +293,14 @@ void main() {
 
       // Check that only high-confidence landmarks were recorded
       final recordedLandmarks = frames.first.landmarks;
-      expect(recordedLandmarks.containsKey(PoseLandmarkType.leftShoulder), true);
       expect(
-          recordedLandmarks.containsKey(PoseLandmarkType.rightShoulder), false);
+        recordedLandmarks.containsKey(PoseLandmarkType.leftShoulder),
+        true,
+      );
+      expect(
+        recordedLandmarks.containsKey(PoseLandmarkType.rightShoulder),
+        false,
+      );
 
       recorder.stopRecording();
     });
@@ -316,10 +323,12 @@ void main() {
           likelihood: 0.9,
         );
 
-        recorder.recordFrame(PoseFrame(
-          landmarks: landmarks,
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        ));
+        recorder.recordFrame(
+          PoseFrame(
+            landmarks: landmarks,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
       }
 
       // Record dropped frames
@@ -355,11 +364,13 @@ void main() {
         likelihood: 0.85,
       );
 
-      recorder.recordFrame(PoseFrame(
-        landmarks: landmarks,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        processingTimeMs: 20,
-      ));
+      recorder.recordFrame(
+        PoseFrame(
+          landmarks: landmarks,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+          processingTimeMs: 20,
+        ),
+      );
 
       recorder.stopRecording(averageFps: 28.5);
 
@@ -414,10 +425,12 @@ void main() {
           likelihood: 0.9,
         );
 
-        recorder.recordFrame(PoseFrame(
-          landmarks: landmarks,
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        ));
+        recorder.recordFrame(
+          PoseFrame(
+            landmarks: landmarks,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
       }
 
       recorder.clear();
@@ -472,7 +485,10 @@ void main() {
       }
 
       final state = container.read(frameRateMonitorProvider);
-      expect(state.status, anyOf(FrameRateStatus.warning, FrameRateStatus.critical));
+      expect(
+        state.status,
+        anyOf(FrameRateStatus.warning, FrameRateStatus.critical),
+      );
       // Note: Fallback may or may not trigger depending on cooldown timing
     });
 
@@ -612,10 +628,7 @@ void main() {
         userId: 'e2e-user',
         exerciseType: 'squat',
         deviceInfo: const DeviceInfo(platform: 'ios'),
-        cameraConfig: const CameraConfigInfo(
-          resolution: '720p',
-          targetFps: 30,
-        ),
+        cameraConfig: const CameraConfigInfo(resolution: '720p', targetFps: 30),
       );
 
       // Simulate realistic pose detection sequence
@@ -671,11 +684,9 @@ void main() {
         likelihood: 0.95,
       );
 
-      recorder.recordFrame(PoseFrame(
-        landmarks: landmarks,
-        timestamp: 1000,
-        processingTimeMs: 25,
-      ));
+      recorder.recordFrame(
+        PoseFrame(landmarks: landmarks, timestamp: 1000, processingTimeMs: 25),
+      );
 
       // Get recorded frame
       final recordedFrame = recorder.frames.first;
@@ -687,8 +698,10 @@ void main() {
       expect(reconstructed.frameIndex, recordedFrame.frameIndex);
       expect(reconstructed.timestamp, recordedFrame.timestamp);
       expect(reconstructed.processingTimeMs, recordedFrame.processingTimeMs);
-      expect(reconstructed.overallConfidence,
-          closeTo(recordedFrame.overallConfidence, 0.001));
+      expect(
+        reconstructed.overallConfidence,
+        closeTo(recordedFrame.overallConfidence, 0.001),
+      );
 
       // Verify landmark data
       final originalLandmark =
@@ -699,8 +712,10 @@ void main() {
       expect(reconstructedLandmark.x, closeTo(originalLandmark.x, 0.001));
       expect(reconstructedLandmark.y, closeTo(originalLandmark.y, 0.001));
       expect(reconstructedLandmark.z, closeTo(originalLandmark.z, 0.001));
-      expect(reconstructedLandmark.likelihood,
-          closeTo(originalLandmark.likelihood, 0.001));
+      expect(
+        reconstructedLandmark.likelihood,
+        closeTo(originalLandmark.likelihood, 0.001),
+      );
 
       container.dispose();
     });
@@ -726,10 +741,9 @@ void main() {
           likelihood: 0.9,
         );
 
-        recorder.recordFrame(PoseFrame(
-          landmarks: landmarks,
-          timestamp: i * 33,
-        ));
+        recorder.recordFrame(
+          PoseFrame(landmarks: landmarks, timestamp: i * 33),
+        );
       }
 
       // Should be limited to kMaxFramesInMemory

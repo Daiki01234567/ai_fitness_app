@@ -116,9 +116,7 @@ void main() {
 }
 
 /// Creates a squat frame with the specified parameters
-PoseFrame _createSquatFrame({
-  double kneeY = 0.6,
-}) {
+PoseFrame _createSquatFrame({double kneeY = 0.6}) {
   // Hip positions (center of body)
   final leftHip = _createLandmark(PoseLandmarkType.leftHip, 0.45, 0.5);
   final rightHip = _createLandmark(PoseLandmarkType.rightHip, 0.55, 0.5);
@@ -132,9 +130,16 @@ PoseFrame _createSquatFrame({
   final rightAnkle = _createLandmark(PoseLandmarkType.rightAnkle, 0.55, 0.85);
 
   // Shoulder positions
-  final leftShoulder = _createLandmark(PoseLandmarkType.leftShoulder, 0.45, 0.3);
-  final rightShoulder =
-      _createLandmark(PoseLandmarkType.rightShoulder, 0.55, 0.3);
+  final leftShoulder = _createLandmark(
+    PoseLandmarkType.leftShoulder,
+    0.45,
+    0.3,
+  );
+  final rightShoulder = _createLandmark(
+    PoseLandmarkType.rightShoulder,
+    0.55,
+    0.3,
+  );
 
   // Heel positions
   final leftHeel = _createLandmark(PoseLandmarkType.leftHeel, 0.43, 0.87);
@@ -166,11 +171,5 @@ PoseFrame _createSquatFrame({
 }
 
 PoseLandmark _createLandmark(PoseLandmarkType type, double x, double y) {
-  return PoseLandmark(
-    type: type,
-    x: x,
-    y: y,
-    z: 0,
-    likelihood: 0.9,
-  );
+  return PoseLandmark(type: type, x: x, y: y, z: 0, likelihood: 0.9);
 }

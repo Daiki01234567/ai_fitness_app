@@ -247,10 +247,7 @@ void main() {
       });
 
       test('exportSession throws when no metadata', () {
-        expect(
-          () => recorder.exportSession(),
-          throwsStateError,
-        );
+        expect(() => recorder.exportSession(), throwsStateError);
       });
     });
   });

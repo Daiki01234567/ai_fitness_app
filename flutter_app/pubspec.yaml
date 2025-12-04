@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.10.1
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -76,16 +76,21 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-  build_runner: ^2.4.7           # コード生成を実行するツール
-  custom_lint: ^0.7.3            # Freezedを正しく使うためのリンター (推奨)
-  freezed: ^2.4.6                # Freezedのコード生成用ツール
-  riverpod_generator: ^2.3.9     # Riverpodのコード生成用ツール (Providerを定義する場合)
-  riverpod_lint: ^2.3.7          # Riverpod専用のリンター (推奨)
+  build_runner: ^2.4.13          # コード生成を実行するツール (updated for analyzer compatibility)
+  # custom_lint: ^0.7.3          # Temporarily disabled due to analyzer_plugin incompatibility with analyzer 7.x
+  freezed: ^2.5.7                # Freezedのコード生成用ツール (updated)
+  riverpod_generator: ^2.6.3     # Riverpodのコード生成用ツール (updated)
+  # riverpod_lint: ^2.6.3        # Temporarily disabled due to analyzer_plugin incompatibility with analyzer 7.x
 
   # Testing dependencies
   mockito: ^5.4.4                # モックライブラリ
   fake_cloud_firestore: ^3.1.0   # Firestore用フェイク実装
   fake_async: ^1.3.1             # Timer/async testing
+
+# Override analyzer_plugin to ensure compatibility with analyzer 7.x
+# The issue: analyzer 7.x introduced Element2 API, but analyzer_plugin 0.12.0 uses old Element API
+dependency_overrides:
+  analyzer_plugin: ^0.13.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

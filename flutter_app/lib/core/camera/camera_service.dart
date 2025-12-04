@@ -21,10 +21,11 @@ final cameraServiceProvider = Provider<CameraService>((ref) {
 });
 
 /// カメラ状態プロバイダー
-final cameraStateProvider = StateNotifierProvider<CameraStateNotifier, CameraServiceState>((ref) {
-  final cameraService = ref.watch(cameraServiceProvider);
-  return CameraStateNotifier(cameraService);
-});
+final cameraStateProvider =
+    StateNotifierProvider<CameraStateNotifier, CameraServiceState>((ref) {
+      final cameraService = ref.watch(cameraServiceProvider);
+      return CameraStateNotifier(cameraService);
+    });
 
 /// カメラサービス状態
 class CameraServiceState {
@@ -198,6 +199,87 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
     }
   }
 
+  /// 現在のカメラ方向を取得
+  CameraLensDirection? get currentDirection {
+    final controller = state.controller;
+    if (controller == null) return null;
+    return controller.description.lensDirection;
+  }
+
+  /// フロント/バックカメラを切り替え
+  Future<bool> switchCamera() async {
+    final controller = state.controller;
+    if (controller == null || !controller.value.isInitialized) {
+      debugPrint('CameraStateNotifier: Cannot switch - camera not initialized');
+      return false;
+    }
+
+    // Determine target direction
+    final currentDir = controller.description.lensDirection;
+    final targetDirection = currentDir == CameraLensDirection.front
+        ? CameraLensDirection.back
+        : CameraLensDirection.front;
+
+    // Check if target camera is available
+    final cameras = state.availableCameras;
+    final targetCamera = cameras.where(
+      (camera) => camera.lensDirection == targetDirection,
+    ).firstOrNull;
+
+    if (targetCamera == null) {
+      debugPrint(
+        'CameraStateNotifier: Cannot switch - target camera not available',
+      );
+      return false;
+    }
+
+    final currentConfig = state.currentConfig ?? CameraConfig.highQuality;
+
+    // Set state to initializing while switching
+    state = state.copyWith(state: CameraState.initializing);
+
+    try {
+      // Stop current controller
+      await stopImageStream();
+      await controller.dispose();
+
+      // Initialize new camera
+      final newController = await _cameraService.initializeCamera(
+        targetCamera,
+        currentConfig,
+      );
+
+      if (newController != null) {
+        state = state.copyWith(
+          state: CameraState.ready,
+          controller: newController,
+          errorMessage: null,
+          error: null,
+        );
+        debugPrint(
+          'CameraStateNotifier: Switched to ${targetDirection.name} camera',
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          state: CameraState.error,
+          errorMessage: CameraError.initializationFailed.message,
+          error: CameraError.initializationFailed,
+        );
+        return false;
+      }
+    } catch (e) {
+      final errorMessage = e.toString();
+      state = state.copyWith(
+        state: CameraState.error,
+        errorMessage: errorMessage,
+        error: CameraError.fromMessage(errorMessage),
+      );
+      debugPrint('CameraStateNotifier: Switch camera error: $errorMessage');
+      return false;
+    }
+  }
+
   /// フォールバック設定を適用（低解像度/FPS）
   Future<bool> applyFallback() async {
     final currentConfig = state.currentConfig;
@@ -209,7 +291,9 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
       return false;
     }
 
-    debugPrint('CameraService: Applying fallback from $currentConfig to $fallbackConfig');
+    debugPrint(
+      'CameraService: Applying fallback from $currentConfig to $fallbackConfig',
+    );
 
     // 現在のコントローラーを破棄
     await disposeCamera();
@@ -225,10 +309,7 @@ class CameraStateNotifier extends StateNotifier<CameraServiceState> {
   Future<void> disposeCamera() async {
     await stopImageStream();
     await state.controller?.dispose();
-    state = state.copyWith(
-      state: CameraState.disposed,
-      controller: null,
-    );
+    state = state.copyWith(state: CameraState.disposed, controller: null);
   }
 
   @override

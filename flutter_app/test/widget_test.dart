@@ -38,10 +38,8 @@ void main() {
       return ProviderScope(
         overrides: [
           authStateProvider.overrideWith(
-            (ref) => AuthStateNotifier(
-              auth: mockAuth,
-              firestore: fakeFirestore,
-            ),
+            (ref) =>
+                AuthStateNotifier(auth: mockAuth, firestore: fakeFirestore),
           ),
         ],
         child: MaterialApp(
@@ -66,7 +64,9 @@ void main() {
       expect(find.text('パスワード'), findsOneWidget);
     });
 
-    testWidgets('AppTheme provides correct theme data', (WidgetTester tester) async {
+    testWidgets('AppTheme provides correct theme data', (
+      WidgetTester tester,
+    ) async {
       // Verify light theme configuration
       expect(AppTheme.lightTheme.useMaterial3, isTrue);
       expect(AppTheme.lightTheme.brightness, Brightness.light);

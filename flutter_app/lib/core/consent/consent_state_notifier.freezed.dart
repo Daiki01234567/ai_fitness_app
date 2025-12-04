@@ -17,40 +17,40 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$ConsentState {
-  /// Loading state
+  /// ローディング状態
   bool get isLoading => throw _privateConstructorUsedError;
 
-  /// Error message
+  /// エラーメッセージ
   String? get error => throw _privateConstructorUsedError;
 
-  /// Success message
+  /// 成功メッセージ
   String? get successMessage => throw _privateConstructorUsedError;
 
-  /// ToS accepted
+  /// 利用規約同意済み
   bool get tosAccepted => throw _privateConstructorUsedError;
 
-  /// ToS accepted date
+  /// 利用規約同意日時
   DateTime? get tosAcceptedAt => throw _privateConstructorUsedError;
 
-  /// ToS version
+  /// 利用規約バージョン
   String? get tosVersion => throw _privateConstructorUsedError;
 
-  /// PP accepted
+  /// プライバシーポリシー同意済み
   bool get ppAccepted => throw _privateConstructorUsedError;
 
-  /// PP accepted date
+  /// プライバシーポリシー同意日時
   DateTime? get ppAcceptedAt => throw _privateConstructorUsedError;
 
-  /// PP version
+  /// プライバシーポリシーバージョン
   String? get ppVersion => throw _privateConstructorUsedError;
 
-  /// Needs consent (either ToS or PP not accepted)
+  /// 同意が必要（利用規約またはプライバシーポリシーが未同意）
   bool get needsConsent => throw _privateConstructorUsedError;
 
-  /// Needs update (version mismatch)
+  /// 更新が必要（バージョン不一致）
   bool get needsUpdate => throw _privateConstructorUsedError;
 
-  /// Consent history
+  /// 同意履歴
   List<ConsentHistoryEntry> get history => throw _privateConstructorUsedError;
 
   /// Create a copy of ConsentState
@@ -276,7 +276,7 @@ class __$$ConsentStateImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ConsentStateImpl implements _ConsentState {
+class _$ConsentStateImpl with DiagnosticableTreeMixin implements _ConsentState {
   const _$ConsentStateImpl({
     this.isLoading = true,
     this.error,
@@ -292,59 +292,59 @@ class _$ConsentStateImpl implements _ConsentState {
     final List<ConsentHistoryEntry> history = const [],
   }) : _history = history;
 
-  /// Loading state
+  /// ローディング状態
   @override
   @JsonKey()
   final bool isLoading;
 
-  /// Error message
+  /// エラーメッセージ
   @override
   final String? error;
 
-  /// Success message
+  /// 成功メッセージ
   @override
   final String? successMessage;
 
-  /// ToS accepted
+  /// 利用規約同意済み
   @override
   @JsonKey()
   final bool tosAccepted;
 
-  /// ToS accepted date
+  /// 利用規約同意日時
   @override
   final DateTime? tosAcceptedAt;
 
-  /// ToS version
+  /// 利用規約バージョン
   @override
   final String? tosVersion;
 
-  /// PP accepted
+  /// プライバシーポリシー同意済み
   @override
   @JsonKey()
   final bool ppAccepted;
 
-  /// PP accepted date
+  /// プライバシーポリシー同意日時
   @override
   final DateTime? ppAcceptedAt;
 
-  /// PP version
+  /// プライバシーポリシーバージョン
   @override
   final String? ppVersion;
 
-  /// Needs consent (either ToS or PP not accepted)
+  /// 同意が必要（利用規約またはプライバシーポリシーが未同意）
   @override
   @JsonKey()
   final bool needsConsent;
 
-  /// Needs update (version mismatch)
+  /// 更新が必要（バージョン不一致）
   @override
   @JsonKey()
   final bool needsUpdate;
 
-  /// Consent history
+  /// 同意履歴
   final List<ConsentHistoryEntry> _history;
 
-  /// Consent history
+  /// 同意履歴
   @override
   @JsonKey()
   List<ConsentHistoryEntry> get history {
@@ -354,8 +354,27 @@ class _$ConsentStateImpl implements _ConsentState {
   }
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'ConsentState(isLoading: $isLoading, error: $error, successMessage: $successMessage, tosAccepted: $tosAccepted, tosAcceptedAt: $tosAcceptedAt, tosVersion: $tosVersion, ppAccepted: $ppAccepted, ppAcceptedAt: $ppAcceptedAt, ppVersion: $ppVersion, needsConsent: $needsConsent, needsUpdate: $needsUpdate, history: $history)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'ConsentState'))
+      ..add(DiagnosticsProperty('isLoading', isLoading))
+      ..add(DiagnosticsProperty('error', error))
+      ..add(DiagnosticsProperty('successMessage', successMessage))
+      ..add(DiagnosticsProperty('tosAccepted', tosAccepted))
+      ..add(DiagnosticsProperty('tosAcceptedAt', tosAcceptedAt))
+      ..add(DiagnosticsProperty('tosVersion', tosVersion))
+      ..add(DiagnosticsProperty('ppAccepted', ppAccepted))
+      ..add(DiagnosticsProperty('ppAcceptedAt', ppAcceptedAt))
+      ..add(DiagnosticsProperty('ppVersion', ppVersion))
+      ..add(DiagnosticsProperty('needsConsent', needsConsent))
+      ..add(DiagnosticsProperty('needsUpdate', needsUpdate))
+      ..add(DiagnosticsProperty('history', history));
   }
 
   @override
@@ -429,51 +448,51 @@ abstract class _ConsentState implements ConsentState {
     final List<ConsentHistoryEntry> history,
   }) = _$ConsentStateImpl;
 
-  /// Loading state
+  /// ローディング状態
   @override
   bool get isLoading;
 
-  /// Error message
+  /// エラーメッセージ
   @override
   String? get error;
 
-  /// Success message
+  /// 成功メッセージ
   @override
   String? get successMessage;
 
-  /// ToS accepted
+  /// 利用規約同意済み
   @override
   bool get tosAccepted;
 
-  /// ToS accepted date
+  /// 利用規約同意日時
   @override
   DateTime? get tosAcceptedAt;
 
-  /// ToS version
+  /// 利用規約バージョン
   @override
   String? get tosVersion;
 
-  /// PP accepted
+  /// プライバシーポリシー同意済み
   @override
   bool get ppAccepted;
 
-  /// PP accepted date
+  /// プライバシーポリシー同意日時
   @override
   DateTime? get ppAcceptedAt;
 
-  /// PP version
+  /// プライバシーポリシーバージョン
   @override
   String? get ppVersion;
 
-  /// Needs consent (either ToS or PP not accepted)
+  /// 同意が必要（利用規約またはプライバシーポリシーが未同意）
   @override
   bool get needsConsent;
 
-  /// Needs update (version mismatch)
+  /// 更新が必要（バージョン不一致）
   @override
   bool get needsUpdate;
 
-  /// Consent history
+  /// 同意履歴
   @override
   List<ConsentHistoryEntry> get history;
 

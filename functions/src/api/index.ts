@@ -9,6 +9,7 @@
  * - gdpr: GDPR 準拠（データエクスポート、削除）
  * - settings: ユーザー設定
  * - subscription: サブスクリプション管理
+ * - analytics: BigQuery分析API
  */
 
 // 認証
@@ -31,3 +32,6 @@ export * from "./gdpr";
 
 // サブスクリプション管理
 // export * from "./subscription";
+
+// 分析API（BigQuery）
+export * from "./analytics";

@@ -94,8 +94,87 @@ class CameraErrorWidget extends StatelessWidget {
 
             // Action buttons
             _buildActionButtons(context, colorScheme),
+
+            // Support contact for initialization failures
+            if (_shouldShowSupportContact()) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _buildSupportContactSection(context, colorScheme),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  /// Whether to show support contact section
+  bool _shouldShowSupportContact() {
+    return error.type == CameraErrorType.initializationFailed ||
+        error.type == CameraErrorType.poseDetectorFailed ||
+        error.type == CameraErrorType.unknown;
+  }
+
+  /// Build support contact section
+  Widget _buildSupportContactSection(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.support_agent,
+                color: colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'お困りの場合',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '問題が解決しない場合は、サポートまでお問い合わせください。',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Icon(
+                Icons.email_outlined,
+                color: colorScheme.onSurfaceVariant,
+                size: 16,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                'support@aifitness.app',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -108,11 +187,7 @@ class CameraErrorWidget extends StatelessWidget {
         color: colorScheme.errorContainer.withValues(alpha: 0.3),
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        error.icon,
-        size: 48,
-        color: colorScheme.error,
-      ),
+      child: Icon(error.icon, size: 48, color: colorScheme.error),
     );
   }
 
@@ -174,7 +249,8 @@ class CameraErrorWidget extends StatelessWidget {
         ),
 
         // Settings button (if can retry but also might need settings)
-        if (error.canRetry && error.type == CameraErrorType.permissionDenied) ...[
+        if (error.canRetry &&
+            error.type == CameraErrorType.permissionDenied) ...[
           const SizedBox(height: AppSpacing.md),
           TextButton.icon(
             onPressed: _openAppSettings,
@@ -193,10 +269,7 @@ class CameraErrorWidget extends StatelessWidget {
 
 /// カメラエラー詳細ダイアログ
 class CameraErrorDetailsDialog extends StatelessWidget {
-  const CameraErrorDetailsDialog({
-    required this.error,
-    super.key,
-  });
+  const CameraErrorDetailsDialog({required this.error, super.key});
 
   final CameraError error;
 
@@ -209,31 +282,15 @@ class CameraErrorDetailsDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildDetailRow(
-              context,
-              'エラー種別',
-              error.type.name,
-            ),
+            _buildDetailRow(context, 'エラー種別', error.type.name),
             const SizedBox(height: AppSpacing.sm),
-            _buildDetailRow(
-              context,
-              'メッセージ',
-              error.message,
-            ),
+            _buildDetailRow(context, 'メッセージ', error.message),
             if (error.technicalDetails != null) ...[
               const SizedBox(height: AppSpacing.sm),
-              _buildDetailRow(
-                context,
-                '技術的詳細',
-                error.technicalDetails!,
-              ),
+              _buildDetailRow(context, '技術的詳細', error.technicalDetails!),
             ],
             const SizedBox(height: AppSpacing.md),
-            _buildDetailRow(
-              context,
-              '再試行可能',
-              error.canRetry ? 'はい' : 'いいえ',
-            ),
+            _buildDetailRow(context, '再試行可能', error.canRetry ? 'はい' : 'いいえ'),
           ],
         ),
       ),
@@ -259,10 +316,7 @@ class CameraErrorDetailsDialog extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: textTheme.bodyMedium,
-        ),
+        Text(value, style: textTheme.bodyMedium),
       ],
     );
   }

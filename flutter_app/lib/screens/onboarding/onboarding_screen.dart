@@ -78,7 +78,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                         ),
                       )
-                    : const SizedBox(height: 48), // Placeholder for consistent layout
+                    : const SizedBox(
+                        height: 48,
+                      ), // Placeholder for consistent layout
               ),
             ),
             // Page content
@@ -100,19 +102,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             // Page indicator
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: _PageIndicator(
-                currentPage: _currentPage,
-                pageCount: 3,
-              ),
+              child: _PageIndicator(currentPage: _currentPage, pageCount: 3),
             ),
             // Navigation button
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: FilledButton(
                 onPressed: _nextPage,
-                child: Text(
-                  _currentPage < 2 ? '次へ' : '始める',
-                ),
+                child: Text(_currentPage < 2 ? '次へ' : '始める'),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -134,11 +131,7 @@ class _OnboardingPage1 extends StatelessWidget {
       iconBackgroundColor: Color(0xFFE8F5E9),
       iconColor: Color(0xFF4CAF50),
       title: '本サービスは医療機器ではありません',
-      bulletPoints: [
-        '参考情報としてご利用ください',
-        '医学的な判断は行いません',
-        '最終的な判断はご自身でお願いします',
-      ],
+      bulletPoints: ['参考情報としてご利用ください', '医学的な判断は行いません', '最終的な判断はご自身でお願いします'],
     );
   }
 }
@@ -154,11 +147,7 @@ class _OnboardingPage2 extends StatelessWidget {
       iconBackgroundColor: Color(0xFFE3F2FD),
       iconColor: Color(0xFF2196F3),
       title: 'AIがあなたのフォームを確認補助',
-      bulletPoints: [
-        'カメラでフォームをチェック',
-        '音声で参考情報を提供',
-        '映像はデバイス内で処理',
-      ],
+      bulletPoints: ['カメラでフォームをチェック', '音声で参考情報を提供', '映像はデバイス内で処理'],
     );
   }
 }
@@ -174,10 +163,7 @@ class _OnboardingPage3 extends StatelessWidget {
       iconBackgroundColor: Color(0xFFFFF3E0),
       iconColor: Color(0xFFFF9800),
       title: '月額500円で始められる',
-      bulletPoints: [
-        '1週間無料トライアル',
-        'いつでもキャンセル可能',
-      ],
+      bulletPoints: ['1週間無料トライアル', 'いつでもキャンセル可能'],
     );
   }
 }
@@ -215,11 +201,7 @@ class _OnboardingPageContent extends StatelessWidget {
               color: iconBackgroundColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 80,
-              color: iconColor,
-            ),
+            child: Icon(icon, size: 80, color: iconColor),
           ),
           const SizedBox(height: AppSpacing.xxl),
           // Title
@@ -232,29 +214,31 @@ class _OnboardingPageContent extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xl),
           // Bullet points
-          ...bulletPoints.map((point) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
+          ...bulletPoints.map(
+            (point) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      point,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    point,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -263,10 +247,7 @@ class _OnboardingPageContent extends StatelessWidget {
 
 /// Page indicator dots
 class _PageIndicator extends StatelessWidget {
-  const _PageIndicator({
-    required this.currentPage,
-    required this.pageCount,
-  });
+  const _PageIndicator({required this.currentPage, required this.pageCount});
 
   final int currentPage;
   final int pageCount;

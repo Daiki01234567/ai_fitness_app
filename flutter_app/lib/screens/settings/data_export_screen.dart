@@ -90,9 +90,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
               _buildSectionTitle(context, '過去のリクエスト'),
               exportRequests.when(
                 data: (requests) => _buildRequestsList(context, requests),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => Text(
                   'エラー: $error',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -180,17 +178,14 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 
-  Widget _buildFormatSelection(
-    BuildContext context,
-    ExportRequestState state,
-  ) {
+  Widget _buildFormatSelection(BuildContext context, ExportRequestState state) {
     return Card(
       child: Column(
         children: [
@@ -203,7 +198,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
-                ref.read(exportRequestNotifierProvider.notifier).setFormat(value);
+                ref
+                    .read(exportRequestNotifierProvider.notifier)
+                    .setFormat(value);
               }
             },
           ),
@@ -217,7 +214,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
-                ref.read(exportRequestNotifierProvider.notifier).setFormat(value);
+                ref
+                    .read(exportRequestNotifierProvider.notifier)
+                    .setFormat(value);
               }
             },
           ),
@@ -226,10 +225,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     );
   }
 
-  Widget _buildScopeSelection(
-    BuildContext context,
-    ExportRequestState state,
-  ) {
+  Widget _buildScopeSelection(BuildContext context, ExportRequestState state) {
     return Card(
       child: Column(
         children: [
@@ -242,7 +238,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
-                ref.read(exportRequestNotifierProvider.notifier).setScopeType(value);
+                ref
+                    .read(exportRequestNotifierProvider.notifier)
+                    .setScopeType(value);
               }
             },
           ),
@@ -256,7 +254,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             // ignore: deprecated_member_use
             onChanged: (value) {
               if (value != null) {
-                ref.read(exportRequestNotifierProvider.notifier).setScopeType(value);
+                ref
+                    .read(exportRequestNotifierProvider.notifier)
+                    .setScopeType(value);
               }
             },
           ),
@@ -265,10 +265,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     );
   }
 
-  Widget _buildDateRangePicker(
-    BuildContext context,
-    ExportRequestState state,
-  ) {
+  Widget _buildDateRangePicker(BuildContext context, ExportRequestState state) {
     return Column(
       children: [
         Card(
@@ -464,10 +461,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
@@ -554,11 +548,9 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     }
 
     // In a real app, this would open the URL or trigger a download
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('ダウンロード: ${request.downloadUrl}'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('ダウンロード: ${request.downloadUrl}')));
   }
 
   void _navigateToTab(BuildContext context, int index) {

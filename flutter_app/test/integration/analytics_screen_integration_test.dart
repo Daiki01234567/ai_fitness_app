@@ -78,25 +78,27 @@ void main() {
         .collection('sessions')
         .doc(id)
         .set({
-      'id': id,
-      'userId': testUserId,
-      'exerciseType': exerciseType.name,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
-      'totalReps': totalReps,
-      'totalSets': totalSets,
-      'averageScore': averageScore,
-      'sets': sets ?? [
-        {
-          'setNumber': 1,
-          'reps': 10,
+          'id': id,
+          'userId': testUserId,
+          'exerciseType': exerciseType.name,
+          'startTime': startTime.toIso8601String(),
+          'endTime': endTime.toIso8601String(),
+          'totalReps': totalReps,
+          'totalSets': totalSets,
           'averageScore': averageScore,
-          'durationMs': 300000,
-          'issues': ['form_issue_1'],
-        }
-      ],
-      'note': note,
-    });
+          'sets':
+              sets ??
+              [
+                {
+                  'setNumber': 1,
+                  'reps': 10,
+                  'averageScore': averageScore,
+                  'durationMs': 300000,
+                  'issues': ['form_issue_1'],
+                },
+              ],
+          'note': note,
+        });
   }
 
   /// Helper function to seed comprehensive analytics data
@@ -179,9 +181,7 @@ void main() {
   }
 
   /// Helper to build the analytics screen with necessary providers
-  Widget buildAnalyticsScreen({
-    List<Override>? additionalOverrides,
-  }) {
+  Widget buildAnalyticsScreen({List<Override>? additionalOverrides}) {
     return ProviderScope(
       overrides: [
         historyServiceProvider.overrideWithValue(historyService),
@@ -206,9 +206,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('ja', 'JP'),
-        ],
+        supportedLocales: const [Locale('ja', 'JP')],
         locale: const Locale('ja', 'JP'),
         home: const AnalyticsScreen(),
       ),
@@ -394,7 +392,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down to find comparison section
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -200));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -200),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('平均スコア'), findsWidgets);
@@ -433,7 +434,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to score progress section
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -300),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('データがありません'), findsOneWidget);
@@ -445,7 +449,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to score progress section
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -300),
+      );
       await tester.pumpAndSettle();
 
       // Look for CustomPaint widget (chart)
@@ -460,7 +467,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down to find section
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('種目別内訳'), findsOneWidget);
@@ -472,7 +482,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       // Should see exercise names
@@ -488,7 +501,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(LinearProgressIndicator), findsWidgets);
@@ -502,7 +518,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('種目別詳細'), findsOneWidget);
@@ -514,7 +533,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll down
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
 
       // Find expansion tile
@@ -614,8 +636,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Either shows empty state icon OR dashboard cards
-      final hasEmptyIcon = find.byIcon(Icons.analytics_outlined).evaluate().isNotEmpty;
-      final hasFitnessIcon = find.byIcon(Icons.fitness_center).evaluate().isNotEmpty;
+      final hasEmptyIcon = find
+          .byIcon(Icons.analytics_outlined)
+          .evaluate()
+          .isNotEmpty;
+      final hasFitnessIcon = find
+          .byIcon(Icons.fitness_center)
+          .evaluate()
+          .isNotEmpty;
       expect(hasEmptyIcon || hasFitnessIcon, isTrue);
     });
   });
@@ -627,7 +655,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Pull to refresh
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, 300));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, 300),
+      );
       await tester.pump();
 
       // RefreshIndicator should be present
@@ -644,7 +675,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to exercise details
-      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -600));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -600),
+      );
       await tester.pumpAndSettle();
 
       // Verify exercise icons exist

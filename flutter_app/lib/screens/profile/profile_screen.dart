@@ -7,7 +7,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_state_notifier.dart';
 import '../../core/router/app_router.dart';
@@ -45,8 +44,9 @@ class ProfileScreen extends ConsumerWidget {
                       // Avatar
                       CircleAvatar(
                         radius: 48,
-                        backgroundColor:
-                            Theme.of(context).colorScheme.primaryContainer,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
                         backgroundImage: user?.photoURL != null
                             ? NetworkImage(user!.photoURL!)
                             : null,
@@ -66,8 +66,8 @@ class ProfileScreen extends ConsumerWidget {
                             userData?['displayName'] as String? ??
                             'ユーザー',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
 
@@ -75,8 +75,8 @@ class ProfileScreen extends ConsumerWidget {
                       Text(
                         user?.email ?? '',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
 
                       // Email verification status
@@ -128,9 +128,9 @@ class ProfileScreen extends ConsumerWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         // TODO: Navigate to profile edit
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('開発中です')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('開発中です')));
                       },
                     ),
                     const Divider(height: 1),
@@ -140,9 +140,9 @@ class ProfileScreen extends ConsumerWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         // TODO: Navigate to password change
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('開発中です')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('開発中です')));
                       },
                     ),
                     const Divider(height: 1),
@@ -152,9 +152,9 @@ class ProfileScreen extends ConsumerWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         // TODO: Navigate to email change
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('開発中です')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('開発中です')));
                       },
                     ),
                   ],
@@ -216,8 +216,8 @@ class ProfileScreen extends ConsumerWidget {
                 child: Text(
                   'バージョン 1.0.0',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -238,11 +238,10 @@ class ProfileScreen extends ConsumerWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
-
 }

@@ -127,7 +127,7 @@ class CorrelationAnalysis {
 /// Form analysis state notifier
 class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
   FormAnalysisNotifier(this._historyService, this._userId)
-      : super(const FormAnalysisState());
+    : super(const FormAnalysisState());
 
   final HistoryService _historyService;
   final String _userId;
@@ -145,10 +145,7 @@ class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
       final startDate = DateTime.now().subtract(const Duration(days: 90));
       final sessions = await _historyService.fetchSessions(
         userId: _userId,
-        filter: HistoryFilter(
-          startDate: startDate,
-          exerciseTypes: [exercise],
-        ),
+        filter: HistoryFilter(startDate: startDate, exerciseTypes: [exercise]),
         limit: 200,
       );
 
@@ -181,10 +178,7 @@ class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '分析データの読み込みに失敗しました',
-      );
+      state = state.copyWith(isLoading: false, error: '分析データの読み込みに失敗しました');
     }
   }
 
@@ -197,14 +191,17 @@ class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
     for (final session in sessions) {
       double? improvementRate;
       if (previousScore != null && previousScore > 0) {
-        improvementRate = ((session.averageScore - previousScore) / previousScore) * 100;
+        improvementRate =
+            ((session.averageScore - previousScore) / previousScore) * 100;
       }
 
-      points.add(TrendDataPoint(
-        date: session.startTime,
-        score: session.averageScore,
-        improvementRate: improvementRate,
-      ));
+      points.add(
+        TrendDataPoint(
+          date: session.startTime,
+          score: session.averageScore,
+          improvementRate: improvementRate,
+        ),
+      );
 
       previousScore = session.averageScore;
     }
@@ -262,12 +259,14 @@ class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
         }
       }
 
-      patterns.add(ErrorPattern(
-        issue: entry.key,
-        count: entry.value,
-        percentage: percentage,
-        trend: trend,
-      ));
+      patterns.add(
+        ErrorPattern(
+          issue: entry.key,
+          count: entry.value,
+          percentage: percentage,
+          trend: trend,
+        ),
+      );
     }
 
     return patterns;
@@ -319,9 +318,13 @@ class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
 
     if (firstSetScores.isEmpty) return null;
 
-    final avgFirst = firstSetScores.reduce((a, b) => a + b) / firstSetScores.length;
-    final avgLast = lastSetScores.reduce((a, b) => a + b) / lastSetScores.length;
-    final degradation = avgFirst > 0 ? ((avgFirst - avgLast) / avgFirst) * 100 : 0.0;
+    final avgFirst =
+        firstSetScores.reduce((a, b) => a + b) / firstSetScores.length;
+    final avgLast =
+        lastSetScores.reduce((a, b) => a + b) / lastSetScores.length;
+    final degradation = avgFirst > 0
+        ? ((avgFirst - avgLast) / avgFirst) * 100
+        : 0.0;
 
     String recommendation;
     if (degradation > 15) {
@@ -399,19 +402,18 @@ class FormAnalysisNotifier extends StateNotifier<FormAnalysisState> {
 
 /// Form analysis provider
 final formAnalysisProvider =
-    StateNotifierProvider.autoDispose<FormAnalysisNotifier, FormAnalysisState>((ref) {
-  final historyService = ref.watch(historyServiceProvider);
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.uid ?? '';
-  return FormAnalysisNotifier(historyService, userId);
-});
+    StateNotifierProvider.autoDispose<FormAnalysisNotifier, FormAnalysisState>((
+      ref,
+    ) {
+      final historyService = ref.watch(historyServiceProvider);
+      final authState = ref.watch(authStateProvider);
+      final userId = authState.user?.uid ?? '';
+      return FormAnalysisNotifier(historyService, userId);
+    });
 
 /// Form Analysis View widget
 class FormAnalysisView extends ConsumerStatefulWidget {
-  const FormAnalysisView({
-    super.key,
-    this.initialExercise,
-  });
+  const FormAnalysisView({super.key, this.initialExercise});
 
   final ExerciseType? initialExercise;
 
@@ -537,7 +539,8 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
           .toList();
 
       if (improvements.isNotEmpty) {
-        avgImprovement = improvements.reduce((a, b) => a + b) / improvements.length;
+        avgImprovement =
+            improvements.reduce((a, b) => a + b) / improvements.length;
         isPlateauing = avgImprovement < 2.0;
       }
     }
@@ -559,7 +562,10 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
                 ),
                 if (isPlateauing)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.orange.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -614,8 +620,10 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
                       ? '${((state.trendData.last.score - state.trendData.first.score) / state.trendData.first.score * 100).toStringAsFixed(1)}%'
                       : '-',
                   theme,
-                  valueColor: state.trendData.length >= 2 &&
-                          state.trendData.last.score > state.trendData.first.score
+                  valueColor:
+                      state.trendData.length >= 2 &&
+                          state.trendData.last.score >
+                              state.trendData.first.score
                       ? AppColors.scoreExcellent
                       : null,
                 ),
@@ -632,8 +640,11 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.lightbulb_outline,
-                        color: Colors.orange.shade800, size: 20),
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: Colors.orange.shade800,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -686,10 +697,9 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
                 ),
               )
             else
-              ...state.errorPatterns.map((pattern) => _buildErrorPatternItem(
-                    pattern,
-                    theme,
-                  )),
+              ...state.errorPatterns.map(
+                (pattern) => _buildErrorPatternItem(pattern, theme),
+              ),
           ],
         ),
       ),
@@ -809,7 +819,12 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
               children: [
                 _buildTimeBlock('午前', morning, Icons.wb_sunny_outlined, theme),
                 _buildTimeBlock('午後', afternoon, Icons.wb_sunny, theme),
-                _buildTimeBlock('夕方', evening, Icons.nights_stay_outlined, theme),
+                _buildTimeBlock(
+                  '夕方',
+                  evening,
+                  Icons.nights_stay_outlined,
+                  theme,
+                ),
               ],
             ),
 
@@ -818,13 +833,18 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  color: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.3,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.schedule,
-                        color: theme.colorScheme.primary, size: 20),
+                    Icon(
+                      Icons.schedule,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -906,10 +926,14 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
 
             Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: _getDegradationColor(analysis.degradationPercentage)
-                      .withValues(alpha: 0.1),
+                  color: _getDegradationColor(
+                    analysis.degradationPercentage,
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -932,7 +956,11 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade800, size: 20),
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade800,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -955,7 +983,10 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
     return AppColors.scoreExcellent;
   }
 
-  Widget _buildCorrelationSection(CorrelationAnalysis analysis, ThemeData theme) {
+  Widget _buildCorrelationSection(
+    CorrelationAnalysis analysis,
+    ThemeData theme,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -976,10 +1007,7 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
                 Expanded(
                   child: Column(
                     children: [
-                      Text(
-                        analysis.label,
-                        style: theme.textTheme.bodyMedium,
-                      ),
+                      Text(analysis.label, style: theme.textTheme.bodyMedium),
                       const SizedBox(height: 8),
                       SizedBox(
                         height: 20,
@@ -1016,10 +1044,7 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
 
             const SizedBox(height: 12),
 
-            Text(
-              analysis.description,
-              style: theme.textTheme.bodyMedium,
-            ),
+            Text(analysis.description, style: theme.textTheme.bodyMedium),
           ],
         ),
       ),
@@ -1088,7 +1113,11 @@ class _FormAnalysisViewState extends ConsumerState<FormAnalysisView> {
         padding: const EdgeInsets.all(32),
         child: Column(
           children: [
-            Icon(Icons.analytics_outlined, size: 48, color: Colors.grey.shade400),
+            Icon(
+              Icons.analytics_outlined,
+              size: 48,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
             Text(
               'この種目のトレーニングデータがありません',
@@ -1166,21 +1195,31 @@ class _TrendChartPainter extends CustomPainter {
 
     // Calculate bounds
     final scores = dataPoints.map((d) => d.score).toList();
-    final minScore = (scores.reduce((a, b) => a < b ? a : b) - 5).clamp(0.0, 100.0);
-    final maxScore = (scores.reduce((a, b) => a > b ? a : b) + 5).clamp(0.0, 100.0);
+    final minScore = (scores.reduce((a, b) => a < b ? a : b) - 5).clamp(
+      0.0,
+      100.0,
+    );
+    final maxScore = (scores.reduce((a, b) => a > b ? a : b) + 5).clamp(
+      0.0,
+      100.0,
+    );
     final range = maxScore - minScore;
 
     if (range == 0) return;
 
     final path = Path();
     final fillPath = Path();
-    final stepX = dataPoints.length > 1 ? size.width / (dataPoints.length - 1) : size.width;
+    final stepX = dataPoints.length > 1
+        ? size.width / (dataPoints.length - 1)
+        : size.width;
 
     fillPath.moveTo(0, size.height);
 
     for (var i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
-      final y = size.height - ((dataPoints[i].score - minScore) / range * size.height);
+      final y =
+          size.height -
+          ((dataPoints[i].score - minScore) / range * size.height);
 
       if (i == 0) {
         path.moveTo(x, y);
@@ -1204,7 +1243,9 @@ class _TrendChartPainter extends CustomPainter {
 
     for (var i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
-      final y = size.height - ((dataPoints[i].score - minScore) / range * size.height);
+      final y =
+          size.height -
+          ((dataPoints[i].score - minScore) / range * size.height);
       canvas.drawCircle(Offset(x, y), 3, dotPaint);
     }
   }

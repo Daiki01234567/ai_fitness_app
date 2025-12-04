@@ -78,10 +78,8 @@ class LateralRaiseConfig {
 
 /// Lateral raise form analyzer implementation
 class LateralRaiseAnalyzer extends BaseFormAnalyzer {
-  LateralRaiseAnalyzer({
-    super.config,
-    LateralRaiseConfig? raiseConfig,
-  }) : raiseConfig = raiseConfig ?? const LateralRaiseConfig();
+  LateralRaiseAnalyzer({super.config, LateralRaiseConfig? raiseConfig})
+    : raiseConfig = raiseConfig ?? const LateralRaiseConfig();
 
   /// Raise-specific configuration
   final LateralRaiseConfig raiseConfig;
@@ -98,10 +96,10 @@ class LateralRaiseAnalyzer extends BaseFormAnalyzer {
 
   @override
   Map<String, double> get phaseThresholds => {
-        'down': raiseConfig.downPhaseAngle,
-        'top': raiseConfig.topPhaseAngle,
-        'up': raiseConfig.upPhaseAngle,
-      };
+    'down': raiseConfig.downPhaseAngle,
+    'top': raiseConfig.topPhaseAngle,
+    'up': raiseConfig.upPhaseAngle,
+  };
 
   @override
   FrameEvaluationResult evaluateFrame(PoseFrame frame) {
@@ -143,7 +141,9 @@ class LateralRaiseAnalyzer extends BaseFormAnalyzer {
       jointAngles['leftRaise'] = getFilter('leftRaise').filter(leftRaiseAngle);
     }
     if (rightRaiseAngle != null) {
-      jointAngles['rightRaise'] = getFilter('rightRaise').filter(rightRaiseAngle);
+      jointAngles['rightRaise'] = getFilter(
+        'rightRaise',
+      ).filter(rightRaiseAngle);
     }
 
     // 2. Calculate elbow angles
@@ -162,7 +162,9 @@ class LateralRaiseAnalyzer extends BaseFormAnalyzer {
       jointAngles['leftElbow'] = getFilter('leftElbow').filter(leftElbowAngle);
     }
     if (rightElbowAngle != null) {
-      jointAngles['rightElbow'] = getFilter('rightElbow').filter(rightElbowAngle);
+      jointAngles['rightElbow'] = getFilter(
+        'rightElbow',
+      ).filter(rightElbowAngle);
     }
 
     // 3. Evaluate arm raise height
@@ -200,14 +202,18 @@ class LateralRaiseAnalyzer extends BaseFormAnalyzer {
 
     // 7. Check for shoulder shrug
     if (leftShoulder != null) {
-      final (shrugScore, shrugIssue) =
-          _evaluateShoulderShrug(leftShoulder, 'left');
+      final (shrugScore, shrugIssue) = _evaluateShoulderShrug(
+        leftShoulder,
+        'left',
+      );
       score -= (100 - shrugScore) * 0.075;
       if (shrugIssue != null) issues.add(shrugIssue);
     }
     if (rightShoulder != null) {
-      final (shrugScore, shrugIssue) =
-          _evaluateShoulderShrug(rightShoulder, 'right');
+      final (shrugScore, shrugIssue) = _evaluateShoulderShrug(
+        rightShoulder,
+        'right',
+      );
       score -= (100 - shrugScore) * 0.075;
       if (shrugIssue != null) issues.add(shrugIssue);
     }
@@ -229,8 +235,9 @@ class LateralRaiseAnalyzer extends BaseFormAnalyzer {
     if (avgRaiseAngle == null) return currentPhase;
 
     final smoothedAngle = getFilter('phaseAngle').filter(avgRaiseAngle);
-    final velocity = getVelocityCalc('raiseAngle')
-        .calculateVelocity(smoothedAngle, frame.timestamp);
+    final velocity = getVelocityCalc(
+      'raiseAngle',
+    ).calculateVelocity(smoothedAngle, frame.timestamp);
 
     switch (currentPhase) {
       case ExercisePhase.start:
@@ -491,8 +498,9 @@ class LateralRaiseAnalyzer extends BaseFormAnalyzer {
     PoseLandmark shoulder,
     String side,
   ) {
-    final initialY =
-        side == 'left' ? _leftShoulderInitialY : _rightShoulderInitialY;
+    final initialY = side == 'left'
+        ? _leftShoulderInitialY
+        : _rightShoulderInitialY;
     if (initialY == null) return (100.0, null);
 
     // Negative means shoulder raised

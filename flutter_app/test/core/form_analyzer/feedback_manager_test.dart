@@ -28,10 +28,7 @@ void main() {
       });
 
       test('throws when starting without initialization', () {
-        expect(
-          () => manager.start(),
-          throwsA(isA<StateError>()),
-        );
+        expect(() => manager.start(), throwsA(isA<StateError>()));
       });
     });
 
@@ -171,17 +168,17 @@ void main() {
           manager.start();
 
           // First feedback
-          manager.processFrameResult(_createFrameResult([
-            _createIssue('issue1', FeedbackPriority.high),
-          ]));
+          manager.processFrameResult(
+            _createFrameResult([_createIssue('issue1', FeedbackPriority.high)]),
+          );
 
           // Process queue
           async.elapse(const Duration(seconds: 1));
 
           // Second feedback immediately after
-          manager.processFrameResult(_createFrameResult([
-            _createIssue('issue2', FeedbackPriority.high),
-          ]));
+          manager.processFrameResult(
+            _createFrameResult([_createIssue('issue2', FeedbackPriority.high)]),
+          );
 
           // Advance time but less than minFeedbackInterval
           async.elapse(const Duration(seconds: 2));
@@ -203,10 +200,12 @@ void main() {
           manager.start();
 
           // Add low and high priority together
-          manager.processFrameResult(_createFrameResult([
-            _createIssue('low', FeedbackPriority.low, message: 'low'),
-            _createIssue('high', FeedbackPriority.high, message: 'high'),
-          ]));
+          manager.processFrameResult(
+            _createFrameResult([
+              _createIssue('low', FeedbackPriority.low, message: 'low'),
+              _createIssue('high', FeedbackPriority.high, message: 'high'),
+            ]),
+          );
 
           // Process queue
           async.elapse(const Duration(seconds: 1));
@@ -244,9 +243,9 @@ void main() {
         await manager.initialize();
         manager.start();
 
-        manager.processFrameResult(_createFrameResult([
-          _createIssue('test', FeedbackPriority.high),
-        ]));
+        manager.processFrameResult(
+          _createFrameResult([_createIssue('test', FeedbackPriority.high)]),
+        );
 
         await manager.stop();
 
@@ -271,12 +270,12 @@ void main() {
 
     group('FeedbackItem', () {
       test('generates voice message with prefix', () {
-        final issue = _createIssue('test', FeedbackPriority.high,
-            message: 'テストメッセージ');
-        final item = FeedbackItem(
-          issue: issue,
-          timestamp: DateTime.now(),
+        final issue = _createIssue(
+          'test',
+          FeedbackPriority.high,
+          message: 'テストメッセージ',
         );
+        final item = FeedbackItem(issue: issue, timestamp: DateTime.now());
 
         expect(item.voiceMessage, equals('参考: テストメッセージ'));
       });

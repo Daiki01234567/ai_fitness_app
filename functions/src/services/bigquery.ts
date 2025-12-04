@@ -18,9 +18,11 @@ import { logger } from "../utils/logger";
 const BQ_CONFIG = {
   datasetId: "fitness_analytics",
   tables: {
-    users: "users_anonymized",
+    users: "user_metadata",
     sessions: "training_sessions",
-    exercises: "exercise_metrics",
+    aggregatedStats: "aggregated_stats",
+    pseudonymizationLog: "pseudonymization_log",
+    exerciseDefinitions: "exercise_definitions",
   },
   // データ保持期間: 2年（GDPR 準拠）
   retentionDays: 730,

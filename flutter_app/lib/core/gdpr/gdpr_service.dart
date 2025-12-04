@@ -23,10 +23,11 @@ class GdprService {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'asia-northeast1');
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions =
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'asia-northeast1');
 
   /// Get current user ID
   String? get _currentUserId => _auth.currentUser?.uid;
@@ -101,9 +102,7 @@ class GdprService {
   }
 
   /// Get all export requests for current user
-  Future<List<ExportRequest>> getExportRequests({
-    int limit = 10,
-  }) async {
+  Future<List<ExportRequest>> getExportRequests({int limit = 10}) async {
     final userId = _currentUserId;
     if (userId == null) {
       throw Exception('User not authenticated');
@@ -126,9 +125,7 @@ class GdprService {
   }
 
   /// Stream export requests for real-time updates
-  Stream<List<ExportRequest>> streamExportRequests({
-    int limit = 10,
-  }) {
+  Stream<List<ExportRequest>> streamExportRequests({int limit = 10}) {
     final userId = _currentUserId;
     if (userId == null) {
       return Stream.value([]);
@@ -140,9 +137,11 @@ class GdprService {
         .orderBy('requestedAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ExportRequest.fromMap(doc.data(), doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => ExportRequest.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   /// Request account deletion
@@ -184,8 +183,7 @@ class GdprService {
             ? DeletionStatus.processing
             : DeletionStatus.scheduled,
         canRecover: type != DeletionType.hard,
-        recoverDeadline:
-            type != DeletionType.hard ? scheduledDate : null,
+        recoverDeadline: type != DeletionType.hard ? scheduledDate : null,
       );
     } on FirebaseFunctionsException catch (e) {
       throw _handleFunctionsError(e, 'アカウント削除リクエスト');
@@ -204,9 +202,7 @@ class GdprService {
     try {
       // Call Cloud Function to cancel deletion
       final callable = _functions.httpsCallable('cancelAccountDeletion');
-      await callable.call<Map<String, dynamic>>({
-        'requestId': requestId,
-      });
+      await callable.call<Map<String, dynamic>>({'requestId': requestId});
     } on FirebaseFunctionsException catch (e) {
       throw _handleFunctionsError(e, '削除キャンセル');
     }
@@ -240,9 +236,7 @@ class GdprService {
   }
 
   /// Get all deletion requests for current user
-  Future<List<DeletionRequest>> getDeletionRequests({
-    int limit = 10,
-  }) async {
+  Future<List<DeletionRequest>> getDeletionRequests({int limit = 10}) async {
     final userId = _currentUserId;
     if (userId == null) {
       throw Exception('User not authenticated');
@@ -279,12 +273,12 @@ class GdprService {
         .limit(1)
         .snapshots()
         .map((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        return null;
-      }
-      final doc = snapshot.docs.first;
-      return DeletionRequest.fromMap(doc.data(), doc.id);
-    });
+          if (snapshot.docs.isEmpty) {
+            return null;
+          }
+          final doc = snapshot.docs.first;
+          return DeletionRequest.fromMap(doc.data(), doc.id);
+        });
   }
 
   /// Download exported data
@@ -631,10 +625,7 @@ class GdprService {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        return RecoveryEligibility(
-          isEligible: false,
-          reason: 'アカウントが見つかりません',
-        );
+        return RecoveryEligibility(isEligible: false, reason: 'アカウントが見つかりません');
       }
 
       final userData = querySnapshot.docs.first.data();
@@ -652,10 +643,7 @@ class GdprService {
       if (scheduledDeletionDate != null) {
         final deletionDate = (scheduledDeletionDate as Timestamp).toDate();
         if (DateTime.now().isAfter(deletionDate)) {
-          return RecoveryEligibility(
-            isEligible: false,
-            reason: '復元期限が過ぎています',
-          );
+          return RecoveryEligibility(isEligible: false, reason: '復元期限が過ぎています');
         }
 
         return RecoveryEligibility(
@@ -665,14 +653,9 @@ class GdprService {
         );
       }
 
-      return RecoveryEligibility(
-        isEligible: true,
-      );
+      return RecoveryEligibility(isEligible: true);
     } catch (e) {
-      return RecoveryEligibility(
-        isEligible: false,
-        reason: '確認中にエラーが発生しました',
-      );
+      return RecoveryEligibility(isEligible: false, reason: '確認中にエラーが発生しました');
     }
   }
 

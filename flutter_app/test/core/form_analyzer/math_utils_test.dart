@@ -279,13 +279,7 @@ PoseLandmark _createLandmark(
   double z = 0,
   double likelihood = 0.9,
 }) {
-  return PoseLandmark(
-    type: type,
-    x: x,
-    y: y,
-    z: z,
-    likelihood: likelihood,
-  );
+  return PoseLandmark(type: type, x: x, y: y, z: z, likelihood: likelihood);
 }
 
 /// Helper function to create a pose frame
@@ -300,8 +294,5 @@ PoseFrame _createPoseFrame(Map<PoseLandmarkType, (double, double)> positions) {
       likelihood: 0.9,
     );
   }
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: 0,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: 0);
 }

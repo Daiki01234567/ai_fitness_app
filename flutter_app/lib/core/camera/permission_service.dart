@@ -6,7 +6,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart' as permission_handler;
 
 /// 許可サービスプロバイダー
 final permissionServiceProvider = Provider<PermissionService>((ref) {
@@ -15,10 +15,12 @@ final permissionServiceProvider = Provider<PermissionService>((ref) {
 
 /// 許可状態プロバイダー
 final cameraPermissionStateProvider =
-    StateNotifierProvider<CameraPermissionNotifier, CameraPermissionState>((ref) {
-  final service = ref.watch(permissionServiceProvider);
-  return CameraPermissionNotifier(service);
-});
+    StateNotifierProvider<CameraPermissionNotifier, CameraPermissionState>((
+      ref,
+    ) {
+      final service = ref.watch(permissionServiceProvider);
+      return CameraPermissionNotifier(service);
+    });
 
 /// カメラ許可状態
 enum CameraPermissionState {
@@ -43,7 +45,8 @@ enum CameraPermissionState {
 
 /// カメラ許可状態Notifier
 class CameraPermissionNotifier extends StateNotifier<CameraPermissionState> {
-  CameraPermissionNotifier(this._service) : super(CameraPermissionState.unknown);
+  CameraPermissionNotifier(this._service)
+    : super(CameraPermissionState.unknown);
 
   final PermissionService _service;
 
@@ -69,14 +72,14 @@ class CameraPermissionNotifier extends StateNotifier<CameraPermissionState> {
 class PermissionService {
   /// カメラ許可状態をチェック
   Future<CameraPermissionState> checkCameraPermission() async {
-    final status = await Permission.camera.status;
+    final status = await permission_handler.Permission.camera.status;
     return _convertStatus(status);
   }
 
   /// カメラ許可をリクエスト
   Future<CameraPermissionState> requestCameraPermission() async {
     // まず現在の状態をチェック
-    final currentStatus = await Permission.camera.status;
+    final currentStatus = await permission_handler.Permission.camera.status;
 
     if (currentStatus.isGranted) {
       return CameraPermissionState.granted;
@@ -88,7 +91,7 @@ class PermissionService {
     }
 
     // 許可をリクエスト
-    final newStatus = await Permission.camera.request();
+    final newStatus = await permission_handler.Permission.camera.request();
     debugPrint('PermissionService: Camera permission result: $newStatus');
 
     return _convertStatus(newStatus);
@@ -97,23 +100,23 @@ class PermissionService {
   /// 許可設定のためアプリ設定を開く
   Future<bool> openAppSettings() async {
     debugPrint('PermissionService: Opening app settings');
-    return openAppSettings();
+    return permission_handler.openAppSettings();
   }
 
   /// permission_handlerのステータスを独自のenumに変換
-  CameraPermissionState _convertStatus(PermissionStatus status) {
+  CameraPermissionState _convertStatus(permission_handler.PermissionStatus status) {
     switch (status) {
-      case PermissionStatus.granted:
+      case permission_handler.PermissionStatus.granted:
         return CameraPermissionState.granted;
-      case PermissionStatus.denied:
+      case permission_handler.PermissionStatus.denied:
         return CameraPermissionState.denied;
-      case PermissionStatus.permanentlyDenied:
+      case permission_handler.PermissionStatus.permanentlyDenied:
         return CameraPermissionState.permanentlyDenied;
-      case PermissionStatus.restricted:
+      case permission_handler.PermissionStatus.restricted:
         return CameraPermissionState.restricted;
-      case PermissionStatus.limited:
+      case permission_handler.PermissionStatus.limited:
         return CameraPermissionState.limited;
-      case PermissionStatus.provisional:
+      case permission_handler.PermissionStatus.provisional:
         return CameraPermissionState.granted;
     }
   }

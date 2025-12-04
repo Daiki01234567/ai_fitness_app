@@ -229,19 +229,13 @@ void main() {
     });
 
     test('dropRate calculates correctly', () {
-      const state = FrameRateState(
-        frameCount: 100,
-        droppedFrames: 10,
-      );
+      const state = FrameRateState(frameCount: 100, droppedFrames: 10);
 
       expect(state.dropRate, equals(10.0)); // 10%
     });
 
     test('dropRate is zero when no frames', () {
-      const state = FrameRateState(
-        frameCount: 0,
-        droppedFrames: 0,
-      );
+      const state = FrameRateState(frameCount: 0, droppedFrames: 0);
 
       expect(state.dropRate, equals(0.0));
     });

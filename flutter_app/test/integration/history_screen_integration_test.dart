@@ -79,26 +79,28 @@ void main() {
         .collection('sessions')
         .doc(id)
         .set({
-      'id': id,
-      'userId': testUserId,
-      'exerciseType': exerciseType.name,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
-      'totalReps': totalReps,
-      'totalSets': totalSets,
-      'averageScore': averageScore,
-      'sets': sets ?? [
-        {
-          'setNumber': 1,
-          'reps': 10,
+          'id': id,
+          'userId': testUserId,
+          'exerciseType': exerciseType.name,
+          'startTime': startTime.toIso8601String(),
+          'endTime': endTime.toIso8601String(),
+          'totalReps': totalReps,
+          'totalSets': totalSets,
           'averageScore': averageScore,
-          'durationMs': 300000,
-          'issues': [],
-        }
-      ],
-      'note': note,
-      'tags': tags,
-    });
+          'sets':
+              sets ??
+              [
+                {
+                  'setNumber': 1,
+                  'reps': 10,
+                  'averageScore': averageScore,
+                  'durationMs': 300000,
+                  'issues': [],
+                },
+              ],
+          'note': note,
+          'tags': tags,
+        });
   }
 
   /// Helper function to seed Firestore with test sessions
@@ -159,9 +161,7 @@ void main() {
   }
 
   /// Helper to build the widget with necessary providers
-  Widget buildHistoryScreen({
-    List<Override>? additionalOverrides,
-  }) {
+  Widget buildHistoryScreen({List<Override>? additionalOverrides}) {
     return ProviderScope(
       overrides: [
         historyServiceProvider.overrideWithValue(historyService),
@@ -171,17 +171,12 @@ void main() {
             firestore: fakeFirestore,
           );
           // Set authenticated state
-          notifier.state = AuthState(
-            user: mockUser,
-            isLoading: false,
-          );
+          notifier.state = AuthState(user: mockUser, isLoading: false);
           return notifier;
         }),
         consentStateProvider.overrideWith((ref) {
-          return ConsentStateNotifier(
-            firestore: fakeFirestore,
-            auth: mockAuth,
-          )..state = const ConsentState(
+          return ConsentStateNotifier(firestore: fakeFirestore, auth: mockAuth)
+            ..state = const ConsentState(
               isLoading: false,
               tosAccepted: true,
               ppAccepted: true,
@@ -196,9 +191,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('ja', 'JP'),
-        ],
+        supportedLocales: const [Locale('ja', 'JP')],
         locale: const Locale('ja', 'JP'),
         home: const HistoryScreen(),
       ),

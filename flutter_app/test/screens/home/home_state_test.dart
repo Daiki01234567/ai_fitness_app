@@ -22,13 +22,12 @@ void main() {
       expect(state.todayUsageCount, 0);
       expect(state.isLoading, false);
       expect(state.error, isNull);
+      expect(state.weeklySessionCount, 0);
+      expect(state.weeklyAverageScore, 0.0);
     });
 
     test('remainingSessions should calculate correctly', () {
-      const state = HomeScreenState(
-        dailyLimit: 3,
-        todayUsageCount: 1,
-      );
+      const state = HomeScreenState(dailyLimit: 3, todayUsageCount: 1);
 
       expect(state.remainingSessions, 2);
     });
@@ -88,6 +87,31 @@ void main() {
       expect(updated.todaySessionCount, 10);
       expect(updated.dailyLimit, 5);
       expect(updated.userPlan, UserPlan.free);
+    });
+
+    test('weeklySessionCount and weeklyAverageScore can be set', () {
+      const state = HomeScreenState(
+        weeklySessionCount: 15,
+        weeklyAverageScore: 82.5,
+      );
+
+      expect(state.weeklySessionCount, 15);
+      expect(state.weeklyAverageScore, 82.5);
+    });
+
+    test('copyWith should update weekly stats fields', () {
+      const original = HomeScreenState(
+        weeklySessionCount: 5,
+        weeklyAverageScore: 75.0,
+      );
+
+      final updated = original.copyWith(
+        weeklySessionCount: 10,
+        weeklyAverageScore: 85.0,
+      );
+
+      expect(updated.weeklySessionCount, 10);
+      expect(updated.weeklyAverageScore, 85.0);
     });
   });
 

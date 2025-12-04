@@ -134,13 +134,17 @@ void main() {
         // Simulate curl up
         for (var i = 0; i < 10; i++) {
           final angle = 160 - (i * 13); // 160 -> 30
-          analyzer.analyze(_createBicepCurlPoseFrame(elbowAngle: angle.toDouble()));
+          analyzer.analyze(
+            _createBicepCurlPoseFrame(elbowAngle: angle.toDouble()),
+          );
         }
 
         // Simulate curl down
         for (var i = 0; i < 10; i++) {
           final angle = 30 + (i * 13); // 30 -> 160
-          analyzer.analyze(_createBicepCurlPoseFrame(elbowAngle: angle.toDouble()));
+          analyzer.analyze(
+            _createBicepCurlPoseFrame(elbowAngle: angle.toDouble()),
+          );
         }
 
         expect(analyzer.repCount, greaterThanOrEqualTo(0));
@@ -507,10 +511,7 @@ PoseFrame _createSquatPoseFrame({required double kneeAngle}) {
     likelihood: 0.85,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }
 
 PoseFrame _createSquatPoseFrameWithKneeOverToe() {
@@ -603,10 +604,7 @@ PoseFrame _createSquatPoseFrameWithKneeOverToe() {
     likelihood: 0.85,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }
 
 PoseFrame _createBicepCurlPoseFrame({required double elbowAngle}) {
@@ -678,10 +676,7 @@ PoseFrame _createBicepCurlPoseFrame({required double elbowAngle}) {
     likelihood: 0.85,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }
 
 PoseFrame _createBicepCurlPoseFrameWithElbowSwing() {
@@ -752,10 +747,7 @@ PoseFrame _createBicepCurlPoseFrameWithElbowSwing() {
     likelihood: 0.85,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }
 
 PoseFrame _createLateralRaisePoseFrame({required double armAngle}) {
@@ -828,10 +820,7 @@ PoseFrame _createLateralRaisePoseFrame({required double armAngle}) {
     likelihood: 0.85,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }
 
 PoseFrame _createShoulderPressPoseFrame({required double armAngle}) {
@@ -913,10 +902,7 @@ PoseFrame _createShoulderPressPoseFrame({required double armAngle}) {
     likelihood: 0.9,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }
 
 PoseFrame _createPushUpPoseFrame({required double elbowAngle}) {
@@ -1031,8 +1017,5 @@ PoseFrame _createPushUpPoseFrame({required double elbowAngle}) {
     likelihood: 0.9,
   );
 
-  return PoseFrame(
-    landmarks: landmarks,
-    timestamp: timestamp,
-  );
+  return PoseFrame(landmarks: landmarks, timestamp: timestamp);
 }

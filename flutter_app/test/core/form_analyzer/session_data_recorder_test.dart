@@ -65,7 +65,10 @@ void main() {
 
         // Record 10 frames
         for (var i = 0; i < 10; i++) {
-          recorder.recordFrame(_createFrameResult(score: 80), ExercisePhase.down);
+          recorder.recordFrame(
+            _createFrameResult(score: 80),
+            ExercisePhase.down,
+          );
         }
 
         // Should only record 5 (every other frame)
@@ -140,14 +143,16 @@ void main() {
         recorder.startSession();
         recorder.recordRepCompleted(_createRepSummary(repNumber: 1, score: 80));
         recorder.recordRepCompleted(_createRepSummary(repNumber: 2, score: 90));
-        recorder.recordSetCompleted(_createSetSummary(
-          setNumber: 1,
-          repCount: 2,
-          reps: [
-            _createRepSummary(repNumber: 1, score: 80),
-            _createRepSummary(repNumber: 2, score: 90),
-          ],
-        ));
+        recorder.recordSetCompleted(
+          _createSetSummary(
+            setNumber: 1,
+            repCount: 2,
+            reps: [
+              _createRepSummary(repNumber: 1, score: 80),
+              _createRepSummary(repNumber: 2, score: 90),
+            ],
+          ),
+        );
 
         final record = await recorder.endSession();
 
@@ -204,7 +209,9 @@ void main() {
         recorder.startSession();
         recorder.recordRepCompleted(_createRepSummary(repNumber: 1, score: 80));
         recorder.recordRepCompleted(_createRepSummary(repNumber: 2, score: 90));
-        recorder.recordRepCompleted(_createRepSummary(repNumber: 3, score: 100));
+        recorder.recordRepCompleted(
+          _createRepSummary(repNumber: 3, score: 100),
+        );
 
         final stats = recorder.getStatistics();
 
@@ -224,18 +231,15 @@ void main() {
 
       test('returns issues sorted by frequency', () {
         recorder.startSession();
-        recorder.recordRepCompleted(_createRepSummary(
-          repNumber: 1,
-          issues: ['issue_a', 'issue_b'],
-        ));
-        recorder.recordRepCompleted(_createRepSummary(
-          repNumber: 2,
-          issues: ['issue_a'],
-        ));
-        recorder.recordRepCompleted(_createRepSummary(
-          repNumber: 3,
-          issues: ['issue_a', 'issue_c'],
-        ));
+        recorder.recordRepCompleted(
+          _createRepSummary(repNumber: 1, issues: ['issue_a', 'issue_b']),
+        );
+        recorder.recordRepCompleted(
+          _createRepSummary(repNumber: 2, issues: ['issue_a']),
+        );
+        recorder.recordRepCompleted(
+          _createRepSummary(repNumber: 3, issues: ['issue_a', 'issue_c']),
+        );
 
         final issues = recorder.getMostCommonIssues(limit: 2);
 
@@ -393,16 +397,18 @@ RepSummary _createRepSummary({
     score: score,
     level: FeedbackLevelExtension.fromScore(score),
     issues: (issues ?? [])
-        .map((type) => FormIssue(
-              issueType: type,
-              message: type,
-              priority: FeedbackPriority.medium,
-              suggestion: '',
-              affectedBodyPart: '',
-              currentValue: 0,
-              targetValue: 0,
-              deduction: 0,
-            ))
+        .map(
+          (type) => FormIssue(
+            issueType: type,
+            message: type,
+            priority: FeedbackPriority.medium,
+            suggestion: '',
+            affectedBodyPart: '',
+            currentValue: 0,
+            targetValue: 0,
+            deduction: 0,
+          ),
+        )
         .toList(),
     startTime: now - 3000, // 3 seconds before now
     endTime: now,

@@ -76,9 +76,13 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
 
   // Debug logging
   // ignore: avoid_print
-  print('[AppInit] authState: user=${authState.user?.uid}, isLoading=${authState.isLoading}, isForceLogout=${authState.isForceLogout}');
+  print(
+    '[AppInit] authState: user=${authState.user?.uid}, isLoading=${authState.isLoading}, isForceLogout=${authState.isForceLogout}',
+  );
   // ignore: avoid_print
-  print('[AppInit] consentState: isLoading=${consentState.isLoading}, needsConsent=${consentState.needsConsent}, tosAccepted=${consentState.tosAccepted}');
+  print(
+    '[AppInit] consentState: isLoading=${consentState.isLoading}, needsConsent=${consentState.needsConsent}, tosAccepted=${consentState.tosAccepted}',
+  );
 
   // Check force logout first - this takes priority over everything
   if (authState.isForceLogout) {

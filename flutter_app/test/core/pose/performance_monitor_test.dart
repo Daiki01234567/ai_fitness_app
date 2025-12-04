@@ -99,7 +99,10 @@ void main() {
         expect(state.currentMetrics?.cpuUsagePercent, equals(45.0));
         expect(state.currentMetrics?.batteryLevel, equals(0.8));
         expect(state.currentMetrics?.isCharging, equals(false));
-        expect(state.currentMetrics?.thermalState, equals(ThermalState.nominal));
+        expect(
+          state.currentMetrics?.thermalState,
+          equals(ThermalState.nominal),
+        );
       });
     });
 
@@ -170,10 +173,7 @@ void main() {
         processingTimeMs: 33,
       );
 
-      final updated = original.copyWith(
-        fps: 25.0,
-        memoryUsageMb: 150.0,
-      );
+      final updated = original.copyWith(fps: 25.0, memoryUsageMb: 150.0);
 
       expect(updated.fps, equals(25.0));
       expect(updated.processingTimeMs, equals(33)); // unchanged
@@ -210,9 +210,18 @@ void main() {
     });
 
     test('levels are in correct order', () {
-      expect(PerformanceLevel.optimal.index, lessThan(PerformanceLevel.acceptable.index));
-      expect(PerformanceLevel.acceptable.index, lessThan(PerformanceLevel.warning.index));
-      expect(PerformanceLevel.warning.index, lessThan(PerformanceLevel.critical.index));
+      expect(
+        PerformanceLevel.optimal.index,
+        lessThan(PerformanceLevel.acceptable.index),
+      );
+      expect(
+        PerformanceLevel.acceptable.index,
+        lessThan(PerformanceLevel.warning.index),
+      );
+      expect(
+        PerformanceLevel.warning.index,
+        lessThan(PerformanceLevel.critical.index),
+      );
     });
   });
 

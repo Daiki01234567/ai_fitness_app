@@ -78,10 +78,8 @@ class BicepCurlConfig {
 
 /// Bicep curl form analyzer implementation
 class BicepCurlAnalyzer extends BaseFormAnalyzer {
-  BicepCurlAnalyzer({
-    super.config,
-    BicepCurlConfig? curlConfig,
-  }) : curlConfig = curlConfig ?? const BicepCurlConfig();
+  BicepCurlAnalyzer({super.config, BicepCurlConfig? curlConfig})
+    : curlConfig = curlConfig ?? const BicepCurlConfig();
 
   /// Curl-specific configuration
   final BicepCurlConfig curlConfig;
@@ -103,10 +101,10 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
 
   @override
   Map<String, double> get phaseThresholds => {
-        'down': curlConfig.downPhaseAngle,
-        'bottom': curlConfig.bottomPhaseAngle,
-        'up': curlConfig.upPhaseAngle,
-      };
+    'down': curlConfig.downPhaseAngle,
+    'bottom': curlConfig.bottomPhaseAngle,
+    'up': curlConfig.upPhaseAngle,
+  };
 
   @override
   FrameEvaluationResult evaluateFrame(PoseFrame frame) {
@@ -150,12 +148,12 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
     _detectActiveArms(leftElbowAngle, rightElbowAngle);
 
     if (leftElbowAngle != null && _leftArmActive) {
-      jointAngles['leftElbow'] =
-          getFilter('leftElbow').filter(leftElbowAngle);
+      jointAngles['leftElbow'] = getFilter('leftElbow').filter(leftElbowAngle);
     }
     if (rightElbowAngle != null && _rightArmActive) {
-      jointAngles['rightElbow'] =
-          getFilter('rightElbow').filter(rightElbowAngle);
+      jointAngles['rightElbow'] = getFilter(
+        'rightElbow',
+      ).filter(rightElbowAngle);
     }
 
     // 2. Evaluate range of motion
@@ -180,14 +178,18 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
 
     // 4. Check shoulder position
     if (_leftArmActive && leftShoulder != null) {
-      final (shoulderScore, shoulderIssue) =
-          _evaluateShoulderPosition(leftShoulder, 'left');
+      final (shoulderScore, shoulderIssue) = _evaluateShoulderPosition(
+        leftShoulder,
+        'left',
+      );
       score -= (100 - shoulderScore) * 0.1;
       if (shoulderIssue != null) issues.add(shoulderIssue);
     }
     if (_rightArmActive && rightShoulder != null) {
-      final (shoulderScore, shoulderIssue) =
-          _evaluateShoulderPosition(rightShoulder, 'right');
+      final (shoulderScore, shoulderIssue) = _evaluateShoulderPosition(
+        rightShoulder,
+        'right',
+      );
       score -= (100 - shoulderScore) * 0.1;
       if (shoulderIssue != null) issues.add(shoulderIssue);
     }
@@ -233,8 +235,9 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
     if (avgElbowAngle == null) return currentPhase;
 
     final smoothedAngle = getFilter('phaseAngle').filter(avgElbowAngle);
-    final velocity = getVelocityCalc('elbowAngle')
-        .calculateVelocity(smoothedAngle, frame.timestamp);
+    final velocity = getVelocityCalc(
+      'elbowAngle',
+    ).calculateVelocity(smoothedAngle, frame.timestamp);
 
     switch (currentPhase) {
       case ExercisePhase.start:
@@ -289,16 +292,20 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
     PoseLandmark? leftShoulder,
     PoseLandmark? rightShoulder,
   }) {
-    if (_leftElbowInitialX == null && leftElbow?.meetsMinimumThreshold == true) {
+    if (_leftElbowInitialX == null &&
+        leftElbow?.meetsMinimumThreshold == true) {
       _leftElbowInitialX = leftElbow!.x;
     }
-    if (_rightElbowInitialX == null && rightElbow?.meetsMinimumThreshold == true) {
+    if (_rightElbowInitialX == null &&
+        rightElbow?.meetsMinimumThreshold == true) {
       _rightElbowInitialX = rightElbow!.x;
     }
-    if (_leftShoulderInitialY == null && leftShoulder?.meetsMinimumThreshold == true) {
+    if (_leftShoulderInitialY == null &&
+        leftShoulder?.meetsMinimumThreshold == true) {
       _leftShoulderInitialY = leftShoulder!.y;
     }
-    if (_rightShoulderInitialY == null && rightShoulder?.meetsMinimumThreshold == true) {
+    if (_rightShoulderInitialY == null &&
+        rightShoulder?.meetsMinimumThreshold == true) {
       _rightShoulderInitialY = rightShoulder!.y;
     }
   }
@@ -340,8 +347,7 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
   /// Evaluate range of motion
   (double, FormIssue?) _evaluateRangeOfMotion(double angle) {
     // During curl up phase, check for full contraction
-    if (currentPhase == ExercisePhase.top ||
-        currentPhase == ExercisePhase.up) {
+    if (currentPhase == ExercisePhase.top || currentPhase == ExercisePhase.up) {
       if (angle > curlConfig.targetMinAngle + 20) {
         final deduction = (angle - curlConfig.targetMinAngle - 20) / 2;
         return (
@@ -416,8 +422,9 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
     PoseLandmark shoulder,
     String side,
   ) {
-    final initialY =
-        side == 'left' ? _leftShoulderInitialY : _rightShoulderInitialY;
+    final initialY = side == 'left'
+        ? _leftShoulderInitialY
+        : _rightShoulderInitialY;
     if (initialY == null) return (100.0, null);
 
     // Negative means shoulder raised (Y axis inverted in image coordinates)
@@ -445,8 +452,9 @@ class BicepCurlAnalyzer extends BaseFormAnalyzer {
 
   /// Evaluate momentum usage
   (double, FormIssue?) _evaluateMomentum(double angle, int timestamp) {
-    final velocity =
-        getVelocityCalc('momentum').calculateVelocity(angle, timestamp);
+    final velocity = getVelocityCalc(
+      'momentum',
+    ).calculateVelocity(angle, timestamp);
 
     if (velocity == null || velocity.abs() <= curlConfig.momentumThreshold) {
       return (100.0, null);

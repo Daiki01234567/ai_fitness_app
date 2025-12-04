@@ -107,12 +107,10 @@ class ConsentService {
   final FirebaseFunctions _functions;
   final FirebaseAuth _auth;
 
-  ConsentService({
-    FirebaseFunctions? functions,
-    FirebaseAuth? auth,
-  })  : _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'asia-northeast1'),
-        _auth = auth ?? FirebaseAuth.instance;
+  ConsentService({FirebaseFunctions? functions, FirebaseAuth? auth})
+    : _functions =
+          functions ?? FirebaseFunctions.instanceFor(region: 'asia-northeast1'),
+      _auth = auth ?? FirebaseAuth.instance;
 
   /// ユーザーが認証されているかチェック
   bool get _isAuthenticated => _auth.currentUser != null;
@@ -125,9 +123,7 @@ class ConsentService {
 
     try {
       final callable = _functions.httpsCallable('getConsentStatus');
-      final result = await callable.call({
-        'includeHistory': includeHistory,
-      });
+      final result = await callable.call({'includeHistory': includeHistory});
 
       final data = result.data as Map<String, dynamic>;
 
@@ -175,10 +171,7 @@ class ConsentService {
     required bool accepted,
   }) async {
     if (!_isAuthenticated) {
-      return ConsentResult(
-        success: false,
-        error: '認証が必要です',
-      );
+      return ConsentResult(success: false, error: '認証が必要です');
     }
 
     try {
@@ -195,20 +188,14 @@ class ConsentService {
         message: data['message'],
       );
     } on FirebaseFunctionsException catch (e) {
-      return ConsentResult(
-        success: false,
-        error: _getErrorMessage(e),
-      );
+      return ConsentResult(success: false, error: _getErrorMessage(e));
     }
   }
 
   /// 利用規約とプライバシーポリシーの同意を一度に記録
   Future<ConsentResult> recordAllConsents() async {
     // 利用規約の同意を記録
-    final tosResult = await recordConsent(
-      consentType: 'tos',
-      accepted: true,
-    );
+    final tosResult = await recordConsent(consentType: 'tos', accepted: true);
 
     if (!tosResult.success) {
       return tosResult;
@@ -230,10 +217,7 @@ class ConsentService {
     String? reason,
   }) async {
     if (!_isAuthenticated) {
-      return ConsentResult(
-        success: false,
-        error: '認証が必要です',
-      );
+      return ConsentResult(success: false, error: '認証が必要です');
     }
 
     try {
@@ -252,10 +236,7 @@ class ConsentService {
         forceLogout: data['forceLogout'] == true,
       );
     } on FirebaseFunctionsException catch (e) {
-      return ConsentResult(
-        success: false,
-        error: _getErrorMessage(e),
-      );
+      return ConsentResult(success: false, error: _getErrorMessage(e));
     }
   }
 

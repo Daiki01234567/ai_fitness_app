@@ -34,14 +34,11 @@
       "codebase": "default",
       "disallowLegacyRuntimeConfig": true,
       "ignore": [
-        "functions\\node_modules",
-        "functions\\.git",
-        "functions\\firebase-debug.log",
-        "functions\\firebase-debug.*.log",
-        "functions\\*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
       ]
     }
   ],

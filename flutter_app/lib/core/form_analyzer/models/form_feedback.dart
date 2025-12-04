@@ -278,21 +278,24 @@ class SetSummary {
   int get durationMs => endTime - startTime;
 
   /// Best rep score
-  double get bestScore =>
-      reps.isEmpty ? 0 : reps.map((r) => r.score).reduce((a, b) => a > b ? a : b);
+  double get bestScore => reps.isEmpty
+      ? 0
+      : reps.map((r) => r.score).reduce((a, b) => a > b ? a : b);
 
   /// Worst rep score
-  double get worstScore =>
-      reps.isEmpty ? 0 : reps.map((r) => r.score).reduce((a, b) => a < b ? a : b);
+  double get worstScore => reps.isEmpty
+      ? 0
+      : reps.map((r) => r.score).reduce((a, b) => a < b ? a : b);
 
   /// Score consistency (standard deviation)
   double get scoreConsistency {
     if (reps.isEmpty) return 0;
     final avg = averageScore;
-    final variance = reps.map((r) => (r.score - avg) * (r.score - avg)).fold<double>(
-      0,
-      (sum, v) => sum + v,
-    ) / reps.length;
+    final variance =
+        reps
+            .map((r) => (r.score - avg) * (r.score - avg))
+            .fold<double>(0, (sum, v) => sum + v) /
+        reps.length;
     return variance > 0 ? (variance as num).toDouble() : 0;
   }
 
@@ -350,8 +353,9 @@ class SessionSummary {
   int get durationMs => endTime - startTime;
 
   /// Best set score
-  double get bestSetScore =>
-      sets.isEmpty ? 0 : sets.map((s) => s.averageScore).reduce((a, b) => a > b ? a : b);
+  double get bestSetScore => sets.isEmpty
+      ? 0
+      : sets.map((s) => s.averageScore).reduce((a, b) => a > b ? a : b);
 
   @override
   String toString() =>

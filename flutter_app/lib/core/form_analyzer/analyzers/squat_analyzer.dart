@@ -82,10 +82,8 @@ class SquatConfig {
 
 /// Squat form analyzer implementation
 class SquatAnalyzer extends BaseFormAnalyzer {
-  SquatAnalyzer({
-    super.config,
-    SquatConfig? squatConfig,
-  }) : squatConfig = squatConfig ?? const SquatConfig();
+  SquatAnalyzer({super.config, SquatConfig? squatConfig})
+    : squatConfig = squatConfig ?? const SquatConfig();
 
   /// Squat-specific configuration
   final SquatConfig squatConfig;
@@ -98,10 +96,10 @@ class SquatAnalyzer extends BaseFormAnalyzer {
 
   @override
   Map<String, double> get phaseThresholds => {
-        'down': squatConfig.downPhaseAngle,
-        'bottom': squatConfig.bottomPhaseAngle,
-        'up': squatConfig.upPhaseAngle,
-      };
+    'down': squatConfig.downPhaseAngle,
+    'bottom': squatConfig.bottomPhaseAngle,
+    'up': squatConfig.upPhaseAngle,
+  };
 
   @override
   FrameEvaluationResult evaluateFrame(PoseFrame frame) {
@@ -149,24 +147,34 @@ class SquatAnalyzer extends BaseFormAnalyzer {
 
     // 2. Check left-right symmetry
     if (leftKneeAngle != null && rightKneeAngle != null) {
-      final (symmetryScore, symmetryIssue) =
-          _evaluateSymmetry(leftKneeAngle, rightKneeAngle);
+      final (symmetryScore, symmetryIssue) = _evaluateSymmetry(
+        leftKneeAngle,
+        rightKneeAngle,
+      );
       score -= (100 - symmetryScore) * 0.15; // 15% weight for symmetry
       if (symmetryIssue != null) issues.add(symmetryIssue);
     }
 
     // 3. Check knee over toe
     if (leftKnee != null && leftAnkle != null && leftFootIndex != null) {
-      final (leftKotScore, leftKotIssue) =
-          _evaluateKneeOverToe(leftKnee, leftAnkle, leftFootIndex, 'left');
+      final (leftKotScore, leftKotIssue) = _evaluateKneeOverToe(
+        leftKnee,
+        leftAnkle,
+        leftFootIndex,
+        'left',
+      );
       if (leftKotIssue != null) {
         score -= (100 - leftKotScore) * 0.1; // 10% weight
         issues.add(leftKotIssue);
       }
     }
     if (rightKnee != null && rightAnkle != null && rightFootIndex != null) {
-      final (rightKotScore, rightKotIssue) =
-          _evaluateKneeOverToe(rightKnee, rightAnkle, rightFootIndex, 'right');
+      final (rightKotScore, rightKotIssue) = _evaluateKneeOverToe(
+        rightKnee,
+        rightAnkle,
+        rightFootIndex,
+        'right',
+      );
       if (rightKotIssue != null) {
         score -= (100 - rightKotScore) * 0.1;
         issues.add(rightKotIssue);
@@ -182,24 +190,31 @@ class SquatAnalyzer extends BaseFormAnalyzer {
     );
     if (backAngle != null) {
       jointAngles['backAngle'] = getFilter('backAngle').filter(backAngle);
-      final (backScore, backIssue) =
-          _evaluateBackAngle(jointAngles['backAngle']!);
+      final (backScore, backIssue) = _evaluateBackAngle(
+        jointAngles['backAngle']!,
+      );
       score -= (100 - backScore) * 0.15; // 15% weight
       if (backIssue != null) issues.add(backIssue);
     }
 
     // 5. Check heel lift
     if (leftHeel != null && leftFootIndex != null) {
-      final (leftHeelScore, leftHeelIssue) =
-          _evaluateHeelLift(leftHeel, leftFootIndex, 'left');
+      final (leftHeelScore, leftHeelIssue) = _evaluateHeelLift(
+        leftHeel,
+        leftFootIndex,
+        'left',
+      );
       if (leftHeelIssue != null) {
         score -= (100 - leftHeelScore) * 0.05;
         issues.add(leftHeelIssue);
       }
     }
     if (rightHeel != null && rightFootIndex != null) {
-      final (rightHeelScore, rightHeelIssue) =
-          _evaluateHeelLift(rightHeel, rightFootIndex, 'right');
+      final (rightHeelScore, rightHeelIssue) = _evaluateHeelLift(
+        rightHeel,
+        rightFootIndex,
+        'right',
+      );
       if (rightHeelIssue != null) {
         score -= (100 - rightHeelScore) * 0.05;
         issues.add(rightHeelIssue);
@@ -226,8 +241,9 @@ class SquatAnalyzer extends BaseFormAnalyzer {
     final smoothedAngle = getFilter('phaseAngle').filter(avgKneeAngle);
 
     // Calculate velocity to determine direction
-    final velocity = getVelocityCalc('kneeAngle')
-        .calculateVelocity(smoothedAngle, frame.timestamp);
+    final velocity = getVelocityCalc(
+      'kneeAngle',
+    ).calculateVelocity(smoothedAngle, frame.timestamp);
 
     // State machine logic
     switch (currentPhase) {
@@ -323,7 +339,11 @@ class SquatAnalyzer extends BaseFormAnalyzer {
 
     // Not deep enough
     if (angle > squatConfig.targetKneeAngle + squatConfig.kneeAngleTolerance) {
-      final deduction = (angle - squatConfig.targetKneeAngle - squatConfig.kneeAngleTolerance) / 2;
+      final deduction =
+          (angle -
+              squatConfig.targetKneeAngle -
+              squatConfig.kneeAngleTolerance) /
+          2;
       return (
         (100 - deduction).clamp(50.0, 100.0),
         FormIssue(
@@ -439,7 +459,10 @@ class SquatAnalyzer extends BaseFormAnalyzer {
     }
 
     // Calculate midpoints
-    final shoulderMid = FormMathUtils.calculateMidpoint(leftShoulder, rightShoulder);
+    final shoulderMid = FormMathUtils.calculateMidpoint(
+      leftShoulder,
+      rightShoulder,
+    );
     final hipMid = FormMathUtils.calculateMidpoint(leftHip, rightHip);
 
     // Create virtual landmarks for angle calculation

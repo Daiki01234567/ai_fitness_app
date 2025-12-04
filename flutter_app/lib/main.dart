@@ -39,18 +39,16 @@ void main() async {
       );
 
       // TODO: 監視サービスを初期化（別チケットで実装予定）
-      debugPrint('App initialized - platform: ${defaultTargetPlatform.name}, debug: $kDebugMode');
+      debugPrint(
+        'App initialized - platform: ${defaultTargetPlatform.name}, debug: $kDebugMode',
+      );
 
       // デバッグモードでエミュレータを設定
       if (kDebugMode) {
         _configureEmulators(useEmulators: true);
       }
 
-      runApp(
-        const ProviderScope(
-          child: MyApp(),
-        ),
-      );
+      runApp(const ProviderScope(child: MyApp()));
     },
     (error, stackTrace) {
       // Handle uncaught errors in the zone
@@ -85,10 +83,13 @@ void _configureEmulators({bool useEmulators = false}) {
     // このメソッドはWebプラットフォームでは同期的に動作
     FirebaseAuth.instance.useAuthEmulator(host, 9099);
     FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
-    FirebaseFunctions.instanceFor(region: 'asia-northeast1')
-        .useFunctionsEmulator(host, 5001);
+    FirebaseFunctions.instanceFor(
+      region: 'asia-northeast1',
+    ).useFunctionsEmulator(host, 5001);
 
-    debugPrint('Firebaseエミュレータの設定完了（ホスト: $host、プラットフォーム: ${kIsWeb ? "web" : defaultTargetPlatform.name}）');
+    debugPrint(
+      'Firebaseエミュレータの設定完了（ホスト: $host、プラットフォーム: ${kIsWeb ? "web" : defaultTargetPlatform.name}）',
+    );
   } catch (e) {
     debugPrint('Firebaseエミュレータ設定エラー: $e');
     // エミュレータなしで続行 - 本番Firebaseを使用
@@ -111,10 +112,7 @@ class MyApp extends ConsumerWidget {
       routerConfig: router,
       // 日本語ロケール
       locale: const Locale('ja', 'JP'),
-      supportedLocales: const [
-        Locale('ja', 'JP'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('ja', 'JP'), Locale('en', 'US')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

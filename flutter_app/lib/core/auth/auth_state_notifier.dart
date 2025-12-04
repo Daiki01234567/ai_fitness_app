@@ -68,10 +68,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     GoogleSignIn? googleSignIn,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(),
-        super(const AuthState()) {
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _googleSignIn = googleSignIn ?? GoogleSignIn(),
+       super(const AuthState()) {
     // 認証状態の監視を開始
     _initAuthStateListener();
   }
@@ -87,21 +87,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         }
       },
       onError: (error) {
-        state = state.copyWith(
-          error: '認証エラー: $error',
-          isLoading: false,
-        );
+        state = state.copyWith(error: '認証エラー: $error', isLoading: false);
       },
     );
   }
 
   /// ユーザーサインイン時の処理
   Future<void> _handleUserSignIn(User user) async {
-    state = state.copyWith(
-      user: user,
-      isLoading: true,
-      error: null,
-    );
+    state = state.copyWith(user: user, isLoading: true, error: null);
 
     try {
       // メール確認状態をチェック
@@ -115,10 +108,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       // 強制ログアウトチェック
       if (customClaims['forceLogout'] == true) {
         await signOut();
-        state = state.copyWith(
-          error: 'アカウントがログアウトされました',
-          isForceLogout: true,
-        );
+        state = state.copyWith(error: 'アカウントがログアウトされました', isForceLogout: true);
         return;
       }
 
@@ -129,77 +119,74 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           .doc(user.uid)
           .snapshots()
           .listen(
-        (snapshot) async {
-          if (snapshot.exists) {
-            final userData = snapshot.data()!;
+            (snapshot) async {
+              if (snapshot.exists) {
+                final userData = snapshot.data()!;
 
-            // Firestoreからの強制ログアウトフラグをチェック
-            // 同意撤回やその他のサーバー側ログアウトトリガーを処理
-            if (userData['forceLogout'] == true) {
-              await signOut();
-              state = state.copyWith(
-                error: 'セッションが無効になりました。再度ログインしてください。',
-                isForceLogout: true,
-              );
-              return;
-            }
+                // Firestoreからの強制ログアウトフラグをチェック
+                // 同意撤回やその他のサーバー側ログアウトトリガーを処理
+                if (userData['forceLogout'] == true) {
+                  await signOut();
+                  state = state.copyWith(
+                    error: 'セッションが無効になりました。再度ログインしてください。',
+                    isForceLogout: true,
+                  );
+                  return;
+                }
 
-            state = state.copyWith(
-              user: updatedUser ?? user,
-              userData: userData,
-              isEmailVerified: updatedUser?.emailVerified ?? false,
-              isDeletionScheduled: userData['deletionScheduled'] ?? false,
-              customClaims: customClaims,
-              isLoading: false,
-              error: null,
-            );
-
-            // 削除予定の場合は警告
-            if (userData['deletionScheduled'] == true) {
-              final deletionDate = userData['scheduledDeletionDate'] as Timestamp?;
-              if (deletionDate != null) {
-                final daysLeft = deletionDate
-                    .toDate()
-                    .difference(DateTime.now())
-                    .inDays;
                 state = state.copyWith(
-                  error: 'アカウントは$daysLeft日後に削除されます',
+                  user: updatedUser ?? user,
+                  userData: userData,
+                  isEmailVerified: updatedUser?.emailVerified ?? false,
+                  isDeletionScheduled: userData['deletionScheduled'] ?? false,
+                  customClaims: customClaims,
+                  isLoading: false,
+                  error: null,
+                );
+
+                // 削除予定の場合は警告
+                if (userData['deletionScheduled'] == true) {
+                  final deletionDate =
+                      userData['scheduledDeletionDate'] as Timestamp?;
+                  if (deletionDate != null) {
+                    final daysLeft = deletionDate
+                        .toDate()
+                        .difference(DateTime.now())
+                        .inDays;
+                    state = state.copyWith(error: 'アカウントは$daysLeft日後に削除されます');
+                  }
+                }
+              } else {
+                // ユーザードキュメントが存在しない場合（新規ユーザー）
+                state = state.copyWith(
+                  user: updatedUser ?? user,
+                  isEmailVerified: updatedUser?.emailVerified ?? false,
+                  customClaims: customClaims,
+                  isLoading: false,
                 );
               }
-            }
-          } else {
-            // ユーザードキュメントが存在しない場合（新規ユーザー）
-            state = state.copyWith(
-              user: updatedUser ?? user,
-              isEmailVerified: updatedUser?.emailVerified ?? false,
-              customClaims: customClaims,
-              isLoading: false,
-            );
-          }
-        },
-        onError: (error) {
-          state = state.copyWith(
-            error: 'ユーザーデータの読み込みに失敗しました: $error',
-            isLoading: false,
+            },
+            onError: (error) {
+              state = state.copyWith(
+                error: 'ユーザーデータの読み込みに失敗しました: $error',
+                isLoading: false,
+              );
+            },
           );
-        },
-      );
 
       // トークンリフレッシュタイマーを開始
       _startTokenRefreshTimer();
-
     } catch (e) {
-      state = state.copyWith(
-        error: 'サインインエラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'サインインエラー: $e', isLoading: false);
     }
   }
 
   /// ユーザーサインアウト時の処理
   void _handleUserSignOut() {
     debugPrint('[AuthState] _handleUserSignOut called');
-    debugPrint('[AuthState] Current state.isForceLogout before reset: ${state.isForceLogout}');
+    debugPrint(
+      '[AuthState] Current state.isForceLogout before reset: ${state.isForceLogout}',
+    );
 
     _userDataSubscription?.cancel();
     _tokenRefreshTimer?.cancel();
@@ -209,7 +196,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     final wasForceLogout = state.isForceLogout;
     debugPrint('[AuthState] Preserving isForceLogout=$wasForceLogout');
     state = AuthState(isForceLogout: wasForceLogout);
-    debugPrint('[AuthState] State reset completed. New state.isForceLogout: ${state.isForceLogout}');
+    debugPrint(
+      '[AuthState] State reset completed. New state.isForceLogout: ${state.isForceLogout}',
+    );
   }
 
   /// トークンリフレッシュタイマーの開始
@@ -217,33 +206,28 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     _tokenRefreshTimer?.cancel();
 
     // 50分ごとにトークンをリフレッシュ（有効期限は60分）
-    _tokenRefreshTimer = Timer.periodic(
-      const Duration(minutes: 50),
-      (_) async {
-        try {
-          final user = _auth.currentUser;
-          if (user != null) {
-            final idTokenResult = await user.getIdTokenResult(true);
+    _tokenRefreshTimer = Timer.periodic(const Duration(minutes: 50), (_) async {
+      try {
+        final user = _auth.currentUser;
+        if (user != null) {
+          final idTokenResult = await user.getIdTokenResult(true);
 
-            // カスタムクレームを更新
+          // カスタムクレームを更新
+          state = state.copyWith(customClaims: idTokenResult.claims);
+
+          // 強制ログアウトチェック
+          if (idTokenResult.claims?['forceLogout'] == true) {
+            await signOut();
             state = state.copyWith(
-              customClaims: idTokenResult.claims,
+              error: 'セッションが無効になりました',
+              isForceLogout: true,
             );
-
-            // 強制ログアウトチェック
-            if (idTokenResult.claims?['forceLogout'] == true) {
-              await signOut();
-              state = state.copyWith(
-                error: 'セッションが無効になりました',
-                isForceLogout: true,
-              );
-            }
           }
-        } catch (e) {
-          // トークンリフレッシュエラーは無視 - Token refresh error
         }
-      },
-    );
+      } catch (e) {
+        // トークンリフレッシュエラーは無視 - Token refresh error
+      }
+    });
   }
 
   /// メール/パスワードでサインイン
@@ -289,15 +273,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           errorMessage = 'ログインに失敗しました: ${e.message}';
       }
 
-      state = state.copyWith(
-        error: errorMessage,
-        isLoading: false,
-      );
+      state = state.copyWith(error: errorMessage, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        error: 'ログインエラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'ログインエラー: $e', isLoading: false);
     }
   }
 
@@ -323,7 +301,6 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
       // メール確認を送信
       await sendEmailVerification();
-
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
@@ -343,15 +320,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           errorMessage = '登録に失敗しました: ${e.message}';
       }
 
-      state = state.copyWith(
-        error: errorMessage,
-        isLoading: false,
-      );
+      state = state.copyWith(error: errorMessage, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        error: '登録エラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: '登録エラー: $e', isLoading: false);
     }
   }
 
@@ -361,14 +332,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       final user = _auth.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
-        state = state.copyWith(
-          error: '確認メールを送信しました。メールをご確認ください',
-        );
+        state = state.copyWith(error: '確認メールを送信しました。メールをご確認ください');
       }
     } catch (e) {
-      state = state.copyWith(
-        error: 'メール送信エラー: $e',
-      );
+      state = state.copyWith(error: 'メール送信エラー: $e');
     }
   }
 
@@ -378,10 +345,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      state = state.copyWith(
-        error: 'パスワードリセットメールを送信しました',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'パスワードリセットメールを送信しました', isLoading: false);
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
@@ -395,15 +359,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           errorMessage = 'エラー: ${e.message}';
       }
 
-      state = state.copyWith(
-        error: errorMessage,
-        isLoading: false,
-      );
+      state = state.copyWith(error: errorMessage, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        error: 'エラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'エラー: $e', isLoading: false);
     }
   }
 
@@ -414,9 +372,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
-      state = state.copyWith(
-        error: 'サインアウトエラー: $e',
-      );
+      state = state.copyWith(error: 'サインアウトエラー: $e');
     }
   }
 
@@ -431,7 +387,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   Future<void> forceLogout() async {
     debugPrint('[ForceLogout] Starting forceLogout...');
     debugPrint('[ForceLogout] Current user: ${_auth.currentUser?.uid}');
-    debugPrint('[ForceLogout] Current state.isForceLogout: ${state.isForceLogout}');
+    debugPrint(
+      '[ForceLogout] Current state.isForceLogout: ${state.isForceLogout}',
+    );
 
     // まず強制ログアウトフラグを設定してルーターがログインにリダイレクトするようにする
     state = state.copyWith(isForceLogout: true);
@@ -452,7 +410,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         } catch (firestoreError) {
           // Firestoreエラーは無視 - ローカルでのサインアウトは続行
           // セキュリティルールで禁止されている場合やユーザーが存在しない場合に失敗する可能性あり
-          debugPrint('[ForceLogout] Firestore update failed (ignoring): $firestoreError');
+          debugPrint(
+            '[ForceLogout] Firestore update failed (ignoring): $firestoreError',
+          );
         }
       }
 
@@ -464,9 +424,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       debugPrint('[ForceLogout] Firebase Auth signOut completed');
     } catch (e) {
       debugPrint('[ForceLogout] Error during signOut: $e');
-      state = state.copyWith(
-        error: 'サインアウトエラー: $e',
-      );
+      state = state.copyWith(error: 'サインアウトエラー: $e');
     }
     debugPrint('[ForceLogout] forceLogout() method completed');
   }
@@ -528,7 +486,6 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       }
 
       // 注意: 認証状態リスナーが残りのサインインフローを処理
-
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
@@ -548,15 +505,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           errorMessage = 'Googleログインに失敗しました: ${e.message}';
       }
 
-      state = state.copyWith(
-        error: errorMessage,
-        isLoading: false,
-      );
+      state = state.copyWith(error: errorMessage, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        error: 'Googleログインエラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'Googleログインエラー: $e', isLoading: false);
     }
   }
 
@@ -602,7 +553,6 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       }
 
       // 注意: 認証状態リスナーが残りのサインインフローを処理
-
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
@@ -625,15 +575,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           errorMessage = 'Apple ログインに失敗しました: ${e.message}';
       }
 
-      state = state.copyWith(
-        error: errorMessage,
-        isLoading: false,
-      );
+      state = state.copyWith(error: errorMessage, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        error: 'Appleログインエラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'Appleログインエラー: $e', isLoading: false);
     }
   }
 
@@ -775,16 +719,18 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       }
 
       // 削除リクエストをFirestoreに記録
-      final deletionRequest = await _firestore.collection('dataDeletionRequests').add({
-        'requestId': '',  // 後で更新
-        'userId': user.uid,
-        'requestedAt': FieldValue.serverTimestamp(),
-        'scheduledDeletionDate': Timestamp.fromDate(
-          DateTime.now().add(const Duration(days: 30)),
-        ),
-        'status': 'pending',
-        'reason': 'user_requested',
-      });
+      final deletionRequest = await _firestore
+          .collection('dataDeletionRequests')
+          .add({
+            'requestId': '', // 後で更新
+            'userId': user.uid,
+            'requestedAt': FieldValue.serverTimestamp(),
+            'scheduledDeletionDate': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 30)),
+            ),
+            'status': 'pending',
+            'reason': 'user_requested',
+          });
 
       // requestIdを更新
       await deletionRequest.update({'requestId': deletionRequest.id});
@@ -804,10 +750,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        error: 'アカウント削除リクエストエラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'アカウント削除リクエストエラー: $e', isLoading: false);
     }
   }
 
@@ -848,10 +791,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        error: 'キャンセルエラー: $e',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'キャンセルエラー: $e', isLoading: false);
     }
   }
 
