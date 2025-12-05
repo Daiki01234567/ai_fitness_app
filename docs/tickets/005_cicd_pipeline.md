@@ -4,7 +4,7 @@
 **期間**: Week 2
 **優先度**: 高
 **ステータス**: ほぼ完了（95%）- オプション機能のみ残り
-**最終更新**: 2025-12-01
+**最終更新**: 2025-12-05
 **関連仕様書**:
 - `docs/specs/01_システムアーキテクチャ設計書_v3_2.md`
 - `docs/specs/09_開発タスク詳細_スケジュール_v3_3.md`
@@ -93,6 +93,21 @@ GitHub ActionsとFirebase CLIを使用した自動デプロイパイプライン
 - [ ] ロールバックスクリプト作成（Phase 2で実装予定）
 - [x] 手動ロールバック手順書 → `docs/CI_CD_SETUP.md` に記載
 
+### GitHub リポジトリ設定（ユーザー操作必須）
+- [ ] GitHub Secrets 設定
+  - [ ] `GOOGLE_APPLICATION_CREDENTIALS` - Firebase サービスアカウントJSON
+  - [ ] `ANDROID_KEYSTORE_BASE64` - Android署名キーストア
+  - [ ] `ANDROID_KEYSTORE_PASSWORD` - キーストアパスワード
+  - [ ] `ANDROID_KEY_PASSWORD` - キーパスワード
+  - [ ] `ANDROID_KEY_ALIAS` - キーエイリアス
+  - [ ] `IOS_P12_BASE64` - iOS証明書
+  - [ ] `IOS_P12_PASSWORD` - 証明書パスワード
+  - [ ] `IOS_PROVISIONING_PROFILE_BASE64` - プロビジョニングプロファイル
+  - [ ] `KEYCHAIN_PASSWORD` - キーチェーンパスワード
+- [ ] GitHub Variables 設定
+  - [ ] `DEPLOY_ENABLED` - デプロイ有効化フラグ
+  - [ ] `SLACK_WEBHOOK_URL` - Slack通知用（オプション）
+
 ### 監視統合
 - [x] デプロイ後の自動ヘルスチェック
 - [ ] エラー率監視（Firebase Crashlytics統合後）
@@ -117,6 +132,44 @@ GitHub ActionsとFirebase CLIを使用した自動デプロイパイプライン
 - 本番環境へのデプロイは承認プロセスを検討
 - コスト最適化（ビルド時間の短縮）
 - 並列実行による高速化
+
+## ユーザー操作が必要な項目
+
+### GitHub Secrets 設定
+| シークレット名 | 説明 | 取得方法 | 所要時間 |
+|--------------|------|---------|---------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | Firebase サービスアカウントJSON | Firebase Console > Project Settings > Service accounts > Generate new private key | 5分 |
+| `ANDROID_KEYSTORE_BASE64` | Android署名キーストア（Base64エンコード） | `base64 -i release-keystore.jks` | 10分 |
+| `ANDROID_KEYSTORE_PASSWORD` | キーストアパスワード | keytool作成時に設定したパスワード | - |
+| `ANDROID_KEY_PASSWORD` | キーパスワード | keytool作成時に設定したパスワード | - |
+| `ANDROID_KEY_ALIAS` | キーエイリアス | keytool作成時に設定したエイリアス | - |
+| `IOS_P12_BASE64` | iOS証明書（Base64エンコード） | Apple Developer > Certificates からエクスポート | 15分 |
+| `IOS_P12_PASSWORD` | 証明書パスワード | エクスポート時に設定したパスワード | - |
+| `IOS_PROVISIONING_PROFILE_BASE64` | プロビジョニングプロファイル（Base64エンコード） | Apple Developer > Profiles からダウンロード | 10分 |
+| `KEYCHAIN_PASSWORD` | キーチェーンパスワード | 任意のパスワードを設定 | - |
+
+### GitHub Variables 設定
+| 変数名 | 説明 | 設定値 |
+|-------|------|--------|
+| `DEPLOY_ENABLED` | デプロイ有効化フラグ | `true` または `false` |
+| `SLACK_WEBHOOK_URL` | Slack通知用Webhook URL（オプション） | Slack App設定から取得 |
+
+### 設定手順
+
+**GitHub Secrets 設定**:
+1. リポジトリの Settings > Secrets and variables > Actions に移動
+2. "New repository secret" をクリック
+3. 各シークレットを順番に追加
+
+**設定URL**:
+```
+https://github.com/[owner]/[repo]/settings/secrets/actions
+```
+
+**Androidキーストア作成コマンド（未作成の場合）**:
+```bash
+keytool -genkey -v -keystore release-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias release
+```
 
 ## 作成ファイル一覧
 | ファイル | 説明 |

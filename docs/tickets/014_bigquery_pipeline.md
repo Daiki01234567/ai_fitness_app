@@ -4,7 +4,7 @@
 **期間**: Week 9-10
 **優先度**: 中
 **ステータス**: ほぼ完了 (85%)
-**最終更新日**: 2025-12-04
+**最終更新日**: 2025-12-05
 **関連仕様書**:
 - `docs/specs/04_BigQuery設計書_v3_3.md`
 - `docs/specs/00_要件定義書_v3_3.md` (NFR-018～NFR-020)
@@ -307,6 +307,101 @@ Firestore→BigQueryのデータパイプラインを構築し、大規模デー
 - データ保持期間の遵守
 - コスト監視（特にストリーミング）
 - スケーラビリティの考慮
+
+## ユーザー操作が必要な項目
+
+### 1. Pub/Subトピック・サブスクリプション作成
+| 項目 | コマンド | 所要時間 |
+|------|---------|---------|
+| トピック作成 | `gcloud pubsub topics create training-sessions-stream` | 1分 |
+| DLQトピック作成 | `gcloud pubsub topics create training-sessions-dlq` | 1分 |
+| DLQサブスクリプション | `gcloud pubsub subscriptions create training-sessions-dlq-sub --topic=training-sessions-dlq` | 1分 |
+
+### 2. Secret Manager設定
+| 項目 | コマンド | 説明 |
+|------|---------|------|
+| ANONYMIZATION_SALT | `firebase functions:secrets:set ANONYMIZATION_SALT` | 仮名化用ソルト値（ランダム文字列32文字以上推奨） |
+
+**ソルト値生成例**:
+```bash
+openssl rand -base64 32
+```
+
+### 3. IAM権限設定
+サービスアカウント `<project-id>@appspot.gserviceaccount.com` に以下のロールを付与：
+
+| ロール | 説明 | 設定方法 |
+|-------|------|---------|
+| `roles/bigquery.dataEditor` | BigQueryデータ編集 | GCP Console > IAM |
+| `roles/bigquery.jobUser` | BigQueryジョブ実行 | GCP Console > IAM |
+| `roles/pubsub.publisher` | Pub/Subパブリッシャー | GCP Console > IAM |
+| `roles/pubsub.subscriber` | Pub/Subサブスクライバー | GCP Console > IAM |
+
+**GCP Console URL**:
+```
+https://console.cloud.google.com/iam-admin/iam?project=ai-fitness-c38f0
+```
+
+### 4. BigQueryテーブル作成
+```bash
+cd scripts/bigquery
+chmod +x create_tables.sh
+./create_tables.sh prod
+```
+
+**作成されるテーブル**:
+- `training_sessions` - セッションデータ（730日保持）
+- `user_metadata` - ユーザーメタデータ（730日保持）
+- `aggregated_stats` - 集計統計
+- `exercise_definitions` - 種目マスタ
+- `pseudonymization_log` - 仮名化監査ログ（90日保持）
+
+### 5. Cloud Functionsデプロイ
+```bash
+firebase deploy --only functions
+```
+
+**デプロイされる関数**:
+- `onSessionCreated` / `onSessionUpdated` - Firestoreトリガー
+- `processTrainingSession` - Pub/Subプロセッサー
+- `scheduled_dailyAggregation` / `scheduled_weeklyAggregation` - 集計ジョブ
+- `scheduled_processBigQueryDlq` - DLQ処理
+- `analytics_*` - 分析API
+
+### 6. 動作確認テスト
+| テスト項目 | 確認方法 |
+|-----------|---------|
+| Firestoreトリガー | セッション作成後、Pub/Subメッセージ確認 |
+| BigQuery挿入 | BigQueryコンソールでtraining_sessionsテーブル確認 |
+| 日次集計 | 翌日2:00 JST後にaggregated_stats確認 |
+| 分析API | `curl`またはアプリから統計API呼び出し |
+
+### 7. Looker Studioダッシュボード（オプション）
+| ダッシュボード | 内容 | 作成タイミング |
+|--------------|------|--------------|
+| 管理者ダッシュボード | KPI、ユーザー成長、収益 | デプロイ後 |
+| 運用ダッシュボード | システム健全性、エラー分析 | デプロイ後 |
+
+**Looker Studio URL**:
+```
+https://lookerstudio.google.com/
+```
+
+### 8. Slack Webhook設定（オプション）
+| 項目 | 設定場所 | 説明 |
+|------|---------|------|
+| Webhook URL | Firebase Console > Functions > 環境変数 | アラート通知用 |
+
+### デプロイ前チェックリスト
+
+- [ ] Blazeプラン（従量課金）に切り替え済み
+- [ ] Pub/Subトピック作成完了
+- [ ] ANONYMIZATION_SALT設定完了
+- [ ] IAM権限設定完了
+- [ ] BigQueryデータセット作成完了
+- [ ] BigQueryテーブル作成完了
+- [ ] Cloud Functionsデプロイ完了
+- [ ] 動作確認テスト完了
 
 ## 参考リンク
 - [BigQuery Best Practices](https://cloud.google.com/bigquery/docs/best-practices)

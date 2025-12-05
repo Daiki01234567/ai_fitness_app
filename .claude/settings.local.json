@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(claude --doctor)",
-      "Bash(claude doctor:*)",
-      "Bash(claude:*)"
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__activate_project",
+      "mcp__serena__list_memories"
     ],
     "deny": [],
     "ask": []

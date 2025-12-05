@@ -1,7 +1,7 @@
 # チケット001-021 進捗・未完了作業サマリー
 
 **作成日**: 2025-12-04
-**最終更新日**: 2025-12-04
+**最終更新日**: 2025-12-05
 **対象**: Ticket #001 - #021
 **目的**: 全チケットの進捗状況と未完了作業の洗い出し
 
@@ -24,13 +24,13 @@
 
 | チケット | タイトル | Phase | ステータス | 完了率 |
 |:--------:|---------|:-----:|:----------:|:------:|
-| #001 | Firebase プロジェクトセットアップ | Phase 1 | ⚠️ ほぼ完了 | 90% |
-| #002 | Firestore セキュリティルール | Phase 1 | ⚠️ 実装完了 | 100% (テスト待ち) |
-| #003 | Firebase Authentication | Phase 1 | 🟡 進行中 | 60% |
+| #001 | Firebase プロジェクトセットアップ | Phase 1 | ⚠️ ほぼ完了 | 98% |
+| #002 | Firestore セキュリティルール | Phase 1 | ✅ 完了 | 100% |
+| #003 | Firebase Authentication | Phase 1 | 🟡 進行中 | 70% |
 | #004 | Cloud Functions 基盤構築 | Phase 1 | ✅ 完了 | 100% |
 | #005 | CI/CD パイプライン | Phase 1 | ⚠️ ほぼ完了 | 95% |
 | #006 | 監視・ログ基盤 | Phase 1 | ✅ 完了 | 100% |
-| #007 | ユーザー認証機能 | Phase 2 | 🟡 進行中 | 90% |
+| #007 | ユーザー認証機能 | Phase 2 | ⚠️ ほぼ完了 | 90% |
 | #008 | 同意管理機能 | Phase 2 | ✅ 完了 | 100% |
 | #009 | MediaPipe 統合 | Phase 2 | ⚠️ 実装完了 | 85% (実機テスト待ち) |
 | #010 | フォーム評価ロジック | Phase 2 | ⚠️ 実装完了 | 90% (実機テスト待ち) |
@@ -38,7 +38,7 @@
 | #012 | 履歴・分析機能 | Phase 2 | ⚠️ ほぼ完了 | 95% |
 | #013 | 課金機能（RevenueCat） | Phase 2 | 🔴 未着手 | 0% |
 | #014 | BigQuery パイプライン | Phase 2 | ⚠️ ほぼ完了 | 85% |
-| #015 | データエクスポート・削除（GDPR） | Phase 2 | ⚠️ ほぼ完了 | 90% |
+| #015 | データエクスポート・削除（GDPR） | Phase 2 | ✅ 完了 | 95% |
 | #016 | プッシュ通知 | Phase 3 | ⏸️ 対象外 | - |
 | #017 | ソーシャル機能 | Phase 3 | ⏸️ 対象外 | - |
 | #018 | パフォーマンス最適化 | Phase 3 | ⏸️ 対象外 | - |
@@ -59,7 +59,7 @@
 
 ### 2.1 #001 Firebase プロジェクトセットアップ
 
-**ステータス**: ⚠️ ほぼ完了 (90%)
+**ステータス**: ⚠️ ほぼ完了 (98%)
 **Phase**: Phase 1
 
 #### 完了済み ✅
@@ -72,78 +72,67 @@
 - Flutter プロジェクト設定（google-services.json, GoogleService-Info.plist）
 - firestore.rules / storage.rules 作成
 - README.md / .gitignore 作成
+- Cloud Functions TypeScript基盤（70ファイル）
+- ESLint/Prettier設定（Googleスタイル）
+- BigQuery連携設定（サービス、スキーマ、スクリプト）
+- Jest テスト基盤（70テストファイル）
 
 #### 未完了 ❌
-- [ ] Firebase Storage 作成（Phase 2）
-- [ ] Firebase Functions 有効化（本番デプロイ）
-- [ ] BigQuery 連携設定（Phase 2）
-- [ ] Functions 環境変数設定（.env.development / .env.staging / .env.production）
+- [ ] iOS用 GoogleService-Info.plist 配置
+- [ ] Firebase Functions 本番デプロイテスト
+
+#### ユーザー操作が必要な項目
+
+### iOS設定ファイルの配置
+| 項目 | 内容 |
+|------|------|
+| **操作** | `GoogleService-Info.plist` をダウンロードして配置 |
+| **所要時間** | 約5分 |
+| **手順** | 1. [Firebase Console](https://console.firebase.google.com/project/tokyo-list-478804-e5/settings/general/ios) にアクセス<br>2. iOSアプリを選択<br>3. `GoogleService-Info.plist` をダウンロード<br>4. `flutter_app/ios/Runner/` に配置 |
+
+### Functions本番デプロイテスト
+| 項目 | 内容 |
+|------|------|
+| **操作** | Cloud Functionsを本番環境にデプロイ |
+| **所要時間** | 約10分 |
+| **コマンド** | `firebase deploy --only functions` |
+| **前提条件** | Blazeプラン（従量課金）への切り替えが必要 |
 
 ---
 
-### 2.2 #002 Firestore セキュリティルール
+### 2.2 #003 Firebase Authentication
 
-**ステータス**: ✅ 完了
-**Phase**: Phase 1
-**テスト実行日**: 2025-12-04
-
-#### 完了済み ✅
-- 全ルール実装（Users, Sessions, Consents, DataDeletionRequests）
-- ヘルパー関数作成（isAuthenticated, isOwner, hasValidData）
-- フィールドレベル更新制限（tosAccepted, ppAccepted, deletionScheduled 読取専用）
-- カスタムクレーム対応（admin, forceLogout）
-- テストファイル作成（40+テストケース）
-- **エミュレータでのテスト実行完了**: 34/36テスト成功（2スキップ）
-
-#### テスト結果詳細
-```
-Tests:       2 skipped, 34 passed, 36 total
-Time:        4.606 s
-```
-
-- ✅ Users Collection: 読取・作成・更新・削除テスト全通過
-- ✅ Sessions Subcollection: 作成・削除テスト通過
-- ✅ Consents Collection: 読取専用、作成・更新・削除拒否テスト通過
-- ✅ DataDeletionRequests Collection: Cloud Functions経由のみ作成可能テスト通過
-- ✅ Admin-only Collections: 管理者権限テスト通過
-- ✅ Custom Claims: forceLogout/adminクレームテスト通過
-- ⏸️ Skipped: poseDataサイズ制限（設計上framesサブコレクションに保存）
-- ⏸️ Skipped: 削除予定ユーザーのセッション作成制限（エミュレータget()制限）
-
-**実行手順**:
-```bash
-# エミュレータ起動
-firebase emulators:start
-
-# 別ターミナルでテスト
-cd functions
-npm run test:rules
-```
-
----
-
-### 2.3 #003 Firebase Authentication
-
-**ステータス**: 🟡 進行中 (60%)
+**ステータス**: 🟡 進行中 (70%)
 **Phase**: Phase 1
 
 #### 完了済み ✅
-- カスタムクレーム設計・実装（admin, forceLogout, deletionScheduled）
-- Cloud Functions 統合（onCreate, onDelete トリガー）
-- Flutter SDK 統合（FirebaseAuth, 認証状態リスナー）
-- ドキュメント作成
+- カスタムクレーム設計・実装（admin, forceLogout）
+- Cloud Functions統合（onCreate, onDelete, customClaims, register, checkEmailExists）
+- Flutter SDK統合（AuthService, AuthStateNotifier）
+- 認証画面実装（ログイン、登録、パスワードリセット）
+- 認証関連テスト作成（Cloud Functions 32件, Flutter 20件以上）
 
 #### 未完了（Firebase Console操作必須） ❌
 - [ ] メール/パスワード認証有効化
+- [ ] Google OAuth設定
+- [ ] Apple Sign In設定
 - [ ] 電話番号認証有効化（日本 +81）
-- [ ] Google OAuth 設定（OAuth同意画面、クライアントID）
-- [ ] Apple Sign In 設定（iOS）
-- [ ] パスワードポリシー設定（最小8文字）
+- [ ] パスワードポリシー設定
 - [ ] メールテンプレート日本語化
-- [ ] Authorized domains 設定
-- [ ] reCAPTCHA 設定（Web）
-- [ ] App Check 有効化
-- [ ] 各認証プロバイダーのテスト実行
+- [ ] App Check有効化
+
+#### ユーザー操作が必要な項目
+
+##### Firebase Console操作
+| 項目 | 内容 | 所要時間 |
+|------|------|---------|
+| **メール/パスワード認証** | Authentication > Sign-in method で有効化 | 2分 |
+| **Google OAuth** | OAuth同意画面設定、クライアントID作成 | 15分 |
+| **Apple Sign In** | App ID、サービスID設定（Apple Developer必要） | 20分 |
+| **電話番号認証** | 日本（+81）を許可リストに追加 | 5分 |
+| **パスワードポリシー** | 最小8文字に設定 | 2分 |
+| **メールテンプレート** | 日本語化（パスワードリセット、メール確認） | 10分 |
+| **App Check** | セキュリティ強化のため有効化 | 10分 |
 
 **Firebase Console URL**:
 ```
@@ -152,24 +141,7 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 
 ---
 
-### 2.4 #004 Cloud Functions 基盤構築
-
-**ステータス**: ✅ 完了 (100%)
-**Phase**: Phase 1
-
-#### 完了済み ✅
-- ディレクトリ構造作成（api, triggers, scheduled, types, utils, middleware, services）
-- TypeScript 設定（strict モード、ES2022）
-- ESLint/Prettier 設定（Google スタイル）
-- ロギング/モニタリング実装
-- エラーハンドリング実装
-- ミドルウェア実装（auth, validation, rateLimiter）
-- Cloud Tasks / BigQuery 統合
-- Jest テスト基盤
-
----
-
-### 2.5 #005 CI/CD パイプライン
+### 2.3 #005 CI/CD パイプライン
 
 **ステータス**: ⚠️ ほぼ完了 (95%)
 **Phase**: Phase 1
@@ -179,6 +151,7 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 - 環境別デプロイ設定
 - Slack 通知設定
 - ロールバック手順書
+- ドキュメント作成（CI_CD_SETUP.md）
 
 #### 未完了（オプション） ❌
 - [ ] セキュリティテスト実行（Firestore Rules）
@@ -187,60 +160,77 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 - [ ] メール通知設定（オプション）
 - [ ] ロールバックスクリプト作成
 
+#### ユーザー操作が必要な項目
+
+##### GitHub Secrets 設定
+| シークレット名 | 説明 | 所要時間 |
+|--------------|------|---------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | Firebase サービスアカウントJSON | 5分 |
+| `ANDROID_KEYSTORE_BASE64` | Android署名キーストア（Base64） | 10分 |
+| `ANDROID_KEYSTORE_PASSWORD` | キーストアパスワード | - |
+| `ANDROID_KEY_PASSWORD` | キーパスワード | - |
+| `ANDROID_KEY_ALIAS` | キーエイリアス | - |
+| `IOS_P12_BASE64` | iOS証明書（Base64） | 15分 |
+| `IOS_P12_PASSWORD` | 証明書パスワード | - |
+| `IOS_PROVISIONING_PROFILE_BASE64` | プロビジョニングプロファイル（Base64） | 10分 |
+| `KEYCHAIN_PASSWORD` | キーチェーンパスワード | - |
+
+##### GitHub Variables 設定
+| 変数名 | 説明 |
+|-------|------|
+| `DEPLOY_ENABLED` | デプロイ有効化フラグ（`true`/`false`） |
+| `SLACK_WEBHOOK_URL` | Slack通知用（オプション） |
+
+**設定URL**: `https://github.com/[owner]/[repo]/settings/secrets/actions`
+
 ---
 
-### 2.6 #006 監視・ログ基盤
+### 2.4 #007 ユーザー認証機能
 
-**ステータス**: ✅ 完了 (100%)
-**Phase**: Phase 1
-
-#### 完了済み ✅
-- Cloud Logging / Cloud Monitoring / Error Reporting 設定
-- カスタムメトリクス / ダッシュボード作成
-- アラートポリシー設定
-- セキュリティ監視 / 監査ログ
-- Flutter アプリ監視（Crashlytics / Performance スタブ）
-- コスト監視 / 予算アラート
-
----
-
-### 2.7 #007 ユーザー認証機能
-
-**ステータス**: 🟡 進行中 (85%)
+**ステータス**: 🟡 進行中 (90%)
 **Phase**: Phase 2
 
 #### 完了済み ✅
-- Flutter UI 実装（ログイン、新規登録2ステップ、パスワードリセット）
-- Riverpod 状態管理（AuthNotifier）
-- GoRouter ルーティング（認証リダイレクト）
-- バリデーションユーティリティ
-- 共通コンポーネント（AuthTextField, LoadingButton 等）
-- Cloud Functions API（register, updateProfile）
+- Flutter UI 実装（ログイン、新規登録2ステップ、パスワードリセット、アカウント復元）
+- Riverpod 状態管理（AuthStateNotifier, AuthState）
+- AuthService（Google/Apple認証、電話番号認証、メールリンク認証）
+- GoRouter ルーティング（認証リダイレクト、forceLogout対応）
+- バリデーションユーティリティ（メール、パスワード強度、年齢等）
+- 共通コンポーネント（AuthTextField, LoadingButton, SocialSignInButton等）
+- Cloud Functions API（register, updateProfile, checkEmailExists）
+- Firestoreセキュリティルール（本番用363行）
 - CSRF対策 / 監査ログ
+- Cloud Functions テスト（✅ 46 suites/1,104 tests, カバレッジ91%+）
+- Widget テスト（login_screen_test.dart）
 
 #### 未完了 ❌
-- [ ] ウェルカムメール送信（オプション）
-- [x] Cloud Functions テスト（✅ 2025-12-04: 統合テスト 5 suites/56 tests, ユニットテスト 46 suites/1,104 tests）
 - [ ] 統合テスト（ログイン/新規登録/パスワードリセット/ソーシャル）
 - [ ] E2Eテスト
+- [ ] ウェルカムメール送信（オプション）
+
+#### ユーザー操作が必要な項目
+
+##### Firebase Console 設定（#003と共通）
+| 項目 | 説明 | 所要時間 |
+|------|------|---------|
+| **Google Sign In** | OAuth同意画面設定、クライアントID作成 | 15分 |
+| **Apple Sign In** | App ID、サービスID設定 | 20分 |
+
+##### テスト環境準備
+| 項目 | 説明 |
+|------|------|
+| **統合テスト** | `firebase emulators:start` でエミュレータ起動 |
+| **E2Eテスト** | Android Emulator / iOS Simulator または実機 |
+
+##### 本番デプロイ
+| 項目 | コマンド |
+|------|---------|
+| Functions | `firebase deploy --only functions` |
+| Rules | `firebase deploy --only firestore:rules` |
 
 ---
 
-### 2.8 #008 同意管理機能
-
-**ステータス**: ✅ 完了 (100%)
-**Phase**: Phase 2
-
-#### 完了済み ✅
-- 同意画面 / 同意管理セクション
-- Cloud Functions API（record, revoke, status）
-- 強制ログアウト機能
-- GDPR準拠（明示的同意、タイムスタンプ、監査ログ）
-- 統合テスト作成済み
-
----
-
-### 2.9 #009 MediaPipe 統合
+### 2.5 #009 MediaPipe 統合
 
 **ステータス**: ⚠️ 実装完了 (85% - 実機テスト待ち)
 **Phase**: Phase 2
@@ -266,7 +256,7 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 
 ---
 
-### 2.10 #010 フォーム評価ロジック
+### 2.6 #010 フォーム評価ロジック
 
 **ステータス**: ⚠️ 実装完了 (90% - 実機テスト待ち)
 **Phase**: Phase 2
@@ -293,13 +283,7 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 
 ## 3. チケット011-021 詳細
 
-### 3.1 #011 トレーニングセッション画面
-
-**ステータス**: ✅ MVP完了 (100%)
-
----
-
-### 3.2 #012 履歴・分析機能
+### 3.1 #012 履歴・分析機能
 
 **ステータス**: ⚠️ ほぼ完了 (95%)
 
@@ -308,7 +292,7 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 
 ---
 
-### 3.3 #013 課金機能（RevenueCat）
+### 3.2 #013 課金機能（RevenueCat）
 
 **ステータス**: 🔴 未着手 (0%)
 **優先度**: 高
@@ -323,104 +307,95 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 
 ---
 
-### 3.4 #014 BigQuery パイプライン
+### 3.3 #014 BigQuery パイプライン
 
 **ステータス**: ⚠️ ほぼ完了 (85%)
 **優先度**: 中
 **ブロッカー**: デプロイ・本番設定待ち
 
 #### 完了済み ✅
-- [x] BigQueryサービス実装（`functions/src/services/bigquery.ts`）
-- [x] Pub/Subパイプライン実装（`functions/src/pubsub/`）
-- [x] 日次/週次集計ジョブ実装（`functions/src/scheduled/aggregation.ts`）
-- [x] 分析API実装（7エンドポイント: `functions/src/api/analytics/`）
-- [x] 仮名化処理・監査ログ実装
-- [x] スキーマ定義・スクリプト作成（`bigquery_schemas/`, `scripts/bigquery/`）
+- BigQueryサービス実装（仮名化、監査ログ、リトライロジック）
+- Firestoreトリガー（セッション作成・更新時のPub/Sub発行）
+- Pub/Subプロセッサー（メッセージ処理、DLQ対応）
+- 日次/週次集計ジョブ（スケジュール関数）
+- 分析API（ユーザー統計、ランキング、トレンド）
+- BigQueryスキーマ定義（5テーブル）
+- セットアップスクリプト（create_tables.sh）
+- ドキュメント（MONITORING_DESIGN.md, ALERT_RUNBOOK.md）
+- 単体テスト（100%カバレッジテスト含む）
 
 #### 未完了 ❌
-- [ ] Cloud Functions デプロイ
 - [ ] Pub/Sub トピック/サブスクリプション作成
+- [ ] ANONYMIZATION_SALT Secret設定
 - [ ] IAM権限設定
-- [ ] Looker Studio ダッシュボード構築
+- [ ] BigQueryテーブル物理作成
+- [ ] Cloud Functions デプロイ
+- [ ] 動作確認テスト
+- [ ] Looker Studio ダッシュボード構築（オプション）
+
+#### ユーザー操作が必要な項目
+
+##### Pub/Subトピック作成
+```bash
+gcloud pubsub topics create training-sessions-stream
+gcloud pubsub topics create training-sessions-dlq
+gcloud pubsub subscriptions create training-sessions-dlq-sub --topic=training-sessions-dlq
+```
+
+##### Secret Manager設定
+```bash
+# ソルト値生成
+openssl rand -base64 32
+# Secret設定
+firebase functions:secrets:set ANONYMIZATION_SALT
+```
+
+##### IAM権限設定
+サービスアカウントに以下を付与：
+- `roles/bigquery.dataEditor`
+- `roles/bigquery.jobUser`
+- `roles/pubsub.publisher`
+- `roles/pubsub.subscriber`
+
+**GCP Console**: `https://console.cloud.google.com/iam-admin/iam?project=ai-fitness-c38f0`
+
+##### BigQueryテーブル作成
+```bash
+cd scripts/bigquery && ./create_tables.sh prod
+```
+
+##### Cloud Functionsデプロイ
+```bash
+firebase deploy --only functions
+```
 
 ---
 
-### 3.5 #015 GDPR対応
+### 3.4 #015 GDPR対応
 
-**ステータス**: ⚠️ ほぼ完了 (90%)
+**ステータス**: ✅ 完了 (95%) - MVP完了
 
-#### 未完了 ❌
-- [ ] SendGrid 導入
-- [ ] 本番環境E2Eテスト
-- [ ] 72時間以内対応の運用検証
+#### MVP方針（2025-12-05更新）
+- **エクスポート**: PDF形式で即時ダウンロード（Flutter側生成）✅ 実装完了
+- **削除完了**: 「削除完了しました」画面表示（証明書なし）
+- **保留**: SendGrid、72時間検証、削除証明書 → 管理者機能で対応
 
----
+#### 完了済み ✅
+- GDPRサービス実装（11 Cloud Functions）
+- データエクスポート（JSON/CSV, ZIPアーカイブ）- 管理者機能用
+- データ削除（ソフト/ハード/部分削除）
+- 30日猶予期間・復元機能
+- Flutter UI実装（3画面）
+- 単体・統合・コンプライアンステスト
+- **PDFエクスポート機能**（2025-12-05実装完了）
+  - `pdf_export_service.dart` - PDF生成サービス
+  - `data_export_screen.dart` - UI更新（PDF即時ダウンロードボタン）
+  - 単体テスト作成・通過
 
-### 3.6 #021 UIバグ修正・仕様漏れ
-
-**ステータス**: ✅ 完了 (100%)
-**優先度**: 高
-**最終更新**: 2025-12-04
-
-#### タスク一覧
-
-| # | タスク | 種別 | 優先度 | 状態 |
-|:-:|--------|:----:|:------:|:----:|
-| 1 | 規約同意画面のチラつき修正 | バグ | 高 | ✅ 完了 |
-| 2 | スプラッシュ・オンボーディング実装 | 仕様漏れ | 高 | ✅ 完了 |
-| 3 | メールアドレス重複チェック | 仕様漏れ | 高 | ✅ 完了 |
-| 4 | ホーム画面の不足要素実装 | 仕様漏れ | 高 | ✅ 完了 |
-| 5 | メニュー選択画面の検索・フィルタ | 仕様漏れ | 中 | ✅ 完了 |
-| 6 | カメラ設定のエラーハンドリング | 仕様漏れ | 高 | ✅ 完了 |
-| 7 | 履歴画面の月カレンダーUI | 仕様詳細不足 | 中 | ✅ 完了 |
-| 8 | ログアウト・同意解除機能 | 仕様漏れ | 高 | ✅ 完了 |
-
-#### Phase 1 完了内容（2025-12-04）
-
-1. **タスク1: 規約同意画面のチラつき修正**
-   - `consent_state_notifier.dart`に`setConsentAccepted()`メソッド追加
-   - `register_screen.dart`で登録完了直後にローカル状態を更新
-
-2. **タスク2: スプラッシュ・オンボーディング実装確認**
-   - 既存実装が仕様準拠であることを確認
-   - テストファイル33件作成（splash/onboarding）
-
-3. **タスク3: メールアドレス重複チェック**
-   - Cloud Functions実装確認（レート制限付き）
-   - Flutter実装確認（ボタン押下時にチェック）
-
-4. **タスク8: ログアウト・同意解除機能**
-   - settings_screen.dart: ログアウト機能完全実装
-   - consent_management_section.dart: 同意解除機能完全実装、ボタンラベル修正
-
-#### Phase 2 完了内容（2025-12-04）
-
-5. **タスク4: ホーム画面の不足要素実装**
-   - `home_screen.dart` v2.2.0 に更新
-   - 今日の利用状況：無料プラン「残りX回/3回」、有料プラン「無制限」表示
-   - 最近のセッション：3件表示（`home_state.dart`で`limit: 3`に更新）
-   - 今週の統計：`weeklySessionCount`, `weeklyAverageScore` フィールド追加
-   - トレーニング開始ボタン：64px高さの目立つボタン、上限時はロックアイコン表示
-   - クイックアクセス：5種目の横スクロールショートカット追加
-   - 単体テスト11件パス
-
-6. **タスク5: メニュー選択画面の検索・フィルタ**
-   - 既存実装（`exercise_selection_screen.dart`）が仕様準拠であることを確認
-   - 5種目カード：スクワット、プッシュアップ、アームカール、サイドレイズ、ショルダープレス
-   - 検索バー：リアルタイム検索（種目名・部位で検索可能）、クリアボタン付き
-   - フィルタ機能：カテゴリフィルタ（全て/自重/ダンベル）、難易度フィルタ（全て/初級/中級）
-
-7. **タスク6: カメラ設定のエラーハンドリング**
-   - バグ修正：`permission_service.dart` の `openAppSettings()` 無限再帰呼び出しを修正
-   - カメラ切替機能：`camera_service.dart` に `switchCamera()` メソッド追加
-   - サポート連絡先：`camera_error_widget.dart` にサポート連絡先セクション追加
-   - UI改善：`pre_session_screen.dart` の AppBar にカメラ切り替えボタン追加
-
-8. **タスク7: 履歴画面の月カレンダーUI**
-   - 日付選択時セッション表示：`_buildSelectedDateSection()` 新規追加
-   - 日付選択機能改善：`selectDateInMonthView()` メソッドを `HistoryStateNotifier` に追加
-   - 種目フィルタ連携：`fetchDailySummaries()` に `exerciseTypes` パラメータ追加
-   - カスタムカレンダー実装（`table_calendar` の代わり）
+#### 管理者機能で対応（保留）
+- [ ] SendGrid 導入（メール通知）
+- [ ] 削除証明書発行
+- [ ] 72時間以内完了の運用検証（※GDPR要件は1ヶ月以内）
 
 ---
 
@@ -599,6 +574,15 @@ https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/
 
 | 日付 | 更新内容 | 更新者 |
 |------|---------|--------|
+| 2025-12-05 | ドキュメント整理：#002 Firestoreセキュリティルールを100%完了に更新（テスト完了済み）、100%完了チケットの詳細セクション削除（#002）、セクション番号再整理 | Claude |
+| 2025-12-05 | #015 PDFエクスポート機能実装完了（pdf_export_service.dart, data_export_screen.dart更新, テスト通過）、ステータス95%完了に更新 | Claude |
+| 2025-12-05 | #015 MVP方針変更（PDF即時DL、削除完了表示のみ）、SendGrid・72時間検証・削除証明書は管理者機能へ保留、要件定義書FR-025/FR-027更新 | Claude |
+| 2025-12-05 | #015 GDPR対応90%確認、ユーザー操作項目（SendGrid設定、デプロイ、E2Eテスト）追加 | Claude |
+| 2025-12-05 | #014 BigQueryパイプライン85%確認、ユーザー操作項目追加、100%完了タスク削除（#004,#006,#008,#011,#021） | Claude |
+| 2025-12-05 | #007 ユーザー認証機能90%完了確認、ユーザー操作項目追加 | Claude |
+| 2025-12-05 | #005 CI/CDパイプライン95%完了確認、GitHub Secrets/Variables設定項目追加 | Claude |
+| 2025-12-05 | #003 Firebase Authentication70%完了確認、ユーザー操作項目追加 | Claude |
+| 2025-12-05 | #001 Firebase プロジェクトセットアップ98%完了確認、ステータス更新 | Claude |
 | 2025-12-04 | #014 BigQueryパイプライン85%完了確認、ステータス更新 | Claude |
 | 2025-12-04 | #002 エミュレータテスト完了を推奨作業順序・次のアクションに反映、#002完了マーク追加 | Claude |
 | 2025-12-04 | #021 全タスク完了（Phase 2: タスク4,5,6,7）、ステータス100%に更新 | Claude |

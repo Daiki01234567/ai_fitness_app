@@ -1,11 +1,14 @@
 // データエクスポート画面
 // GDPR対応のデータポータビリティ機能
 //
-// 仕様: FR-026 データポータビリティ
+// 仕様: FR-026, FR-027 データポータビリティ
 // 参照: docs/tickets/015_data_export_deletion.md
 //
-// @version 1.0.0
-// @date 2025-11-29
+// MVP: PDF即時ダウンロード機能
+// 管理者機能: JSON/CSV非同期エクスポート（将来実装）
+//
+// @version 2.0.0
+// @date 2025-12-05
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +17,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/gdpr/gdpr_models.dart';
 import '../../core/gdpr/gdpr_state.dart';
+import '../../core/gdpr/pdf_export_service.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -28,6 +32,9 @@ class DataExportScreen extends ConsumerStatefulWidget {
 
 class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   final _dateFormat = DateFormat('yyyy/MM/dd HH:mm');
+  bool _isPdfExporting = false;
+  String? _pdfExportStatus;
+  String? _lastExportedFilePath;
 
   @override
   void initState() {
@@ -60,6 +67,15 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
             children: [
               // Information card
               _buildInfoCard(context),
+              const SizedBox(height: AppSpacing.lg),
+
+              // PDF instant download section (MVP)
+              _buildSectionTitle(context, 'PDF即時ダウンロード'),
+              _buildPdfExportCard(context),
+              const SizedBox(height: AppSpacing.xl),
+
+              // Divider with label
+              _buildDividerWithLabel(context, '詳細オプション（管理者機能）'),
               const SizedBox(height: AppSpacing.lg),
 
               // Export format selection
@@ -157,7 +173,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'GDPRに基づき、あなたのデータを機械可読形式でダウンロードできます。処理には最大72時間かかる場合があります。',
+                    'GDPRに基づき、あなたのデータをダウンロードできます。PDF形式で即時ダウンロードが可能です。',
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -169,6 +185,219 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// PDFエクスポートカード（MVP機能）
+  Widget _buildPdfExportCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.picture_as_pdf,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'PDF形式でダウンロード',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        'プロフィール、トレーニング履歴、同意記録を含む',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Export status
+            if (_pdfExportStatus != null) ...[
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    if (_isPdfExporting)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      Icon(
+                        _lastExportedFilePath != null
+                            ? Icons.check_circle
+                            : Icons.info_outline,
+                        size: 16,
+                        color: _lastExportedFilePath != null
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        _pdfExportStatus!,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _isPdfExporting ? null : _exportToPdf,
+                    icon: _isPdfExporting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.download),
+                    label: Text(_isPdfExporting ? 'エクスポート中...' : 'PDFをダウンロード'),
+                  ),
+                ),
+                if (_lastExportedFilePath != null) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  IconButton.outlined(
+                    onPressed: _openLastExportedPdf,
+                    icon: const Icon(Icons.open_in_new),
+                    tooltip: 'PDFを開く',
+                  ),
+                  IconButton.outlined(
+                    onPressed: _shareLastExportedPdf,
+                    icon: const Icon(Icons.share),
+                    tooltip: '共有',
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// PDFエクスポート実行
+  Future<void> _exportToPdf() async {
+    setState(() {
+      _isPdfExporting = true;
+      _pdfExportStatus = 'エクスポートを開始しています...';
+      _lastExportedFilePath = null;
+    });
+
+    final pdfService = ref.read(pdfExportServiceProvider);
+    final result = await pdfService.exportUserDataToPdf(
+      onStatusChanged: (status, message) {
+        if (mounted) {
+          setState(() {
+            _pdfExportStatus = message;
+          });
+        }
+      },
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isPdfExporting = false;
+      if (result.success) {
+        _lastExportedFilePath = result.filePath;
+        _pdfExportStatus = 'エクスポート完了！';
+      } else {
+        _pdfExportStatus = 'エラー: ${result.errorMessage}';
+      }
+    });
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('PDFエクスポートが完了しました'),
+          backgroundColor: Colors.green,
+          action: SnackBarAction(
+            label: '開く',
+            textColor: Colors.white,
+            onPressed: _openLastExportedPdf,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('エクスポート失敗: ${result.errorMessage}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+
+  /// エクスポートしたPDFを開く
+  Future<void> _openLastExportedPdf() async {
+    if (_lastExportedFilePath == null) return;
+    final pdfService = ref.read(pdfExportServiceProvider);
+    await pdfService.openPdf(_lastExportedFilePath!);
+  }
+
+  /// エクスポートしたPDFを共有
+  Future<void> _shareLastExportedPdf() async {
+    if (_lastExportedFilePath == null) return;
+    final pdfService = ref.read(pdfExportServiceProvider);
+    await pdfService.sharePdf(_lastExportedFilePath!);
+  }
+
+  /// ラベル付きディバイダー
+  Widget _buildDividerWithLabel(BuildContext context, String label) {
+    return Row(
+      children: [
+        const Expanded(child: Divider()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider()),
+      ],
     );
   }
 

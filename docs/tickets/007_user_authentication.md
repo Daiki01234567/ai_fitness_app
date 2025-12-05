@@ -248,6 +248,54 @@ firebase/
 ### オプション
 - [ ] ウェルカムメール送信
 
+## ユーザー操作が必要な項目
+
+### Firebase Console 設定（#003と共通）
+ソーシャルログイン機能を本番環境で使用するには、Firebase Consoleでの設定が必要です。
+
+| 項目 | 説明 | 所要時間 | 前提条件 |
+|------|------|---------|---------|
+| **Google Sign In** | OAuth同意画面設定、クライアントID作成 | 15分 | Google Cloud Console アクセス権 |
+| **Apple Sign In** | App ID、サービスID設定 | 20分 | Apple Developer Program（年額$99） |
+
+**詳細手順**: `docs/tickets/003_firebase_authentication.md` を参照
+
+### 統合テスト環境準備
+統合テストを実行するには、以下の準備が必要です。
+
+| 項目 | 説明 | 所要時間 |
+|------|------|---------|
+| **Firebaseエミュレータ起動** | `firebase emulators:start` | 2分 |
+| **テストユーザー準備** | エミュレータでテスト用アカウント作成 | 5分 |
+
+**テスト実行コマンド**:
+```bash
+# Flutter 統合テスト
+cd flutter_app
+flutter test integration_test/
+
+# Cloud Functions 統合テスト（エミュレータ使用）
+cd functions
+npm run test:integration
+```
+
+### E2Eテスト環境
+E2Eテストには実機またはエミュレータが必要です。
+
+| 項目 | 説明 |
+|------|------|
+| **Android** | Android Studio Emulator または実機 |
+| **iOS** | Xcode Simulator または実機（Mac必須） |
+
+### 本番環境デプロイ確認
+コード実装は完了していますが、本番環境での動作確認が必要です。
+
+| 項目 | コマンド | 備考 |
+|------|---------|------|
+| Cloud Functions デプロイ | `firebase deploy --only functions` | Blazeプラン必須 |
+| Firestoreルールデプロイ | `firebase deploy --only firestore:rules` | - |
+| 動作確認 | 本番アプリでログイン/登録テスト | - |
+
 ## 完了した追加実装
 - [x] 性別フィールド (gender) の追加
 - [x] フィットネスレベルフィールド (fitnessLevel) の追加
