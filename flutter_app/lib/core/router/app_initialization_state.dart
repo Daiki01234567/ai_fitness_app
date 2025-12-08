@@ -151,10 +151,11 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   // User must be logged in before we care about consent status
   // This check must come BEFORE loading check to prevent flickering to consent screen
   if (authState.user == null) {
-    // If still loading auth state, show loading
-    if (authState.isLoading) {
+    // If auth state is not initialized yet (first Firebase Auth callback not received)
+    // or still loading, show loading
+    if (!authState.isInitialized || authState.isLoading) {
       if (_kEnableVerboseLogging && kDebugMode) {
-        debugPrint('[AppInit] -> loading (auth loading, no user yet)');
+        debugPrint('[AppInit] -> loading (auth not initialized or loading, no user yet)');
       }
       return const AppInitializationState(
         status: AppInitializationStatus.loading,
@@ -162,7 +163,7 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
         isConsentLoading: false,
       );
     }
-    // Auth loading complete and no user - definitely unauthenticated
+    // Auth initialized and loading complete and no user - definitely unauthenticated
     if (_kEnableVerboseLogging && kDebugMode) {
       debugPrint('[AppInit] -> unauthenticated');
     }

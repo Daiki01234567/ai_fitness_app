@@ -47,7 +47,10 @@ void main() {
 
       expect(notifier.state.user, isNull);
       expect(notifier.state.userData, isNull);
-      expect(notifier.state.isLoading, isFalse);
+      // Initial state has isLoading: true until Firebase Auth initialization completes
+      // This prevents flickering on splash screen
+      expect(notifier.state.isLoading, isTrue);
+      expect(notifier.state.isInitialized, isFalse);
       expect(notifier.state.error, isNull);
       expect(notifier.state.isEmailVerified, isFalse);
       expect(notifier.state.isForceLogout, isFalse);

@@ -30,7 +30,8 @@ class AuthState with _$AuthState {
     Map<String, dynamic>? userData,
 
     /// ローディング状態
-    @Default(false) bool isLoading,
+    /// 初期値はtrueで、Firebase Authの初期化完了まで待機
+    @Default(true) bool isLoading,
 
     /// エラーメッセージ
     String? error,
@@ -46,6 +47,10 @@ class AuthState with _$AuthState {
 
     /// カスタムクレーム
     Map<String, dynamic>? customClaims,
+
+    /// 初回初期化完了フラグ
+    /// Firebase Authの初期状態取得が完了したかどうか
+    @Default(false) bool isInitialized,
   }) = _AuthState;
 }
 
@@ -87,7 +92,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         }
       },
       onError: (error) {
-        state = state.copyWith(error: '認証エラー: $error', isLoading: false);
+        state = state.copyWith(
+          error: '認証エラー: $error',
+          isLoading: false,
+          isInitialized: true,
+        );
       },
     );
   }
@@ -141,6 +150,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
                   isDeletionScheduled: userData['deletionScheduled'] ?? false,
                   customClaims: customClaims,
                   isLoading: false,
+                  isInitialized: true,
                   error: null,
                 );
 
@@ -163,6 +173,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
                   isEmailVerified: updatedUser?.emailVerified ?? false,
                   customClaims: customClaims,
                   isLoading: false,
+                  isInitialized: true,
                 );
               }
             },
@@ -170,6 +181,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
               state = state.copyWith(
                 error: 'ユーザーデータの読み込みに失敗しました: $error',
                 isLoading: false,
+                isInitialized: true,
               );
             },
           );
@@ -177,23 +189,27 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       // トークンリフレッシュタイマーを開始
       _startTokenRefreshTimer();
     } catch (e) {
-      state = state.copyWith(error: 'サインインエラー: $e', isLoading: false);
+      state = state.copyWith(
+        error: 'サインインエラー: $e',
+        isLoading: false,
+        isInitialized: true,
+      );
     }
   }
 
   /// ユーザーサインアウト時の処理
   ///
-  /// 無限ループ防止: 既に未認証状態の場合は状態変更をスキップ
+  /// 無限ループ防止: 既に未認証状態かつ初期化済みの場合は状態変更をスキップ
   void _handleUserSignOut() {
     debugPrint('[AuthState] _handleUserSignOut called');
     debugPrint(
-      '[AuthState] Current state: user=${state.user?.uid}, isLoading=${state.isLoading}, isForceLogout=${state.isForceLogout}',
+      '[AuthState] Current state: user=${state.user?.uid}, isLoading=${state.isLoading}, isForceLogout=${state.isForceLogout}, isInitialized=${state.isInitialized}',
     );
 
-    // 既に未認証状態（user == null）で、ローディング中でもない場合は
+    // 既に未認証状態（user == null）で初期化済みの場合は
     // 状態変更をスキップして無限ループを防止
-    if (state.user == null && !state.isLoading) {
-      debugPrint('[AuthState] Already signed out, skipping state reset to prevent loop');
+    if (state.user == null && state.isInitialized) {
+      debugPrint('[AuthState] Already signed out and initialized, skipping state reset to prevent loop');
       // サブスクリプションだけキャンセル（安全のため）
       _userDataSubscription?.cancel();
       _tokenRefreshTimer?.cancel();
@@ -207,9 +223,16 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     // これにより強制ログアウト後にルーターがログイン画面にリダイレクトすることを保証
     final wasForceLogout = state.isForceLogout;
     debugPrint('[AuthState] Preserving isForceLogout=$wasForceLogout');
-    state = AuthState(isForceLogout: wasForceLogout);
+
+    // 初期化完了フラグをtrueに設定し、isLoadingをfalseに
+    // これによりFirebase Authの初期化が完了したことを示す
+    state = AuthState(
+      isForceLogout: wasForceLogout,
+      isLoading: false,
+      isInitialized: true,
+    );
     debugPrint(
-      '[AuthState] State reset completed. New state.isForceLogout: ${state.isForceLogout}',
+      '[AuthState] State reset completed. New state: isForceLogout=${state.isForceLogout}, isLoading=${state.isLoading}, isInitialized=${state.isInitialized}',
     );
   }
 

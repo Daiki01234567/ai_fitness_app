@@ -342,7 +342,8 @@ class _AuthConsentStateNotifier extends ChangeNotifier {
       // Only notify if state actually changed
       if (previous?.user?.uid != next.user?.uid ||
           previous?.isLoading != next.isLoading ||
-          previous?.isForceLogout != next.isForceLogout) {
+          previous?.isForceLogout != next.isForceLogout ||
+          previous?.isInitialized != next.isInitialized) {
         notifyListeners();
       }
     });

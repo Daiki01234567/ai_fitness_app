@@ -103,11 +103,12 @@ void main() {
 
   group('AppInitializationStatus', () {
     test('all status values are defined', () {
-      expect(AppInitializationStatus.values.length, 5);
+      expect(AppInitializationStatus.values.length, 6);
       expect(
         AppInitializationStatus.values,
         containsAll([
           AppInitializationStatus.loading,
+          AppInitializationStatus.firstLaunch,
           AppInitializationStatus.unauthenticated,
           AppInitializationStatus.needsConsent,
           AppInitializationStatus.ready,

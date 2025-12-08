@@ -24,6 +24,7 @@ mixin _$AuthState {
   Map<String, dynamic>? get userData => throw _privateConstructorUsedError;
 
   /// ローディング状態
+  /// 初期値はtrueで、Firebase Authの初期化完了まで待機
   bool get isLoading => throw _privateConstructorUsedError;
 
   /// エラーメッセージ
@@ -40,6 +41,10 @@ mixin _$AuthState {
 
   /// カスタムクレーム
   Map<String, dynamic>? get customClaims => throw _privateConstructorUsedError;
+
+  /// 初回初期化完了フラグ
+  /// Firebase Authの初期状態取得が完了したかどうか
+  bool get isInitialized => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -62,6 +67,7 @@ abstract class $AuthStateCopyWith<$Res> {
     bool isForceLogout,
     bool isDeletionScheduled,
     Map<String, dynamic>? customClaims,
+    bool isInitialized,
   });
 }
 
@@ -88,6 +94,7 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
     Object? isForceLogout = null,
     Object? isDeletionScheduled = null,
     Object? customClaims = freezed,
+    Object? isInitialized = null,
   }) {
     return _then(
       _value.copyWith(
@@ -123,6 +130,10 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
                 ? _value.customClaims
                 : customClaims // ignore: cast_nullable_to_non_nullable
                       as Map<String, dynamic>?,
+            isInitialized: null == isInitialized
+                ? _value.isInitialized
+                : isInitialized // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -147,6 +158,7 @@ abstract class _$$AuthStateImplCopyWith<$Res>
     bool isForceLogout,
     bool isDeletionScheduled,
     Map<String, dynamic>? customClaims,
+    bool isInitialized,
   });
 }
 
@@ -172,6 +184,7 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     Object? isForceLogout = null,
     Object? isDeletionScheduled = null,
     Object? customClaims = freezed,
+    Object? isInitialized = null,
   }) {
     return _then(
       _$AuthStateImpl(
@@ -207,6 +220,10 @@ class __$$AuthStateImplCopyWithImpl<$Res>
             ? _value._customClaims
             : customClaims // ignore: cast_nullable_to_non_nullable
                   as Map<String, dynamic>?,
+        isInitialized: null == isInitialized
+            ? _value.isInitialized
+            : isInitialized // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -218,12 +235,13 @@ class _$AuthStateImpl with DiagnosticableTreeMixin implements _AuthState {
   const _$AuthStateImpl({
     this.user,
     final Map<String, dynamic>? userData,
-    this.isLoading = false,
+    this.isLoading = true,
     this.error,
     this.isEmailVerified = false,
     this.isForceLogout = false,
     this.isDeletionScheduled = false,
     final Map<String, dynamic>? customClaims,
+    this.isInitialized = false,
   }) : _userData = userData,
        _customClaims = customClaims;
 
@@ -245,6 +263,7 @@ class _$AuthStateImpl with DiagnosticableTreeMixin implements _AuthState {
   }
 
   /// ローディング状態
+  /// 初期値はtrueで、Firebase Authの初期化完了まで待機
   @override
   @JsonKey()
   final bool isLoading;
@@ -281,9 +300,15 @@ class _$AuthStateImpl with DiagnosticableTreeMixin implements _AuthState {
     return EqualUnmodifiableMapView(value);
   }
 
+  /// 初回初期化完了フラグ
+  /// Firebase Authの初期状態取得が完了したかどうか
+  @override
+  @JsonKey()
+  final bool isInitialized;
+
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'AuthState(user: $user, userData: $userData, isLoading: $isLoading, error: $error, isEmailVerified: $isEmailVerified, isForceLogout: $isForceLogout, isDeletionScheduled: $isDeletionScheduled, customClaims: $customClaims)';
+    return 'AuthState(user: $user, userData: $userData, isLoading: $isLoading, error: $error, isEmailVerified: $isEmailVerified, isForceLogout: $isForceLogout, isDeletionScheduled: $isDeletionScheduled, customClaims: $customClaims, isInitialized: $isInitialized)';
   }
 
   @override
@@ -298,7 +323,8 @@ class _$AuthStateImpl with DiagnosticableTreeMixin implements _AuthState {
       ..add(DiagnosticsProperty('isEmailVerified', isEmailVerified))
       ..add(DiagnosticsProperty('isForceLogout', isForceLogout))
       ..add(DiagnosticsProperty('isDeletionScheduled', isDeletionScheduled))
-      ..add(DiagnosticsProperty('customClaims', customClaims));
+      ..add(DiagnosticsProperty('customClaims', customClaims))
+      ..add(DiagnosticsProperty('isInitialized', isInitialized));
   }
 
   @override
@@ -320,7 +346,9 @@ class _$AuthStateImpl with DiagnosticableTreeMixin implements _AuthState {
             const DeepCollectionEquality().equals(
               other._customClaims,
               _customClaims,
-            ));
+            ) &&
+            (identical(other.isInitialized, isInitialized) ||
+                other.isInitialized == isInitialized));
   }
 
   @override
@@ -334,6 +362,7 @@ class _$AuthStateImpl with DiagnosticableTreeMixin implements _AuthState {
     isForceLogout,
     isDeletionScheduled,
     const DeepCollectionEquality().hash(_customClaims),
+    isInitialized,
   );
 
   /// Create a copy of AuthState
@@ -355,6 +384,7 @@ abstract class _AuthState implements AuthState {
     final bool isForceLogout,
     final bool isDeletionScheduled,
     final Map<String, dynamic>? customClaims,
+    final bool isInitialized,
   }) = _$AuthStateImpl;
 
   /// 現在のユーザー
@@ -366,6 +396,7 @@ abstract class _AuthState implements AuthState {
   Map<String, dynamic>? get userData;
 
   /// ローディング状態
+  /// 初期値はtrueで、Firebase Authの初期化完了まで待機
   @override
   bool get isLoading;
 
@@ -388,6 +419,11 @@ abstract class _AuthState implements AuthState {
   /// カスタムクレーム
   @override
   Map<String, dynamic>? get customClaims;
+
+  /// 初回初期化完了フラグ
+  /// Firebase Authの初期状態取得が完了したかどうか
+  @override
+  bool get isInitialized;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
