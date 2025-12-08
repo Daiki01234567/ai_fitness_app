@@ -9,11 +9,15 @@
 // @version 1.1.0
 // @date 2025-12-08
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_state_notifier.dart';
 import '../consent/consent_state_notifier.dart';
 import '../onboarding/onboarding_service.dart';
+
+/// Debug logging flag - set to false to disable verbose logs
+const bool _kEnableVerboseLogging = false;
 
 /// Represents the combined initialization state of the app
 enum AppInitializationStatus {
@@ -85,22 +89,22 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   final consentState = ref.watch(consentStateProvider);
   final isFirstLaunchAsync = ref.watch(isFirstLaunchProvider);
 
-  // Debug logging
-  // ignore: avoid_print
-  print(
-    '[AppInit] authState: user=${authState.user?.uid}, isLoading=${authState.isLoading}, isForceLogout=${authState.isForceLogout}',
-  );
-  // ignore: avoid_print
-  print(
-    '[AppInit] consentState: isLoading=${consentState.isLoading}, needsConsent=${consentState.needsConsent}, tosAccepted=${consentState.tosAccepted}',
-  );
-  // ignore: avoid_print
-  print('[AppInit] isFirstLaunchAsync: $isFirstLaunchAsync');
+  // Debug logging - only when verbose logging is enabled
+  if (_kEnableVerboseLogging && kDebugMode) {
+    debugPrint(
+      '[AppInit] authState: user=${authState.user?.uid}, isLoading=${authState.isLoading}, isForceLogout=${authState.isForceLogout}',
+    );
+    debugPrint(
+      '[AppInit] consentState: isLoading=${consentState.isLoading}, needsConsent=${consentState.needsConsent}, tosAccepted=${consentState.tosAccepted}',
+    );
+    debugPrint('[AppInit] isFirstLaunchAsync: $isFirstLaunchAsync');
+  }
 
   // Check force logout first - this takes priority over everything
   if (authState.isForceLogout) {
-    // ignore: avoid_print
-    print('[AppInit] -> forceLoggedOut');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> forceLoggedOut');
+    }
     return const AppInitializationState(
       status: AppInitializationStatus.forceLoggedOut,
       isAuthLoading: false,
@@ -117,8 +121,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
 
   // If first launch state is still loading, wait
   if (isFirstLaunch == null) {
-    // ignore: avoid_print
-    print('[AppInit] -> loading (first launch check)');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> loading (first launch check)');
+    }
     return AppInitializationState(
       status: AppInitializationStatus.loading,
       isAuthLoading: authState.isLoading,
@@ -129,8 +134,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
 
   // If this is the first launch, go to onboarding regardless of auth state
   if (isFirstLaunch) {
-    // ignore: avoid_print
-    print('[AppInit] -> firstLaunch');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> firstLaunch');
+    }
     return const AppInitializationState(
       status: AppInitializationStatus.firstLaunch,
       isAuthLoading: false,
@@ -147,8 +153,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   if (authState.user == null) {
     // If still loading auth state, show loading
     if (authState.isLoading) {
-      // ignore: avoid_print
-      print('[AppInit] -> loading (auth loading, no user yet)');
+      if (_kEnableVerboseLogging && kDebugMode) {
+        debugPrint('[AppInit] -> loading (auth loading, no user yet)');
+      }
       return const AppInitializationState(
         status: AppInitializationStatus.loading,
         isAuthLoading: true,
@@ -156,8 +163,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
       );
     }
     // Auth loading complete and no user - definitely unauthenticated
-    // ignore: avoid_print
-    print('[AppInit] -> unauthenticated');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> unauthenticated');
+    }
     return const AppInitializationState(
       status: AppInitializationStatus.unauthenticated,
       isAuthLoading: false,
@@ -169,8 +177,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
 
   // User exists but auth is still loading user data (e.g., fetching userData from Firestore)
   if (authState.isLoading) {
-    // ignore: avoid_print
-    print('[AppInit] -> loading (auth loading user data)');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> loading (auth loading user data)');
+    }
     return const AppInitializationState(
       status: AppInitializationStatus.loading,
       isAuthLoading: true,
@@ -182,8 +191,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   // IMPORTANT: Wait for consent state to fully load before making routing decisions
   // This prevents flickering when consent listener is initializing
   if (consentState.isLoading) {
-    // ignore: avoid_print
-    print('[AppInit] -> loading (consent loading)');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> loading (consent loading)');
+    }
     return const AppInitializationState(
       status: AppInitializationStatus.loading,
       isAuthLoading: false,
@@ -193,8 +203,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
 
   // Both states are loaded - determine final status
   if (consentState.needsConsent) {
-    // ignore: avoid_print
-    print('[AppInit] -> needsConsent');
+    if (_kEnableVerboseLogging && kDebugMode) {
+      debugPrint('[AppInit] -> needsConsent');
+    }
     return const AppInitializationState(
       status: AppInitializationStatus.needsConsent,
       isAuthLoading: false,
@@ -203,8 +214,9 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   }
 
   // All good - user is authenticated and has given consent
-  // ignore: avoid_print
-  print('[AppInit] -> ready');
+  if (_kEnableVerboseLogging && kDebugMode) {
+    debugPrint('[AppInit] -> ready');
+  }
   return const AppInitializationState(
     status: AppInitializationStatus.ready,
     isAuthLoading: false,

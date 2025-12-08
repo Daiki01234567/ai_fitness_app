@@ -7,6 +7,7 @@
 // @version 1.2.0
 // @date 2025-12-02
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,6 +36,9 @@ import '../../screens/settings/data_export_screen.dart';
 import '../../screens/settings/account_deletion_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/auth/recovery_screen.dart';
+
+/// Debug logging flag for router - set to false to disable verbose logs
+const bool _kEnableRouterLogging = false;
 
 /// ルートパス
 class AppRoutes {
@@ -84,7 +88,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isOnConsent = state.matchedLocation == AppRoutes.consent;
       final isOnOnboarding = state.matchedLocation == AppRoutes.onboarding;
 
-      debugPrint('[Router] redirect called: location=${state.matchedLocation}, appInitState=$appInitState');
+      if (_kEnableRouterLogging && kDebugMode) {
+        debugPrint('[Router] redirect called: location=${state.matchedLocation}, appInitState=$appInitState');
+      }
 
       // 強制ログアウトの場合は即座にログイン画面へ
       if (appInitState.status == AppInitializationStatus.forceLoggedOut) {
@@ -92,7 +98,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (isOnAuthPage) {
           return null;
         }
-        debugPrint('[Router] Force logout detected, redirecting to login');
+        if (_kEnableRouterLogging && kDebugMode) {
+          debugPrint('[Router] Force logout detected, redirecting to login');
+        }
         return AppRoutes.login;
       }
 
@@ -131,7 +139,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (isOnOnboarding) {
           return null;
         }
-        debugPrint('[Router] First launch, redirecting to onboarding from ${state.matchedLocation}');
+        if (_kEnableRouterLogging && kDebugMode) {
+          debugPrint('[Router] First launch, redirecting to onboarding from ${state.matchedLocation}');
+        }
         return AppRoutes.onboarding;
       }
 
@@ -146,7 +156,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return null;
         }
         // スプラッシュ画面または他のページからログイン画面へリダイレクト
-        debugPrint('[Router] Unauthenticated user, redirecting to login from ${state.matchedLocation}');
+        if (_kEnableRouterLogging && kDebugMode) {
+          debugPrint('[Router] Unauthenticated user, redirecting to login from ${state.matchedLocation}');
+        }
         return AppRoutes.login;
       }
 
@@ -322,17 +334,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 /// Note: appInitializationProviderは既にauthStateProviderとconsentStateProviderに
 /// 依存しているため、ここでは直接リッスンしない。直接リッスンすると
 /// 1つの状態変化で複数回notifyListeners()が呼ばれ、リダイレクトループの原因となる。
+///
+/// 無限ループ防止: 状態が実際に変化した場合のみnotifyListeners()を呼び出す
 class _AuthConsentStateNotifier extends ChangeNotifier {
   _AuthConsentStateNotifier(this._ref) {
     _ref.listen(authStateProvider, (previous, next) {
-      notifyListeners();
+      // Only notify if state actually changed
+      if (previous?.user?.uid != next.user?.uid ||
+          previous?.isLoading != next.isLoading ||
+          previous?.isForceLogout != next.isForceLogout) {
+        notifyListeners();
+      }
     });
     _ref.listen(consentStateProvider, (previous, next) {
-      notifyListeners();
+      // Only notify if state actually changed
+      if (previous?.isLoading != next.isLoading ||
+          previous?.needsConsent != next.needsConsent ||
+          previous?.tosAccepted != next.tosAccepted ||
+          previous?.ppAccepted != next.ppAccepted) {
+        notifyListeners();
+      }
     });
     // isFirstLaunchProvider の変化もリッスン（オンボーディング完了時のナビゲーション用）
     _ref.listen(isFirstLaunchProvider, (previous, next) {
-      notifyListeners();
+      // AsyncValue の状態が変化した場合のみ通知
+      final prevValue = previous?.valueOrNull;
+      final nextValue = next.valueOrNull;
+      final prevIsLoading = previous?.isLoading ?? true;
+      final nextIsLoading = next.isLoading;
+      if (prevValue != nextValue || prevIsLoading != nextIsLoading) {
+        notifyListeners();
+      }
     });
   }
 
