@@ -1,23 +1,27 @@
 // Application initialization state provider
 //
-// Combines authentication and consent state to determine app readiness.
-// This prevents flickering during navigation by ensuring both states
+// Combines authentication, consent, and onboarding state to determine app readiness.
+// This prevents flickering during navigation by ensuring all states
 // are fully loaded before routing decisions are made.
 //
 // Spec reference: docs/specs/05_v3_3.md Section 2.1
 //
-// @version 1.0.0
-// @date 2025-12-02
+// @version 1.1.0
+// @date 2025-12-08
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_state_notifier.dart';
 import '../consent/consent_state_notifier.dart';
+import '../onboarding/onboarding_service.dart';
 
 /// Represents the combined initialization state of the app
 enum AppInitializationStatus {
-  /// Still loading auth or consent state
+  /// Still loading auth, consent, or onboarding state
   loading,
+
+  /// First launch - show onboarding
+  firstLaunch,
 
   /// User is not authenticated
   unauthenticated,
@@ -37,15 +41,17 @@ class AppInitializationState {
   final AppInitializationStatus status;
   final bool isAuthLoading;
   final bool isConsentLoading;
+  final bool isOnboardingLoading;
 
   const AppInitializationState({
     required this.status,
     required this.isAuthLoading,
     required this.isConsentLoading,
+    this.isOnboardingLoading = false,
   });
 
   /// True if any state is still loading
-  bool get isLoading => isAuthLoading || isConsentLoading;
+  bool get isLoading => isAuthLoading || isConsentLoading || isOnboardingLoading;
 
   /// True if the app is ready for normal navigation
   bool get isReady => status == AppInitializationStatus.ready;
@@ -58,21 +64,26 @@ class AppInitializationState {
       status == AppInitializationStatus.unauthenticated ||
       status == AppInitializationStatus.forceLoggedOut;
 
+  /// True if onboarding should be shown (first launch)
+  bool get shouldShowOnboarding => status == AppInitializationStatus.firstLaunch;
+
   @override
   String toString() {
-    return 'AppInitializationState(status: $status, authLoading: $isAuthLoading, consentLoading: $isConsentLoading)';
+    return 'AppInitializationState(status: $status, authLoading: $isAuthLoading, consentLoading: $isConsentLoading, onboardingLoading: $isOnboardingLoading)';
   }
 }
 
-/// Provider that combines auth and consent states to determine app readiness
+/// Provider that combines auth, consent, and onboarding states to determine app readiness
 ///
 /// This provider solves the consent screen flickering issue by:
-/// 1. Returning loading status until BOTH auth AND consent states are loaded
-/// 2. Only then determining the appropriate navigation destination
-/// 3. Ensuring atomic state transitions for smooth UX
+/// 1. Returning loading status until all states are loaded
+/// 2. Checking first launch FIRST before other states
+/// 3. Only then determining the appropriate navigation destination
+/// 4. Ensuring atomic state transitions for smooth UX
 final appInitializationProvider = Provider<AppInitializationState>((ref) {
   final authState = ref.watch(authStateProvider);
   final consentState = ref.watch(consentStateProvider);
+  final isFirstLaunchAsync = ref.watch(isFirstLaunchProvider);
 
   // Debug logging
   // ignore: avoid_print
@@ -83,6 +94,8 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   print(
     '[AppInit] consentState: isLoading=${consentState.isLoading}, needsConsent=${consentState.needsConsent}, tosAccepted=${consentState.tosAccepted}',
   );
+  // ignore: avoid_print
+  print('[AppInit] isFirstLaunchAsync: $isFirstLaunchAsync');
 
   // Check force logout first - this takes priority over everything
   if (authState.isForceLogout) {
@@ -94,6 +107,39 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
       isConsentLoading: false,
     );
   }
+
+  // Check first launch state - this must be checked early
+  final isFirstLaunch = isFirstLaunchAsync.when(
+    data: (value) => value,
+    loading: () => null, // null means still loading
+    error: (_, __) => false, // assume not first launch on error
+  );
+
+  // If first launch state is still loading, wait
+  if (isFirstLaunch == null) {
+    // ignore: avoid_print
+    print('[AppInit] -> loading (first launch check)');
+    return const AppInitializationState(
+      status: AppInitializationStatus.loading,
+      isAuthLoading: authState.isLoading,
+      isConsentLoading: false,
+      isOnboardingLoading: true,
+    );
+  }
+
+  // If this is the first launch, go to onboarding regardless of auth state
+  if (isFirstLaunch) {
+    // ignore: avoid_print
+    print('[AppInit] -> firstLaunch');
+    return const AppInitializationState(
+      status: AppInitializationStatus.firstLaunch,
+      isAuthLoading: false,
+      isConsentLoading: false,
+      isOnboardingLoading: false,
+    );
+  }
+
+  // Not first launch - now check auth state
 
   // Check if user is not authenticated - this takes priority over consent
   // User must be logged in before we care about consent status

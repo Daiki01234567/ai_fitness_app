@@ -1,107 +1,32 @@
 // Splash Screen
-// Shows loading indicator while checking auth state and first launch
-// Implements navigation logic per spec section 3.1
+// Shows loading indicator while app initialization states are loaded
+// Navigation is handled by GoRouter based on appInitializationProvider
 //
-// @version 2.0.0
-// @date 2025-12-02
+// @version 2.1.0
+// @date 2025-12-08
 // @spec docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md Section 3.1
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../core/auth/auth_state_notifier.dart';
-import '../../core/consent/consent_state_notifier.dart';
-import '../../core/onboarding/onboarding_service.dart';
-import '../../core/router/app_router.dart';
 
 /// Splash screen displayed during app initialization
-/// Displays for 1-2 seconds as per spec
-class SplashScreen extends ConsumerStatefulWidget {
+/// Navigation is handled by GoRouter redirect based on:
+/// - First launch -> Onboarding
+/// - Not authenticated -> Login
+/// - Authenticated + needs consent -> Consent
+/// - Authenticated + has consent -> Home
+class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
-  @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends ConsumerState<SplashScreen> {
-  bool _navigationTriggered = false;
+  // Note: Navigation is now handled entirely by GoRouter's redirect logic
+  // in app_router.dart based on appInitializationProvider state.
+  // This screen simply displays the splash UI while states are loading.
 
   @override
-  void initState() {
-    super.initState();
-    // Start navigation check after a minimum display time of 1 second
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted) {
-        _checkNavigationState();
-      }
-    });
-  }
-
-  /// Check states and navigate accordingly
-  /// Navigation logic per spec section 3.1:
-  /// - First launch -> Onboarding
-  /// - Subsequent launch + logged in -> Consent check -> Home or Consent
-  /// - Subsequent launch + not logged in -> Login
-  Future<void> _checkNavigationState() async {
-    if (_navigationTriggered) return;
-
-    // Check if first launch
-    final onboardingService = ref.read(onboardingServiceProvider);
-    final isFirstLaunch = await onboardingService.isFirstLaunch();
-
-    if (!mounted) return;
-
-    if (isFirstLaunch) {
-      _navigationTriggered = true;
-      context.go(AppRoutes.onboarding);
-      return;
-    }
-
-    // Wait for auth and consent states to be loaded
-    _waitForAuthAndNavigate();
-  }
-
-  /// Wait for auth state to be ready and navigate
-  void _waitForAuthAndNavigate() {
-    final authState = ref.read(authStateProvider);
-    final consentState = ref.read(consentStateProvider);
-
-    debugPrint('[SplashScreen] _waitForAuthAndNavigate: authLoading=${authState.isLoading}, consentLoading=${consentState.isLoading}');
-
-    // If states are still loading, wait and retry
-    if (authState.isLoading || consentState.isLoading) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted && !_navigationTriggered) {
-          _waitForAuthAndNavigate();
-        }
-      });
-      return;
-    }
-
-    if (_navigationTriggered || !mounted) return;
-    _navigationTriggered = true;
-
-    final isAuthenticated = authState.user != null;
-    final needsConsent = consentState.needsConsent;
-
-    debugPrint('[SplashScreen] Navigating: isAuthenticated=$isAuthenticated, needsConsent=$needsConsent');
-
-    if (!isAuthenticated) {
-      debugPrint('[SplashScreen] -> Going to login');
-      context.go(AppRoutes.login);
-    } else if (needsConsent) {
-      debugPrint('[SplashScreen] -> Going to consent');
-      context.go(AppRoutes.consent);
-    } else {
-      debugPrint('[SplashScreen] -> Going to home');
-      context.go(AppRoutes.home);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    debugPrint('[SplashScreen] build called');
 
     // Spec: green brand color background
     return Scaffold(

@@ -128,17 +128,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 認証状態と同意状態が両方確定してから遷移先を決定
       // -------------------------
 
+      // 初回起動の場合はオンボーディングへ
+      if (appInitState.shouldShowOnboarding) {
+        // オンボーディングにいる場合はそのまま維持
+        if (isOnOnboarding) {
+          return null;
+        }
+        debugPrint('[Router] First launch, redirecting to onboarding from ${state.matchedLocation}');
+        return AppRoutes.onboarding;
+      }
+
       // 未認証の場合のルーティング
       if (appInitState.shouldShowLogin) {
-        // オンボーディング・スプラッシュ画面は認証不要なのでスキップ
-        if (isOnAuthPage || isOnOnboarding) {
+        // 認証ページにいる場合はそのまま維持
+        if (isOnAuthPage) {
           return null;
         }
-        // スプラッシュ画面にいる場合はスプラッシュ画面のナビゲーションに任せる
-        // （初回起動チェック等を行うため）
-        if (isOnSplash) {
+        // オンボーディングにいる場合はそのまま維持（オンボーディング完了後にログインへ）
+        if (isOnOnboarding) {
           return null;
         }
+        // スプラッシュ画面または他のページからログイン画面へリダイレクト
+        debugPrint('[Router] Unauthenticated user, redirecting to login from ${state.matchedLocation}');
         return AppRoutes.login;
       }
 
