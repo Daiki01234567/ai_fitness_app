@@ -70,8 +70,6 @@ class AppRoutes {
 final appRouterProvider = Provider<GoRouter>((ref) {
   // Use the combined initialization state to prevent consent screen flickering
   final appInitState = ref.watch(appInitializationProvider);
-  final authNotifier = ref.read(authStateProvider.notifier);
-  final authState = ref.watch(authStateProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
@@ -88,14 +86,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       debugPrint('[Router] redirect called: location=${state.matchedLocation}, appInitState=$appInitState');
 
-      // 別のページに移動する際にエラーをクリア
-      if (authState.error != null) {
-        // ビルド中に状態を変更しないようにFuture.microtaskを使用
-        Future.microtask(() => authNotifier.clearError());
-      }
-
       // 強制ログアウトの場合は即座にログイン画面へ
       if (appInitState.status == AppInitializationStatus.forceLoggedOut) {
+        // 既にログイン画面にいる場合はnullを返してループを防止
+        if (isOnAuthPage) {
+          return null;
+        }
         debugPrint('[Router] Force logout detected, redirecting to login');
         return AppRoutes.login;
       }

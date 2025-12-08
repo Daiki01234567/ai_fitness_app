@@ -119,7 +119,7 @@ final appInitializationProvider = Provider<AppInitializationState>((ref) {
   if (isFirstLaunch == null) {
     // ignore: avoid_print
     print('[AppInit] -> loading (first launch check)');
-    return const AppInitializationState(
+    return AppInitializationState(
       status: AppInitializationStatus.loading,
       isAuthLoading: authState.isLoading,
       isConsentLoading: false,
