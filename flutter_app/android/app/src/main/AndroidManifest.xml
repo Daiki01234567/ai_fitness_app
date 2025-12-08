@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.ai_fitness">
+    package="com.example.ai_flutter_app">
 
     <!-- Network permissions required for Firebase Authentication -->
     <uses-permission android:name="android.permission.INTERNET" />

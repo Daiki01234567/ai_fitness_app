@@ -1,10 +1,10 @@
 // Firebase認証サービス
 //
 // 認証機能の追加サービスメソッド
-// 電話番号認証、ソーシャル認証など
+// ソーシャル認証、メールリンク認証など
 //
-// @version 1.0.0
-// @date 2025-11-24
+// @version 1.1.0
+// @date 2025-12-08
 
 import 'dart:async';
 
@@ -18,10 +18,6 @@ class AuthService {
   final GoogleSignIn _googleSignIn;
   final FirebaseFunctions _functions;
 
-  // SMS認証用
-  String? _verificationId;
-  int? _resendToken;
-
   AuthService({
     FirebaseAuth? auth,
     GoogleSignIn? googleSignIn,
@@ -31,100 +27,6 @@ class AuthService {
        _functions =
            functions ??
            FirebaseFunctions.instanceFor(region: 'asia-northeast1');
-
-  /// 電話番号でサインイン（SMS認証）
-  Future<void> signInWithPhoneNumber({
-    required String phoneNumber,
-    required Function(String verificationId) onCodeSent,
-    required Function(String error) onError,
-    Function(PhoneAuthCredential credential)? onAutoVerification,
-    Duration timeout = const Duration(seconds: 60),
-  }) async {
-    try {
-      // 日本の電話番号形式に変換
-      String formattedNumber = phoneNumber;
-      if (phoneNumber.startsWith('0')) {
-        // 0から始まる場合は+81に変換
-        formattedNumber = '+81${phoneNumber.substring(1)}';
-      } else if (!phoneNumber.startsWith('+')) {
-        // +がない場合は+81を追加
-        formattedNumber = '+81$phoneNumber';
-      }
-
-      await _auth.verifyPhoneNumber(
-        phoneNumber: formattedNumber,
-        timeout: timeout,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // 自動検証成功時
-          if (onAutoVerification != null) {
-            onAutoVerification(credential);
-          } else {
-            // 自動的にサインイン
-            await _auth.signInWithCredential(credential);
-          }
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          String errorMessage;
-          switch (e.code) {
-            case 'invalid-phone-number':
-              errorMessage = '電話番号が無効です';
-              break;
-            case 'quota-exceeded':
-              errorMessage = 'SMS送信の制限に達しました。しばらくしてから再試行してください';
-              break;
-            case 'app-not-authorized':
-              errorMessage = 'アプリが電話番号認証を使用する権限がありません';
-              break;
-            default:
-              errorMessage = '電話番号認証エラー: ${e.message}';
-          }
-          onError(errorMessage);
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          // SMS送信成功
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-          onCodeSent(verificationId);
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          // 自動検証タイムアウト
-          _verificationId = verificationId;
-        },
-        forceResendingToken: _resendToken,
-      );
-    } catch (e) {
-      onError('電話番号認証エラー: $e');
-    }
-  }
-
-  /// SMS確認コードで認証を完了
-  Future<UserCredential?> verifyPhoneCode(String smsCode) async {
-    if (_verificationId == null) {
-      throw Exception('認証IDが見つかりません。まずSMSをリクエストしてください。');
-    }
-
-    try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: smsCode,
-      );
-
-      return await _auth.signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      String errorMessage;
-      switch (e.code) {
-        case 'invalid-verification-code':
-          errorMessage = '確認コードが正しくありません';
-          break;
-        case 'invalid-verification-id':
-          errorMessage = '認証セッションが無効です。もう一度お試しください';
-          break;
-        default:
-          errorMessage = '認証エラー: ${e.message}';
-      }
-      throw Exception(errorMessage);
-    }
-  }
 
   /// Google Sign In
   Future<UserCredential?> signInWithGoogle() async {

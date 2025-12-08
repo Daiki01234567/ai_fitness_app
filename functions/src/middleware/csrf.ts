@@ -31,9 +31,9 @@ import { logger } from "../utils/logger";
  * 本番ドメインをここに追加
  */
 const ALLOWED_ORIGINS: string[] = [
-  // 本番ドメイン（デプロイ時に更新）
-  "https://ai-fitness-c38f0.web.app",
-  "https://ai-fitness-c38f0.firebaseapp.com",
+  // 本番ドメイン
+  "https://tokyo-list-478804-e5.web.app",
+  "https://tokyo-list-478804-e5.firebaseapp.com",
 
   // 開発ドメイン
   "http://localhost:5000",

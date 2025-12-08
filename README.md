@@ -80,5 +80,5 @@ ai-fitness-app/
 - [CLAUDE.md](CLAUDE.md) - 開発時の制約事項とベストプラクティス
 - [開発チケット](docs/tickets/) - 番号付きタスク管理
 
-**Project ID**: ai-fitness-c38f0
+**Project ID**: tokyo-list-478804-e5
 **Version**: 0.1.0 (MVP Phase 1)

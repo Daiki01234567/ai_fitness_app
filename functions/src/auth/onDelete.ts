@@ -29,11 +29,10 @@ const db = admin.firestore();
 export const onUserDelete = auth
   .user()
   .onDelete(async (user) => {
-    const { uid, email, phoneNumber } = user;
+    const { uid, email } = user;
 
     logger.info(`Deleting user data for UID: ${uid}`, {
       email,
-      phoneNumber,
     });
 
     try {
@@ -100,7 +99,6 @@ export const onUserDelete = auth
         logId: deletionLogRef.id,
         userId: uid,
         email: email || null,
-        phoneNumber: phoneNumber || null,
         deletedAt: FieldValue.serverTimestamp(),
         deletedBy: "system",  // システムによる自動削除
         reason: "user_requested",  // ユーザーリクエストによる削除

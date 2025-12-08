@@ -34,13 +34,12 @@ const db = admin.firestore();
 export const onUserCreate = auth
   .user()
   .onCreate(async (user) => {
-    const { uid, email, phoneNumber, displayName, photoURL } = user;
+    const { uid, email, displayName, photoURL } = user;
 
     // DEBUG: 関数開始をログ出力
     console.log("onCreate triggered for user:", uid);
     logger.info(`Creating user document for UID: ${uid}`, {
       email,
-      phoneNumber,
     });
 
     try {
@@ -60,7 +59,6 @@ export const onUserCreate = auth
           // 基本情報
           userId: uid,
           email: email || null,
-          phoneNumber: phoneNumber || null,
           displayName: displayName || null,
           nickname: displayName || null, // Firestore セキュリティルールでこのフィールドが必要
           photoUrl: photoURL || null,
@@ -68,7 +66,6 @@ export const onUserCreate = auth
           // アカウント状態
           isActive: true,
           emailVerified: false,
-          phoneVerified: !!phoneNumber,  // 電話番号があれば検証済みとする
 
           // GDPR同意管理（初期値）
           tosAccepted: false,
