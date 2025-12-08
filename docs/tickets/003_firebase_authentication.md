@@ -3,8 +3,8 @@
 **Phase**: Phase 1 (インフラ構築)
 **期間**: Week 1-2
 **優先度**: 最高
-**ステータス**: コード実装完了（70%）- Console設定待ち
-**最終更新**: 2025-12-05
+**ステータス**: コード実装完了（75%）- Console設定一部完了
+**最終更新**: 2025-12-08
 **関連仕様書**:
 - `docs/specs/01_システムアーキテクチャ設計書_v3_2.md`
 - `docs/specs/00_要件定義書_v3_3.md` (FR-001～FR-005)
@@ -17,8 +17,9 @@ Firebase Authenticationの設定と認証フローの実装基盤を構築する
 | カテゴリ | 進捗 | 備考 |
 |---------|------|------|
 | コード実装 | 95% | Cloud Functions・Flutter共に完了 |
-| Console設定 | 0% | 全プロバイダー設定待ち |
-| 総合進捗 | 70% | Console設定完了で100% |
+| Console設定 | 30% | メール/パスワード・Google OAuth設定済み |
+| ドキュメント | 100% | セットアップガイド作成完了 |
+| 総合進捗 | 75% | 残りConsole設定完了で100% |
 
 ## 実装済み詳細
 
@@ -51,14 +52,14 @@ Firebase Authenticationの設定と認証フローの実装基盤を構築する
 ## Todo リスト
 
 ### 認証プロバイダー設定
-- [ ] メール/パスワード認証有効化
-- [ ] 電話番号認証有効化（日本）
-- [ ] Google OAuth 設定
-  - [ ] OAuth同意画面設定
-  - [ ] クライアントID/シークレット設定
+- [x] メール/パスワード認証有効化 ✅ 2025-12-08完了
+- [x] Google OAuth 設定 ✅ 2025-12-08完了
+  - [x] OAuth同意画面設定
+  - [x] クライアントID/シークレット設定
 - [ ] Apple Sign In 設定（iOS）
   - [ ] App ID 設定
   - [ ] サービスID設定
+- ~~電話番号認証有効化~~ ❌ **設定不要**（要件定義書v3.3により電話番号は「収集しないデバイス情報」として明記）
 
 ### カスタムクレーム設計
 - [x] クレーム仕様定義
@@ -117,16 +118,18 @@ Firebase Authenticationの設定と認証フローの実装基盤を構築する
 
 **Console URL**: https://console.firebase.google.com/project/tokyo-list-478804-e5/authentication/providers
 
-| 項目 | 内容 | 所要時間 |
-|------|------|---------|
-| メール/パスワード認証有効化 | Authentication > Sign-in method で有効化 | 2分 |
-| Google OAuth設定 | OAuth同意画面設定、クライアントID作成 | 15分 |
-| Apple Sign In設定 | App ID、サービスID設定 | 20分 |
-| 電話番号認証有効化 | 日本（+81）を許可リストに追加 | 5分 |
-| パスワードポリシー設定 | 最小8文字に設定 | 2分 |
-| メールテンプレート日本語化 | パスワードリセット、メール確認 | 10分 |
-| Authorized domains設定 | 許可ドメインの追加 | 5分 |
-| App Check有効化 | セキュリティ強化 | 10分 |
+| 項目 | 内容 | 所要時間 | ステータス |
+|------|------|---------|-----------|
+| メール/パスワード認証有効化 | Authentication > Sign-in method で有効化 | 2分 | ✅ 完了 |
+| Google OAuth設定 | OAuth同意画面設定、クライアントID作成 | 15分 | ✅ 完了 |
+| Apple Sign In設定 | App ID、サービスID設定 | 20分 | ⬜ 未設定 |
+| ~~電話番号認証有効化~~ | ~~日本（+81）を許可リストに追加~~ | - | ❌ 不要 |
+| パスワードポリシー設定 | 最小8文字に設定 | 2分 | ⬜ 未設定 |
+| メールテンプレート日本語化 | パスワードリセット、メール確認 | 10分 | ⬜ 未設定 |
+| Authorized domains設定 | 許可ドメインの追加 | 5分 | ⬜ 未設定 |
+| App Check有効化 | セキュリティ強化 | 10分 | ⬜ 未設定 |
+
+> **📖 詳細な設定手順**: `docs/firebase/FIREBASE_AUTHENTICATION_SETUP_GUIDE.md` を参照
 
 ### 外部サービス設定
 
@@ -139,10 +142,10 @@ Firebase Authenticationの設定と認証フローの実装基盤を構築する
 
 | プロバイダー | コード実装 | Console設定 |
 |-------------|-----------|-------------|
-| メール/パスワード | 完了 | 要設定 |
-| Google OAuth | 完了 | 要設定 |
-| Apple Sign In | 完了 | 要設定 |
-| 電話番号 | 完了 | 要設定 |
+| メール/パスワード | 完了 | ✅ 完了 |
+| Google OAuth | 完了 | ✅ 完了 |
+| Apple Sign In | 完了 | ⬜ 未設定 |
+| ~~電話番号~~ | ~~完了~~ | ❌ 不要（要件定義書により収集禁止） |
 
 ## 受け入れ条件
 - [ ] 全ての認証プロバイダーが動作
@@ -152,10 +155,12 @@ Firebase Authenticationの設定と認証フローの実装基盤を構築する
 
 ## 注意事項
 - GDPR準拠（同意管理との連携）
-- 日本市場向け（電話番号は+81対応）
+- 日本市場向け
 - 将来の多要素認証対応を考慮
+- **電話番号認証は設定不要**（要件定義書v3.3 セクション5.5.3「収集しないデバイス情報」に電話番号が明記）
 
 ## 参考リンク
 - [Firebase Authentication](https://firebase.google.com/docs/auth)
 - [カスタムクレーム](https://firebase.google.com/docs/auth/admin/custom-claims)
 - [FlutterFire Auth](https://firebase.flutter.dev/docs/auth/overview)
+- **ローカルドキュメント**: `docs/firebase/FIREBASE_AUTHENTICATION_SETUP_GUIDE.md`
