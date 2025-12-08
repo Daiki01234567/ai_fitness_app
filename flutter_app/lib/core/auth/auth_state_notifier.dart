@@ -197,19 +197,26 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Debug logging flag - set to false to disable verbose auth logs
+  static const bool _kEnableAuthLogging = false;
+
   /// ユーザーサインアウト時の処理
   ///
   /// 無限ループ防止: 既に未認証状態かつ初期化済みの場合は状態変更をスキップ
   void _handleUserSignOut() {
-    debugPrint('[AuthState] _handleUserSignOut called');
-    debugPrint(
-      '[AuthState] Current state: user=${state.user?.uid}, isLoading=${state.isLoading}, isForceLogout=${state.isForceLogout}, isInitialized=${state.isInitialized}',
-    );
+    if (_kEnableAuthLogging && kDebugMode) {
+      debugPrint('[AuthState] _handleUserSignOut called');
+      debugPrint(
+        '[AuthState] Current state: user=${state.user?.uid}, isLoading=${state.isLoading}, isForceLogout=${state.isForceLogout}, isInitialized=${state.isInitialized}',
+      );
+    }
 
     // 既に未認証状態（user == null）で初期化済みの場合は
     // 状態変更をスキップして無限ループを防止
     if (state.user == null && state.isInitialized) {
-      debugPrint('[AuthState] Already signed out and initialized, skipping state reset to prevent loop');
+      if (_kEnableAuthLogging && kDebugMode) {
+        debugPrint('[AuthState] Already signed out and initialized, skipping state reset to prevent loop');
+      }
       // サブスクリプションだけキャンセル（安全のため）
       _userDataSubscription?.cancel();
       _tokenRefreshTimer?.cancel();
@@ -222,7 +229,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     // サインアウト中にisForceLogoutフラグを保持
     // これにより強制ログアウト後にルーターがログイン画面にリダイレクトすることを保証
     final wasForceLogout = state.isForceLogout;
-    debugPrint('[AuthState] Preserving isForceLogout=$wasForceLogout');
+    if (_kEnableAuthLogging && kDebugMode) {
+      debugPrint('[AuthState] Preserving isForceLogout=$wasForceLogout');
+    }
 
     // 初期化完了フラグをtrueに設定し、isLoadingをfalseに
     // これによりFirebase Authの初期化が完了したことを示す
@@ -231,9 +240,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       isLoading: false,
       isInitialized: true,
     );
-    debugPrint(
-      '[AuthState] State reset completed. New state: isForceLogout=${state.isForceLogout}, isLoading=${state.isLoading}, isInitialized=${state.isInitialized}',
-    );
+    if (_kEnableAuthLogging && kDebugMode) {
+      debugPrint(
+        '[AuthState] State reset completed. New state: isForceLogout=${state.isForceLogout}, isLoading=${state.isLoading}, isInitialized=${state.isInitialized}',
+      );
+    }
   }
 
   /// トークンリフレッシュタイマーの開始

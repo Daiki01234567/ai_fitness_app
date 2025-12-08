@@ -40,6 +40,9 @@ import '../../screens/auth/recovery_screen.dart';
 /// Debug logging flag for router - set to false to disable verbose logs
 const bool _kEnableRouterLogging = false;
 
+/// Debounce duration for router refresh notifications (milliseconds)
+const int _kRefreshDebounceDurationMs = 50;
+
 /// ルートパス
 class AppRoutes {
   AppRoutes._();
@@ -80,16 +83,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     refreshListenable: _AuthConsentStateNotifier(ref),
     redirect: (context, state) {
-      final isOnAuthPage = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register ||
-          state.matchedLocation == AppRoutes.passwordReset ||
-          state.matchedLocation == AppRoutes.recovery;
-      final isOnSplash = state.matchedLocation == AppRoutes.splash;
-      final isOnConsent = state.matchedLocation == AppRoutes.consent;
-      final isOnOnboarding = state.matchedLocation == AppRoutes.onboarding;
+      final currentLocation = state.matchedLocation;
+      final isOnAuthPage = currentLocation == AppRoutes.login ||
+          currentLocation == AppRoutes.register ||
+          currentLocation == AppRoutes.passwordReset ||
+          currentLocation == AppRoutes.recovery;
+      final isOnSplash = currentLocation == AppRoutes.splash;
+      final isOnConsent = currentLocation == AppRoutes.consent;
+      final isOnOnboarding = currentLocation == AppRoutes.onboarding;
 
       if (_kEnableRouterLogging && kDebugMode) {
-        debugPrint('[Router] redirect called: location=${state.matchedLocation}, appInitState=$appInitState');
+        debugPrint('[Router] redirect called: location=$currentLocation, appInitState=$appInitState');
+      }
+
+      // Helper function to prevent redirect loop by checking if target equals current location
+      String? safeRedirect(String target) {
+        if (target == currentLocation) {
+          if (_kEnableRouterLogging && kDebugMode) {
+            debugPrint('[Router] Skipping redirect to same location: $target');
+          }
+          return null;
+        }
+        return target;
       }
 
       // 強制ログアウトの場合は即座にログイン画面へ
@@ -101,7 +116,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (_kEnableRouterLogging && kDebugMode) {
           debugPrint('[Router] Force logout detected, redirecting to login');
         }
-        return AppRoutes.login;
+        return safeRedirect(AppRoutes.login);
       }
 
       // ローディング中の場合（認証状態または同意状態がまだ読み込み中）
@@ -126,7 +141,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
         // 他のページにいる場合はスプラッシュへリダイレクト
         // これにより認証・同意状態が確定するまで待機
-        return AppRoutes.splash;
+        return safeRedirect(AppRoutes.splash);
       }
 
       // 以下、ローディング完了後の処理
@@ -140,9 +155,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return null;
         }
         if (_kEnableRouterLogging && kDebugMode) {
-          debugPrint('[Router] First launch, redirecting to onboarding from ${state.matchedLocation}');
+          debugPrint('[Router] First launch, redirecting to onboarding from $currentLocation');
         }
-        return AppRoutes.onboarding;
+        return safeRedirect(AppRoutes.onboarding);
       }
 
       // 未認証の場合のルーティング
@@ -157,9 +172,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
         // スプラッシュ画面または他のページからログイン画面へリダイレクト
         if (_kEnableRouterLogging && kDebugMode) {
-          debugPrint('[Router] Unauthenticated user, redirecting to login from ${state.matchedLocation}');
+          debugPrint('[Router] Unauthenticated user, redirecting to login from $currentLocation');
         }
-        return AppRoutes.login;
+        return safeRedirect(AppRoutes.login);
       }
 
       // 認証済みだが同意が必要な場合
@@ -171,14 +186,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         // スプラッシュ画面にいる場合も同意画面にリダイレクト
         // （スプラッシュ画面のナビゲーションが競合するのを防ぐ）
         // 認証ページ・オンボーディングからも同意画面へ
-        return AppRoutes.consent;
+        return safeRedirect(AppRoutes.consent);
       }
 
       // 認証済みで同意済み（ready状態）
       if (appInitState.isReady) {
         // 認証ページ・オンボーディング・同意ページ・スプラッシュにいる場合はホームへ
         if (isOnAuthPage || isOnOnboarding || isOnConsent || isOnSplash) {
-          return AppRoutes.home;
+          return safeRedirect(AppRoutes.home);
         }
         // その他のページはそのまま維持
         return null;
@@ -335,25 +350,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 /// 依存しているため、ここでは直接リッスンしない。直接リッスンすると
 /// 1つの状態変化で複数回notifyListeners()が呼ばれ、リダイレクトループの原因となる。
 ///
-/// 無限ループ防止: 状態が実際に変化した場合のみnotifyListeners()を呼び出す
+/// 無限ループ防止:
+/// 1. 状態が実際に変化した場合のみnotifyListeners()を呼び出す
+/// 2. debounce処理で連続した通知を抑制
+/// 3. ルーティング判断に関係ない状態変化は無視
 class _AuthConsentStateNotifier extends ChangeNotifier {
   _AuthConsentStateNotifier(this._ref) {
     _ref.listen(authStateProvider, (previous, next) {
-      // Only notify if state actually changed
-      if (previous?.user?.uid != next.user?.uid ||
-          previous?.isLoading != next.isLoading ||
+      // Only notify if routing-relevant state actually changed
+      // Ignore changes to error messages, email verification, etc.
+      final shouldNotify = previous?.user?.uid != next.user?.uid ||
           previous?.isForceLogout != next.isForceLogout ||
-          previous?.isInitialized != next.isInitialized) {
-        notifyListeners();
+          // Only care about isLoading transition to false (loading complete)
+          (previous?.isLoading == true && next.isLoading == false) ||
+          // Only care about isInitialized transition to true (first init)
+          (previous?.isInitialized == false && next.isInitialized == true);
+
+      if (shouldNotify) {
+        _scheduleNotification('auth');
       }
     });
     _ref.listen(consentStateProvider, (previous, next) {
-      // Only notify if state actually changed
-      if (previous?.isLoading != next.isLoading ||
-          previous?.needsConsent != next.needsConsent ||
-          previous?.tosAccepted != next.tosAccepted ||
-          previous?.ppAccepted != next.ppAccepted) {
-        notifyListeners();
+      // Only notify if routing-relevant state actually changed
+      final shouldNotify =
+          // Only care about isLoading transition to false (loading complete)
+          (previous?.isLoading == true && next.isLoading == false) ||
+          // Consent requirement change
+          previous?.needsConsent != next.needsConsent;
+
+      if (shouldNotify) {
+        _scheduleNotification('consent');
       }
     });
     // isFirstLaunchProvider の変化もリッスン（オンボーディング完了時のナビゲーション用）
@@ -363,14 +389,48 @@ class _AuthConsentStateNotifier extends ChangeNotifier {
       final nextValue = next.valueOrNull;
       final prevIsLoading = previous?.isLoading ?? true;
       final nextIsLoading = next.isLoading;
-      if (prevValue != nextValue || prevIsLoading != nextIsLoading) {
-        notifyListeners();
+
+      // Only care about loading complete or value change
+      final shouldNotify = (prevIsLoading && !nextIsLoading) ||
+          (prevValue != nextValue && !nextIsLoading);
+
+      if (shouldNotify) {
+        _scheduleNotification('onboarding');
       }
     });
   }
 
   // ignore: unused_field - リスナー用にrefの参照を保持するために使用されるフィールド
   final Ref _ref;
+
+  /// Pending notification flag to implement debounce
+  bool _notificationPending = false;
+
+  /// Schedule a debounced notification to prevent rapid successive refreshes
+  void _scheduleNotification(String source) {
+    if (_notificationPending) {
+      // Already have a pending notification, skip
+      if (_kEnableRouterLogging && kDebugMode) {
+        debugPrint('[RouterNotifier] Skipping notification from $source (already pending)');
+      }
+      return;
+    }
+
+    _notificationPending = true;
+
+    if (_kEnableRouterLogging && kDebugMode) {
+      debugPrint('[RouterNotifier] Scheduling notification from $source');
+    }
+
+    // Use Future.delayed for debounce instead of Timer for simplicity
+    Future.delayed(Duration(milliseconds: _kRefreshDebounceDurationMs), () {
+      _notificationPending = false;
+      if (_kEnableRouterLogging && kDebugMode) {
+        debugPrint('[RouterNotifier] Executing notification from $source');
+      }
+      notifyListeners();
+    });
+  }
 }
 
 /// ナビゲーション便利機能の拡張
