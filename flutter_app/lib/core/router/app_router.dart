@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../auth/auth_state_notifier.dart';
 import '../consent/consent_state_notifier.dart';
+import '../onboarding/onboarding_service.dart';
 import 'app_initialization_state.dart';
 import '../form_analyzer/form_analyzer.dart';
 import '../../screens/auth/login_screen.dart';
@@ -321,6 +322,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 /// ルーター更新のために認証と同意状態の変更をリッスンするヘルパークラス
+///
+/// Note: appInitializationProviderは既にauthStateProviderとconsentStateProviderに
+/// 依存しているため、ここでは直接リッスンしない。直接リッスンすると
+/// 1つの状態変化で複数回notifyListeners()が呼ばれ、リダイレクトループの原因となる。
 class _AuthConsentStateNotifier extends ChangeNotifier {
   _AuthConsentStateNotifier(this._ref) {
     _ref.listen(authStateProvider, (previous, next) {
@@ -329,8 +334,8 @@ class _AuthConsentStateNotifier extends ChangeNotifier {
     _ref.listen(consentStateProvider, (previous, next) {
       notifyListeners();
     });
-    // Also listen to the combined initialization state for immediate updates
-    _ref.listen(appInitializationProvider, (previous, next) {
+    // isFirstLaunchProvider の変化もリッスン（オンボーディング完了時のナビゲーション用）
+    _ref.listen(isFirstLaunchProvider, (previous, next) {
       notifyListeners();
     });
   }
