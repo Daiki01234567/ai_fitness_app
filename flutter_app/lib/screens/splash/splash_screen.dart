@@ -67,6 +67,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final authState = ref.read(authStateProvider);
     final consentState = ref.read(consentStateProvider);
 
+    debugPrint('[SplashScreen] _waitForAuthAndNavigate: authLoading=${authState.isLoading}, consentLoading=${consentState.isLoading}');
+
     // If states are still loading, wait and retry
     if (authState.isLoading || consentState.isLoading) {
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -83,11 +85,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isAuthenticated = authState.user != null;
     final needsConsent = consentState.needsConsent;
 
+    debugPrint('[SplashScreen] Navigating: isAuthenticated=$isAuthenticated, needsConsent=$needsConsent');
+
     if (!isAuthenticated) {
+      debugPrint('[SplashScreen] -> Going to login');
       context.go(AppRoutes.login);
     } else if (needsConsent) {
+      debugPrint('[SplashScreen] -> Going to consent');
       context.go(AppRoutes.consent);
     } else {
+      debugPrint('[SplashScreen] -> Going to home');
       context.go(AppRoutes.home);
     }
   }

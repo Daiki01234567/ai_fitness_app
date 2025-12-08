@@ -99,8 +99,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[LoginScreen] build called');
     final authState = ref.watch(authStateProvider);
     final colorScheme = Theme.of(context).colorScheme;
+    debugPrint('[LoginScreen] authState: isLoading=${authState.isLoading}, user=${authState.user?.uid}');
 
     return Scaffold(
       body: SafeArea(
