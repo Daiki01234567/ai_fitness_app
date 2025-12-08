@@ -439,6 +439,9 @@ class AuthService {
   /// 新規登録のステップ1で「次へ」を押した時点で
   /// メールアドレスが既に使用されているかをチェックする。
   ///
+  /// Cloud Functionが利用できない場合（エミュレータ未起動等）は、
+  /// Firebase Auth SDKの fetchSignInMethodsForEmail を使用してフォールバック。
+  ///
   /// [email] チェックするメールアドレス
   ///
   /// 戻り値:
@@ -446,7 +449,7 @@ class AuthService {
   /// - message: エラーメッセージ（存在する場合）
   ///
   /// セキュリティ:
-  /// - レート制限あり（1分あたり10リクエスト）
+  /// - レート制限あり（1分あたり10リクエスト）- Cloud Function使用時のみ
   /// - 詳細なエラー情報は返さない
   Future<({bool exists, String? message})> checkEmailExists(
     String email,
@@ -466,6 +469,13 @@ class AuthService {
       );
     } on FirebaseFunctionsException catch (e) {
       debugPrint('[AuthService] FirebaseFunctionsException: code=${e.code}, message=${e.message}');
+
+      // Cloud Functionが利用できない場合（エミュレータ未起動等）はフォールバック
+      if (e.code == 'unavailable' || e.code == 'internal') {
+        debugPrint('[AuthService] Cloud Function利用不可、フォールバック処理を実行...');
+        return _checkEmailExistsFallback(email);
+      }
+
       String errorMessage;
       switch (e.code) {
         case 'resource-exhausted':
@@ -483,7 +493,56 @@ class AuthService {
       // Generic error - don't expose details
       debugPrint('[AuthService] checkEmailExists 予期しないエラー: $e');
       debugPrint('[AuthService] スタックトレース: $stackTrace');
+
+      // Cloud Functionへの接続エラーの場合はフォールバック
+      if (e.toString().contains('unavailable') ||
+          e.toString().contains('UNAVAILABLE') ||
+          e.toString().contains('Failed host lookup')) {
+        debugPrint('[AuthService] 接続エラー検出、フォールバック処理を実行...');
+        return _checkEmailExistsFallback(email);
+      }
+
       throw Exception('メールアドレスの確認中にエラーが発生しました');
+    }
+  }
+
+  /// メールアドレス存在チェックのフォールバック処理
+  ///
+  /// Cloud Functionが利用できない場合に、Firebase Auth SDKを直接使用して
+  /// メールアドレスの存在を確認する。
+  ///
+  /// 注意: この方法にはCloud Function側のレート制限が適用されない。
+  /// 本番環境ではCloud Functionの使用を推奨。
+  Future<({bool exists, String? message})> _checkEmailExistsFallback(
+    String email,
+  ) async {
+    debugPrint('[AuthService] フォールバック: fetchSignInMethodsForEmail 使用');
+    try {
+      // fetchSignInMethodsForEmail は指定されたメールアドレスに関連付けられた
+      // サインイン方法のリストを返す。リストが空でなければユーザーは存在する。
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      final exists = methods.isNotEmpty;
+
+      debugPrint('[AuthService] フォールバック結果: exists=$exists, methods=$methods');
+
+      return (
+        exists: exists,
+        message: exists ? 'このメールアドレスは既に登録されています' : null,
+      );
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[AuthService] フォールバック FirebaseAuthException: ${e.code}');
+
+      // invalid-email の場合は存在しないとみなす（バリデーションエラー）
+      if (e.code == 'invalid-email') {
+        throw Exception('メールアドレスの形式が正しくありません');
+      }
+
+      // その他のエラーは存在しないとみなす（セキュリティ考慮）
+      return (exists: false, message: null);
+    } catch (e) {
+      debugPrint('[AuthService] フォールバック予期しないエラー: $e');
+      // エラーの場合は存在しないとみなす（セキュリティ考慮）
+      return (exists: false, message: null);
     }
   }
 
