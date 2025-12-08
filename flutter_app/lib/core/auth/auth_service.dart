@@ -9,6 +9,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -450,16 +451,21 @@ class AuthService {
   Future<({bool exists, String? message})> checkEmailExists(
     String email,
   ) async {
+    debugPrint('[AuthService] checkEmailExists 開始: $email');
     try {
+      debugPrint('[AuthService] Cloud Function auth_checkEmailExists 呼び出し中...');
       final callable = _functions.httpsCallable('auth_checkEmailExists');
       final result = await callable.call({'email': email});
+      debugPrint('[AuthService] Cloud Function 応答受信');
 
       final data = Map<String, dynamic>.from(result.data as Map);
+      debugPrint('[AuthService] 結果: exists=${data['exists']}, message=${data['message']}');
       return (
         exists: data['exists'] as bool? ?? false,
         message: data['message'] as String?,
       );
     } on FirebaseFunctionsException catch (e) {
+      debugPrint('[AuthService] FirebaseFunctionsException: code=${e.code}, message=${e.message}');
       String errorMessage;
       switch (e.code) {
         case 'resource-exhausted':
@@ -473,8 +479,10 @@ class AuthService {
           errorMessage = 'メールアドレスの確認中にエラーが発生しました';
       }
       throw Exception(errorMessage);
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Generic error - don't expose details
+      debugPrint('[AuthService] checkEmailExists 予期しないエラー: $e');
+      debugPrint('[AuthService] スタックトレース: $stackTrace');
       throw Exception('メールアドレスの確認中にエラーが発生しました');
     }
   }
@@ -494,12 +502,18 @@ class AuthService {
   Future<Map<String, dynamic>> updateProfile({
     required Map<String, dynamic> profileData,
   }) async {
+    debugPrint('[AuthService] updateProfile 開始');
+    debugPrint('[AuthService] profileData: $profileData');
     try {
+      debugPrint('[AuthService] Cloud Function updateProfile 呼び出し中...');
       final callable = _functions.httpsCallable('updateProfile');
       final result = await callable.call(profileData);
+      debugPrint('[AuthService] Cloud Function 応答受信');
+      debugPrint('[AuthService] 結果: ${result.data}');
 
       return Map<String, dynamic>.from(result.data as Map);
     } on FirebaseFunctionsException catch (e) {
+      debugPrint('[AuthService] FirebaseFunctionsException: code=${e.code}, message=${e.message}');
       String errorMessage;
       switch (e.code) {
         case 'unauthenticated':
@@ -519,7 +533,9 @@ class AuthService {
           errorMessage = 'プロフィール更新エラー: ${e.message}';
       }
       throw Exception(errorMessage);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[AuthService] updateProfile 予期しないエラー: $e');
+      debugPrint('[AuthService] スタックトレース: $stackTrace');
       throw Exception('プロフィール更新エラー: $e');
     }
   }

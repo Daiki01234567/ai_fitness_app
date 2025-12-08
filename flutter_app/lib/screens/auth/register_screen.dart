@@ -106,15 +106,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   /// 1. フォームバリデーション
   /// 2. メールアドレス重複チェック（Cloud Functions呼び出し）
   Future<void> _nextStep() async {
+    debugPrint('[NextStep] === _nextStep 開始 ===');
+
     // Clear previous email error
     setState(() {
       _emailError = null;
     });
 
     // Validate form first
+    debugPrint('[NextStep] フォームバリデーション開始');
+    debugPrint('[NextStep] email: ${_emailController.text}');
+    debugPrint('[NextStep] name: ${_nameController.text}');
+    debugPrint('[NextStep] password length: ${_passwordController.text.length}');
+
     if (!_formKey.currentState!.validate()) {
+      debugPrint('[NextStep] フォームバリデーション失敗');
       return;
     }
+    debugPrint('[NextStep] フォームバリデーション成功');
 
     // Check email duplication
     setState(() {
@@ -125,12 +134,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final authService = ref.read(authServiceProvider);
       final email = _emailController.text.trim();
 
+      debugPrint('[NextStep] メール重複チェック開始: $email');
       final result = await authService.checkEmailExists(email);
+      debugPrint('[NextStep] メール重複チェック結果: exists=${result.exists}, message=${result.message}');
 
-      if (!mounted) return;
+      if (!mounted) {
+        debugPrint('[NextStep] ウィジェットがマウントされていません');
+        return;
+      }
 
       if (result.exists) {
         // Email already registered
+        debugPrint('[NextStep] メールアドレスは既に登録済み');
         setState(() {
           _emailError = result.message ?? 'このメールアドレスは既に登録されています';
           _isCheckingEmail = false;
@@ -147,11 +162,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
 
       // Email is available, proceed to next step
+      debugPrint('[NextStep] メールアドレスは利用可能、プロフィールステップへ進む');
       setState(() {
         _isCheckingEmail = false;
         _currentStep = RegisterStep.profile;
       });
-    } catch (e) {
+      debugPrint('[NextStep] === _nextStep 正常終了 ===');
+    } catch (e, stackTrace) {
+      debugPrint('[NextStep] エラー発生: $e');
+      debugPrint('[NextStep] スタックトレース: $stackTrace');
+
       if (!mounted) return;
 
       setState(() {
@@ -175,32 +195,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    debugPrint('[Register] === _handleRegister 開始 ===');
+
     if (!_formKey.currentState!.validate()) {
+      debugPrint('[Register] フォームバリデーション失敗');
       return;
     }
+    debugPrint('[Register] フォームバリデーション成功');
 
     // Validate birthdate
     final birthdateError = AgeValidator.validateBirthdate(_birthDate);
     if (birthdateError != null) {
+      debugPrint('[Register] 生年月日バリデーション失敗: $birthdateError');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(birthdateError)));
       return;
     }
+    debugPrint('[Register] 生年月日バリデーション成功: $_birthDate');
 
     // Validate goal selection
     if (_selectedGoal == null) {
+      debugPrint('[Register] 目標未選択');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('目標を選択してください')));
       return;
     }
+    debugPrint('[Register] 目標選択OK: ${_selectedGoal?.label}');
 
     // IMPORTANT: Get services BEFORE registration
     // After registration, the router may redirect and dispose this widget
+    debugPrint('[Register] サービス取得中...');
     final authService = ref.read(authServiceProvider);
     final authNotifier = ref.read(authStateProvider.notifier);
     final consentNotifier = ref.read(consentStateProvider.notifier);
+    debugPrint('[Register] サービス取得完了');
 
     // Prepare profile data BEFORE registration (widget may be disposed after)
     final profileData = <String, dynamic>{
@@ -242,24 +272,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     // Capture ScaffoldMessenger before async operation
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
+    debugPrint('[Register] プロフィールデータ: $profileData');
+
     try {
       // Step 1: Create Firebase Auth account
+      debugPrint('[Register] Step 1: Firebase Auth アカウント作成開始');
       await authNotifier.signUpWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         displayName: _nameController.text.trim(),
       );
+      debugPrint('[Register] Step 1: Firebase Auth アカウント作成完了');
 
       // Step 2: Wait for user document to be created by onCreate trigger
       // This prevents race condition where updateProfile is called before document exists
       // Note: onCreate trigger runs in us-central1 (Firebase v1 API limitation)
       // which may cause delays when accessed from Japan
+      debugPrint('[Register] Step 2: ユーザードキュメント待機開始');
       await _waitForUserDocument();
+      debugPrint('[Register] Step 2: ユーザードキュメント確認完了');
 
       // Step 2.5: Immediately set consent state to prevent consent screen flickering
       // The onCreate trigger creates user document with tosAccepted=true, ppAccepted=true
       // Set local state immediately so router doesn't redirect to consent screen
       // while waiting for Firestore listener to receive the update
+      debugPrint('[Register] Step 2.5: 同意状態を設定');
       consentNotifier.setConsentAccepted(
         tosAccepted: true,
         ppAccepted: true,
@@ -267,11 +304,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       // Step 3: Save profile data to Firestore via Cloud Function
       // Note: This runs even if widget is disposed - that's intentional
+      debugPrint('[Register] Step 3: プロフィール保存開始');
       try {
         await authService.updateProfile(profileData: profileData);
-      } catch (e) {
+        debugPrint('[Register] Step 3: プロフィール保存成功');
+      } catch (e, stackTrace) {
         // Profile save failed but account was created
         // Show warning but don't block - profile can be updated later
+        debugPrint('[Register] Step 3: プロフィール保存失敗: $e');
+        debugPrint('[Register] スタックトレース: $stackTrace');
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text('アカウントは作成されましたが、プロフィールの保存に失敗しました: $e'),
@@ -279,8 +320,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         );
       }
-    } catch (e) {
+      debugPrint('[Register] === _handleRegister 正常終了 ===');
+    } catch (e, stackTrace) {
       // Handle errors from auth or document wait
+      debugPrint('[Register] 登録処理中にエラー発生: $e');
+      debugPrint('[Register] スタックトレース: $stackTrace');
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('登録エラー: $e'),

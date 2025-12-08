@@ -331,23 +331,34 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     required String password,
     String? displayName,
   }) async {
+    debugPrint('[SignUp] === 新規登録開始 ===');
+    debugPrint('[SignUp] email: $email, displayName: $displayName');
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       // アカウント作成
+      debugPrint('[SignUp] Firebase createUserWithEmailAndPassword 呼び出し中...');
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      debugPrint('[SignUp] アカウント作成成功: uid=${credential.user?.uid}');
 
       // 表示名を設定
       if (displayName != null && credential.user != null) {
+        debugPrint('[SignUp] 表示名を設定中: $displayName');
         await credential.user!.updateDisplayName(displayName);
+        debugPrint('[SignUp] 表示名設定完了');
       }
 
       // メール確認を送信
+      debugPrint('[SignUp] メール確認送信を開始...');
       await sendEmailVerification();
+      debugPrint('[SignUp] メール確認送信処理完了');
+      debugPrint('[SignUp] === 新規登録完了 ===');
+      // Note: isLoading は authStateChanges リスナーで処理される
     } on FirebaseAuthException catch (e) {
+      debugPrint('[SignUp] FirebaseAuthException: code=${e.code}, message=${e.message}');
       String errorMessage;
       switch (e.code) {
         case 'email-already-in-use':
@@ -366,23 +377,39 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           errorMessage = '登録に失敗しました: ${e.message}';
       }
 
+      debugPrint('[SignUp] エラーメッセージ設定: $errorMessage');
       state = state.copyWith(error: errorMessage, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[SignUp] 予期しないエラー: $e');
+      debugPrint('[SignUp] スタックトレース: $stackTrace');
       state = state.copyWith(error: '登録エラー: $e', isLoading: false);
     }
   }
 
   /// メール確認を送信
   Future<void> sendEmailVerification() async {
+    debugPrint('[EmailVerification] sendEmailVerification 開始');
     try {
       final user = _auth.currentUser;
+      debugPrint('[EmailVerification] currentUser: uid=${user?.uid}, email=${user?.email}, emailVerified=${user?.emailVerified}');
+
       if (user != null && !user.emailVerified) {
+        debugPrint('[EmailVerification] sendEmailVerification を呼び出し中...');
         await user.sendEmailVerification();
+        debugPrint('[EmailVerification] sendEmailVerification 成功');
+        // Note: エミュレータではメールは実際には送信されないが、エラーにはならない
         state = state.copyWith(error: '確認メールを送信しました。メールをご確認ください');
+      } else if (user == null) {
+        debugPrint('[EmailVerification] ユーザーが null です');
+      } else {
+        debugPrint('[EmailVerification] メールは既に確認済みです');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[EmailVerification] エラー: $e');
+      debugPrint('[EmailVerification] スタックトレース: $stackTrace');
       state = state.copyWith(error: 'メール送信エラー: $e');
     }
+    debugPrint('[EmailVerification] sendEmailVerification 終了');
   }
 
   /// パスワードリセットメールを送信
