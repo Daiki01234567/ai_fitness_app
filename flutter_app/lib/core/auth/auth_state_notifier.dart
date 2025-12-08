@@ -182,11 +182,23 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   /// ユーザーサインアウト時の処理
+  ///
+  /// 無限ループ防止: 既に未認証状態の場合は状態変更をスキップ
   void _handleUserSignOut() {
     debugPrint('[AuthState] _handleUserSignOut called');
     debugPrint(
-      '[AuthState] Current state.isForceLogout before reset: ${state.isForceLogout}',
+      '[AuthState] Current state: user=${state.user?.uid}, isLoading=${state.isLoading}, isForceLogout=${state.isForceLogout}',
     );
+
+    // 既に未認証状態（user == null）で、ローディング中でもない場合は
+    // 状態変更をスキップして無限ループを防止
+    if (state.user == null && !state.isLoading) {
+      debugPrint('[AuthState] Already signed out, skipping state reset to prevent loop');
+      // サブスクリプションだけキャンセル（安全のため）
+      _userDataSubscription?.cancel();
+      _tokenRefreshTimer?.cancel();
+      return;
+    }
 
     _userDataSubscription?.cancel();
     _tokenRefreshTimer?.cancel();
