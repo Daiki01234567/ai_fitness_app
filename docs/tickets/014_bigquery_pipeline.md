@@ -3,8 +3,8 @@
 **Phase**: Phase 2 (機能実装)
 **期間**: Week 9-10
 **優先度**: 中
-**ステータス**: ほぼ完了 (85%)
-**最終更新日**: 2025-12-05
+**ステータス**: ほぼ完了 (85%) - ユーザー操作待ち
+**最終更新日**: 2025-12-08
 **関連仕様書**:
 - `docs/specs/04_BigQuery設計書_v3_3.md`
 - `docs/specs/00_要件定義書_v3_3.md` (NFR-018～NFR-020)
@@ -38,9 +38,10 @@ Firestore→BigQueryのデータパイプラインを構築し、大規模デー
 - `scripts/bigquery/seed_exercise_definitions.sql` - マスタデータ投入SQL
 
 ### ドキュメント
-- `docs/bigquery/BIGQUERY_SETUP_STATUS.md` - セットアップ状況
+- `docs/bigquery/BIGQUERY_PIPELINE_SETUP_GUIDE.md` - **ユーザー操作ガイド（初学者向け）** ✅ 2025-12-08追加
 - `docs/bigquery/MONITORING_DESIGN.md` - 監視設計
 - `docs/bigquery/ALERT_RUNBOOK.md` - アラート対応手順書
+- `docs/bigquery/LOOKER_STUDIO_SETUP_GUIDE.md` - Looker Studioセットアップガイド
 
 ## 残タスク（ユーザー操作/本番デプロイ待ち）
 
@@ -407,3 +408,4 @@ https://lookerstudio.google.com/
 - [BigQuery Best Practices](https://cloud.google.com/bigquery/docs/best-practices)
 - [Dataflow Templates](https://cloud.google.com/dataflow/docs/guides/templates)
 - [Looker Studio](https://lookerstudio.google.com/)
+- **ローカルドキュメント**: `docs/bigquery/BIGQUERY_PIPELINE_SETUP_GUIDE.md`（ユーザー操作の詳細手順）
