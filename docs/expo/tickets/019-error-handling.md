@@ -333,4 +333,51 @@ export default function RootLayout() {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（2025-12-09）
+
+### 実装内容
+
+#### 作成したファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `expo_app/lib/errors.ts` | エラークラス定義（AppError, AuthError, NetworkError, ValidationError, FirestoreError, StorageError）およびエラーコード列挙型 |
+| `expo_app/lib/errorHandler.ts` | エラーハンドラー（normalizeError, handleError, withErrorHandling, isRetryableError等） |
+| `expo_app/hooks/useErrorHandler.ts` | エラーハンドリングフック（useErrorHandler, useFormErrors） |
+| `expo_app/components/ErrorBoundary.tsx` | React Error Boundary（ErrorBoundary, SelectiveErrorBoundary, useErrorBoundary） |
+| `expo_app/components/ErrorFallbackScreen.tsx` | エラー表示UI（ErrorFallbackScreen, ErrorBanner, ErrorText） |
+| `expo_app/components/index.ts` | コンポーネントエクスポート |
+
+#### 実装した機能
+
+- [x] **エラークラス定義** (`lib/errors.ts`)
+  - `AppError` - 基底エラークラス
+  - `AuthError` - Firebase Auth関連エラー
+  - `NetworkError` - ネットワーク関連エラー
+  - `ValidationError` - フォームバリデーションエラー
+  - `FirestoreError` - Firestoreデータベースエラー
+  - `StorageError` - Firebase Storageエラー
+  - 型ガード関数（isAppError, isAuthError等）
+
+- [x] **エラーハンドラー** (`lib/errorHandler.ts`)
+  - `normalizeError()` - Firebase/ネットワークエラーを統一形式に変換
+  - `handleError()` - エラー処理とユーザーメッセージ取得
+  - `withErrorHandling()` - 非同期関数のエラーハンドリングラッパー
+  - `isRetryableError()` - 再試行可能なエラーかどうか判定
+  - `setupGlobalErrorHandler()` - グローバルエラーハンドラー設定
+
+- [x] **エラーメッセージ（日本語）** - 認証、ネットワーク、バリデーション、Firestore、Storageエラー
+
+- [x] **Error Boundary** (`components/ErrorBoundary.tsx`)
+  - `ErrorBoundary` - 基本的なError Boundary
+  - `SelectiveErrorBoundary` - 特定エラーを無視するError Boundary
+  - `useErrorBoundary` - Error Boundaryリセット用フック
+
+- [x] **エラー表示UI** (`components/ErrorFallbackScreen.tsx`)
+  - `ErrorFallbackScreen` - 全画面エラー表示
+  - `ErrorBanner` - インラインエラーバナー
+  - `ErrorText` - フォームフィールド用エラーテキスト
+
+- [x] **エラーハンドリングフック** (`hooks/useErrorHandler.ts`)
+  - `useErrorHandler` - コンポーネント内でのエラー状態管理
+  - `useFormErrors` - 複数フィールドのバリデーションエラー管理

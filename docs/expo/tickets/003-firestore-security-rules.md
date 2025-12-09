@@ -20,15 +20,15 @@ Firestoreのセキュリティルールを実装し、ユーザーのデータ�
 
 ### Todo
 
-- [ ] usersコレクションのセキュリティルール作成
-- [ ] sessionsコレクションのセキュリティルール作成
-- [ ] consentsコレクションのセキュリティルール作成
-- [ ] フィールドレベルアクセス制御の実装（tosAccepted, ppAccepted, deletionScheduled）
-- [ ] 削除予定ユーザーの書き込み禁止ルール
-- [ ] ヘルパー関数の作成（isOwner, isAdmin等）
+- [x] usersコレクションのセキュリティルール作成
+- [x] sessionsコレクションのセキュリティルール作成
+- [x] consentsコレクションのセキュリティルール作成
+- [x] フィールドレベルアクセス制御の実装（tosAccepted, ppAccepted, deletionScheduled）
+- [x] 削除予定ユーザーの書き込み禁止ルール
+- [x] ヘルパー関数の作成（isOwner, isAdmin等）
 - [ ] セキュリティルールのテスト作成
 - [ ] Firebase Emulatorでのテスト実行
-- [ ] firestore.rulesファイルの作成/更新
+- [x] firestore.rulesファイルの作成/更新
 
 ## 技術仕様
 
@@ -161,12 +161,12 @@ npm run test:rules
 
 ## 受け入れ条件
 
-- [ ] firestore.rulesファイルが作成されている
-- [ ] 本人のデータのみ読み書きできる
-- [ ] 他人のデータにアクセスできない
-- [ ] 保護フィールド（tosAccepted, ppAccepted, deletionScheduled）が直接変更できない
-- [ ] 削除予定ユーザー（deletionScheduled=true）が書き込みできない
-- [ ] consentsコレクションが追記のみで更新・削除不可
+- [x] firestore.rulesファイルが作成されている
+- [x] 本人のデータのみ読み書きできる
+- [x] 他人のデータにアクセスできない
+- [x] 保護フィールド（tosAccepted, ppAccepted, deletionScheduled）が直接変更できない
+- [x] 削除予定ユーザー（deletionScheduled=true）が書き込みできない
+- [x] consentsコレクションが追記のみで更新・削除不可
 - [ ] Firebase Emulatorでテストが全て通る
 - [ ] 本番環境にデプロイ可能
 

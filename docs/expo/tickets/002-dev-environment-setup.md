@@ -76,17 +76,17 @@ ai-fitness-expo/
 
 ## 受け入れ条件
 
-- [ ] Node.js 20.x 以上がインストールされている
-- [ ] Expo CLI（`npx expo`）が使用可能
-- [ ] プロジェクトが`npx create-expo-app`で作成されている
-- [ ] TypeScript 5.0+が設定されている
-- [ ] ESLint/Prettierが設定されている
-- [ ] Expo Routerが動作している
-- [ ] React Native Paperがインストールされている
-- [ ] Zustandがインストールされている
-- [ ] TanStack Queryがインストールされている
-- [ ] iOS Simulatorまたは実機でアプリが起動する
-- [ ] Android Emulatorまたは実機でアプリが起動する
+- [x] Node.js 20.x 以上がインストールされている
+- [x] Expo CLI（`npx expo`）が使用可能
+- [x] プロジェクトが`npx create-expo-app`で作成されている
+- [x] TypeScript 5.0+が設定されている（TypeScript 5.9.2）
+- [x] ESLint/Prettierが設定されている
+- [x] Expo Routerが動作している（expo-router 6.0.17）
+- [x] React Native Paperがインストールされている（5.14.5）
+- [x] Zustandがインストールされている（5.0.9）
+- [x] TanStack Queryがインストールされている（5.90.12）
+- [ ] iOS Simulatorまたは実機でアプリが起動する（要手動確認）
+- [ ] Android Emulatorまたは実機でアプリが起動する（要手動確認）
 
 ## 参照ドキュメント
 
@@ -99,7 +99,7 @@ ai-fitness-expo/
 
 ```bash
 # プロジェクト作成
-npx create-expo-app@latest ai-fitness-expo --template tabs
+npx create-expo_app@latest ai-fitness-expo --template tabs
 
 # ディレクトリ移動
 cd ai-fitness-expo
@@ -183,4 +183,15 @@ npx expo start --android
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（2025-12-09）
+
+### 実装内容
+
+- Expo SDK 54でプロジェクト作成（tabsテンプレート）
+- TypeScript 5.9.2設定（strictモード有効）
+- ESLint + Prettier設定完了
+- 状態管理（Zustand）、サーバー状態管理（TanStack Query）設定
+- Firebase初期化コード作成（lib/firebase.ts）
+- 認証ストア（stores/authStore.ts）とフック（hooks/useAuth.ts）作成
+- React Native Paper プロバイダー設定
+- 環境変数ファイル（.env.development）統合

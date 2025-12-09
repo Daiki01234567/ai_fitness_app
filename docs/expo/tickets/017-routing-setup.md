@@ -245,4 +245,44 @@ export default function SplashScreen() {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（2025-12-09）
+
+### 実装内容
+
+#### 作成したファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `expo_app/app/index.tsx` | エントリーポイント - 認証状態に応じてリダイレクト |
+| `expo_app/app/_layout.tsx` | ルートレイアウト - プロバイダー設定、認証初期化 |
+| `expo_app/app/+not-found.tsx` | 404ページ（日本語化） |
+| `expo_app/app/(auth)/_layout.tsx` | 認証グループレイアウト |
+| `expo_app/app/(auth)/login.tsx` | ログイン画面（スタブ） |
+| `expo_app/app/(auth)/signup.tsx` | 新規登録画面（スタブ） |
+| `expo_app/app/(auth)/forgot-password.tsx` | パスワードリセット画面（スタブ） |
+| `expo_app/app/(app)/_layout.tsx` | アプリグループレイアウト - 認証ガード実装 |
+| `expo_app/app/(app)/(tabs)/_layout.tsx` | タブナビゲーションレイアウト（4タブ） |
+| `expo_app/app/(app)/(tabs)/index.tsx` | ホーム画面（スタブ） |
+| `expo_app/app/(app)/(tabs)/training.tsx` | トレーニング画面（スタブ） |
+| `expo_app/app/(app)/(tabs)/history.tsx` | 履歴画面（スタブ） |
+| `expo_app/app/(app)/(tabs)/settings.tsx` | 設定画面（スタブ） |
+| `expo_app/app/onboarding/_layout.tsx` | オンボーディンググループレイアウト |
+| `expo_app/app/onboarding/index.tsx` | オンボーディング画面（スタブ） |
+
+#### 実装した機能
+
+- [x] **認証グループ (auth)** - login, signup, forgot-password
+- [x] **アプリグループ (app)** - 認証ガード付き
+- [x] **タブナビゲーション** - ホーム、トレーニング、履歴、設定
+- [x] **認証ガード** - `(app)/_layout.tsx`で未認証時にリダイレクト
+- [x] **エントリーポイント** - 認証状態に応じた自動リダイレクト
+- [x] **オンボーディング画面**（スタブ）
+- [x] **404ページ**（日本語化）
+
+#### 認証フロー
+
+1. アプリ起動時、`app/index.tsx`で認証状態をチェック
+2. `isLoading`中はローディングインジケーター表示
+3. 認証済み: `(app)/(tabs)`へリダイレクト
+4. 未認証: `(auth)/login`へリダイレクト
+5. `(app)/_layout.tsx`で追加の認証ガード（直接アクセス対策）

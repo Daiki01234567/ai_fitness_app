@@ -322,4 +322,47 @@ export const logger = {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（2025-12-09）
+
+### 実装内容
+
+#### 作成したファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `expo_app/lib/logger.ts` | ログユーティリティ（ログレベル、センシティブ情報マスク、スコープ付きロガー） |
+| `expo_app/lib/analytics.ts` | Firebase Analytics追跡（screen_view, login, sign_up, training_start, training_complete イベント） |
+| `expo_app/lib/crashlytics.ts` | Crashlytics設定（スタブ実装、Development Build移行後に本実装へ切り替え） |
+| `expo_app/types/react-native.d.ts` | React Native グローバル型定義（ErrorUtils, __DEV__） |
+
+#### 実装した機能
+
+- [x] **ログユーティリティ**
+  - LogLevel enum（DEBUG, INFO, WARN, ERROR）
+  - Logger interface実装
+  - 環境別ログレベル切り替え（development: DEBUG, staging: INFO, production: WARN）
+  - センシティブ情報（password, token, email等）の自動マスク
+  - スコープ付きロガー（createScopedLogger）
+
+- [x] **Analytics基盤（スタブ）**
+  - 画面表示（screen_view）
+  - ログイン（login）
+  - 新規登録（sign_up）
+  - トレーニング開始（training_start）
+  - トレーニング完了（training_complete）
+  - カスタムイベント対応
+  - Firebase Analytics命名規則のバリデーション
+
+- [x] **Crashlytics基盤（スタブ）**
+  - 初期化/有効化制御
+  - ユーザーID/属性設定
+  - 非致命的エラーの記録
+  - グローバルエラーハンドラー
+  - テストクラッシュ機能（開発用）
+
+### 注意事項
+
+- Expo Managed Workflowでは`@react-native-firebase/crashlytics`と`@react-native-firebase/analytics`を直接使用できないため、スタブ実装として提供
+- Development Build移行後に、TODOコメントに記載されている実装に切り替えが必要
+- 開発環境ではAnalytics/Crashlyticsは自動的に無効化され、本番データを汚染しない
+- センシティブ情報（PII）はログに自動的にマスクされる

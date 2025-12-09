@@ -49,17 +49,17 @@ npx expo install @react-native-google-signin/google-signin expo-auth-session exp
 
 ## 受け入れ条件
 
-- [ ] Firebase Authenticationがプロジェクトで有効化されている
-- [ ] メール/パスワード認証プロバイダーが有効化されている
-- [ ] Google認証プロバイダーが有効化されている
-- [ ] `@react-native-firebase/auth`がインストールされている
-- [ ] Google Sign-Inの設定が完了している
-- [ ] メールアドレスでの新規登録が動作する
-- [ ] メールアドレスでのログインが動作する
-- [ ] Googleアカウントでの認証が動作する
-- [ ] パスワードリセットメールが送信できる
-- [ ] ログアウトが動作する
-- [ ] 認証状態の監視（onAuthStateChanged）が動作する
+- [x] Firebase Authenticationがプロジェクトで有効化されている
+- [x] メール/パスワード認証プロバイダーが有効化されている
+- [x] Google認証プロバイダーが有効化されている
+- [x] `firebase`（Web SDK）がインストールされている（Managed Workflow対応）
+- [ ] Google Sign-Inの設定が完了している（Development Build後）
+- [x] メールアドレスでの新規登録が動作する
+- [x] メールアドレスでのログインが動作する
+- [ ] Googleアカウントでの認証が動作する（Development Build後）
+- [x] パスワードリセットメールが送信できる
+- [x] ログアウトが動作する
+- [x] 認証状態の監視（onAuthStateChanged）が動作する
 
 ## 参照ドキュメント
 
@@ -232,4 +232,57 @@ export function getAuthErrorMessage(code: string): string {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] Firebase Web SDK（`firebase`パッケージ）インストール完了
+- [x] `lib/firebaseApp.ts` 作成: Firebase App/Auth初期化、AsyncStorage永続化、エミュレータ接続
+- [x] `lib/auth.ts` 作成: 認証関数（サインイン/サインアップ/サインアウト/パスワードリセット）、バリデーション関数
+- [x] `hooks/useAuth.ts` 更新: Firebase Auth統合、認証状態監視
+- [x] `lib/index.ts` 更新: 認証関連エクスポート追加
+- [ ] Google認証: スタブ実装（Development Build後に本実装予定）
+
+## 実装詳細
+
+### 実装方針の変更
+
+Expo Managed Workflowの制約により、`@react-native-firebase/auth`ではなく`firebase`（Web SDK）を使用して実装しました。
+
+### 作成したファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `lib/firebaseApp.ts` | Firebase App/Auth初期化、AsyncStorageによる認証状態永続化 |
+| `lib/auth.ts` | 認証関数、バリデーション関数、エラーメッセージ変換 |
+
+### 更新したファイル
+
+| ファイル | 変更内容 |
+|---------|----------|
+| `hooks/useAuth.ts` | Firebase Auth統合、onAuthStateChanged監視 |
+| `lib/index.ts` | 認証関連関数のエクスポート追加 |
+
+### 提供する関数
+
+#### 認証関数
+
+- `signInWithEmail(email, password)` - メール/パスワードでサインイン
+- `signUpWithEmail(email, password)` - 新規ユーザー登録
+- `signOut()` - サインアウト
+- `resetPassword(email)` - パスワードリセットメール送信
+- `resendVerificationEmail()` - メール認証の再送信
+- `signInWithGoogle()` - Google認証（スタブ、Phase 2以降）
+- `subscribeToAuthState(callback)` - 認証状態の監視
+- `getCurrentUser()` - 現在のユーザー取得
+
+#### バリデーション関数
+
+- `validateEmail(email)` - メールアドレスバリデーション
+- `validatePassword(password)` - パスワードバリデーション（FR-001準拠）
+- `validatePasswordConfirm(password, confirmPassword)` - パスワード確認バリデーション
+
+#### useAuthフック
+
+- `user` - 現在のユーザー情報
+- `isAuthenticated` - 認証済みかどうか
+- `isLoading` - 認証処理中かどうか
+- `error` - エラーメッセージ
+- `signIn`, `signUp`, `signOut`, `resetPassword`, `signInWithGoogle` - 認証操作
+- `clearError` - エラークリア

@@ -61,16 +61,16 @@ Phase 1（基盤構築）
 
 ## 受け入れ条件
 
-- [ ] React Native Paperのテーマが設定されている
-- [ ] AppButtonコンポーネントが作成されている
-- [ ] AppTextInputコンポーネントが作成されている
-- [ ] AppCardコンポーネントが作成されている
-- [ ] LoadingSpinnerコンポーネントが作成されている
-- [ ] ErrorMessageコンポーネントが作成されている
-- [ ] Headerコンポーネントが作成されている
-- [ ] SafeContainerコンポーネントが作成されている
-- [ ] カラーパレットが定義されている
-- [ ] タイポグラフィが定義されている
+- [x] React Native Paperのテーマが設定されている
+- [x] AppButtonコンポーネントが作成されている
+- [x] AppTextInputコンポーネントが作成されている
+- [x] AppCardコンポーネントが作成されている
+- [x] LoadingSpinnerコンポーネントが作成されている
+- [x] ErrorMessageコンポーネントが作成されている
+- [x] Headerコンポーネントが作成されている
+- [x] SafeContainerコンポーネントが作成されている
+- [x] カラーパレットが定義されている
+- [x] タイポグラフィが定義されている
 - [ ] 各コンポーネントがStorybook等でプレビュー可能（任意）
 
 ## 参照ドキュメント
@@ -413,4 +413,4 @@ export { ErrorBoundary } from './ErrorBoundary';
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了 (2024-12-09)

@@ -156,7 +156,7 @@ const roundCoordinate = (value: number): number => {
 
 ```typescript
 import * as Device from 'expo-device';
-import * as Application from 'expo-application';
+import * as Application from 'expo_application';
 import { Dimensions } from 'react-native';
 
 const getDeviceInfo = async (): Promise<DeviceInfo> => {

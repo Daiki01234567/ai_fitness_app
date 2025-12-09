@@ -49,14 +49,14 @@ Phase 3（Apple認証・課金）
 - `docs/expo/specs/01_要件定義書_Expo版_v1_Part1.md` - FR-015-1（Apple認証）
 - [Apple Sign In ドキュメント](https://developer.apple.com/sign-in-with-apple/)
 - [Firebase Apple認証](https://firebase.google.com/docs/auth/ios/apple)
-- [expo-apple-authentication](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
+- [expo_apple-authentication](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
 
 ## 技術詳細
 
 ### 使用ライブラリ
 
 ```bash
-npx expo install expo-apple-authentication
+npx expo install expo_apple-authentication
 ```
 
 ### 実装手順
@@ -81,7 +81,7 @@ npx expo install expo-apple-authentication
 #### 3. コード実装例
 
 ```typescript
-import * as AppleAuthentication from 'expo-apple-authentication';
+import * as AppleAuthentication from 'expo_apple-authentication';
 import { getAuth, OAuthProvider, signInWithCredential } from 'firebase/auth';
 
 // Apple認証ボタンのハンドラー
@@ -171,7 +171,7 @@ app/
 
 - [ ] Apple Developer Console設定
 - [ ] Firebase Console設定
-- [ ] expo-apple-authentication導入
+- [ ] expo_apple-authentication導入
 - [ ] 認証ロジック実装
 - [ ] UIにApple認証ボタン追加
 - [ ] エラーハンドリング実装

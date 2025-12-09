@@ -259,4 +259,30 @@ export default function RootLayout() {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（2025-12-09）
+
+### 実装内容
+
+#### 作成したファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `expo_app/stores/userStore.ts` | ユーザープロファイル状態管理ストア |
+| `expo_app/stores/trainingStore.ts` | トレーニングセッション状態管理ストア |
+| `expo_app/stores/settingsStore.ts` | アプリ設定状態管理ストア（AsyncStorage永続化付き） |
+| `expo_app/stores/index.ts` | ストアエクスポート（更新） |
+
+#### 実装したストア
+
+- [x] **authStore**（既存）- 認証状態管理
+- [x] **userStore** - ユーザープロファイル管理
+  - `profile`, `isLoading`, `error`状態
+  - `setProfile`, `clearProfile`, `updateProfile`アクション
+- [x] **trainingStore** - トレーニングセッション管理
+  - `currentSession`, `isActive`, `isPaused`状態
+  - `startSession`, `endSession`, `addRep`, `pauseSession`, `resumeSession`アクション
+  - 自動セッションID生成、自動スコア計算
+- [x] **settingsStore**（永続化付き）- アプリ設定管理
+  - `soundEnabled`, `vibrationEnabled`, `language`, `theme`状態
+  - AsyncStorage永続化（zustand/middleware persist使用）
+  - `_hasHydrated`フラグでhydration状態追跡
