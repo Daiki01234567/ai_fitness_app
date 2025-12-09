@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 必ず守るべき開発ルール
 
 1. **ドキュメント優先の原則**
-   - コード実装・設計・レビュー・タスク分解などを行う際は、**必ず `docs/specs` 配下のドキュメントを最優先で参照してください**
+   - コード実装・設計・レビュー・タスク分解などを行う際は、**必ず `docs/common/specs` と `docs/expo/specs` 配下のドキュメントを最優先で参照してください**
    - 推測ではなく、**要件定義書・各種設計書・ポリシー類を根拠に判断してください**
 
 2. **推測を行う場合の明示**
@@ -15,44 +15,65 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - 必ず**選択肢とトレードオフを提示**してください
 
 3. **仕様書の参照順序**
-   1. まず要件定義書で機能要件を確認
-   2. 該当する設計書で詳細設計を確認
-   3. 実装に入る前に関連する全ドキュメントを確認
+   1. まず `docs/common/specs` の機能要件・非機能要件を確認
+   2. `docs/expo/specs` のExpo固有技術スタックと開発計画を確認
+   3. 該当する設計書（Firestore, API, BigQuery等）で詳細設計を確認
+   4. 実装に入る前に関連する全ドキュメントを確認
 
 ## 📁 仕様書ドキュメント一覧
 
+### 共通仕様書（`docs/common/specs`）
+バックエンド・法務・ビジネスロジック関連（プラットフォーム非依存）
+
 | カテゴリ | ファイル | 内容 |
 |---------|---------|------|
-| 要件 | `docs/specs/00_要件定義書_v3_3.md` | 38機能要件 + 37非機能要件 |
-| 要件 | `docs/specs/09_開発タスク詳細_スケジュール_v3_3.md` | Phase 1-2タスクとスケジュール |
-| アーキテクチャ | `docs/specs/01_システムアーキテクチャ設計書_v3_2.md` | システム全体設計 |
-| データ | `docs/specs/02_Firestoreデータベース設計書_v3_3.md` | データ構造とセキュリティルール |
-| API | `docs/specs/03_API設計書_Firebase_Functions_v3_3.md` | Cloud Functions API仕様 |
-| 分析 | `docs/specs/04_BigQuery設計書_v3_3.md` | 分析基盤設計 |
-| UI | `docs/specs/05_画面遷移図_ワイヤーフレーム_v3_3.md` | 15画面の遷移とUI設計 |
-| ロジック | `docs/specs/08_README_form_validation_logic_v3_3.md` | 5種目のフォーム評価ロジック |
-| 法令 | `docs/specs/06_データ処理記録_ROPA_v1_0.md` | GDPR準拠のデータ処理記録 |
-| セキュリティ | `docs/specs/07_セキュリティポリシー_v1_0.md` | セキュリティ要件 |
-| 法務 | `docs/specs/利用規約_v3_2.md`, `docs/specs/プライバシーポリシー_v3.1.md` | 利用規約・プライバシーポリシー |
+| 概要 | `01_プロジェクト概要_v1_0.md` | プロジェクト概要、市場分析、5種目定義 |
+| 要件 | `02-1_機能要件_v1_0.md` | 38機能要件（FR-001~FR-038） |
+| 要件 | `02-2_非機能要件_v1_0.md` | 43非機能要件（NFR-001~NFR-043） |
+| データ | `03_Firestoreデータベース設計書_v1_0.md` | データ構造とセキュリティルール |
+| API | `04_API設計書_Firebase_Functions_v1_0.md` | Cloud Functions API仕様（Stripe統合） |
+| 分析 | `05_BigQuery設計書_v1_0.md` | 分析基盤設計 |
+| ロジック | `06_フォーム評価ロジック_v1_0.md` | 5種目のフォーム評価ロジック（MediaPipe） |
+| 法令 | `07_データ処理記録_ROPA_v1_0.md` | GDPR準拠のデータ処理記録 |
+| セキュリティ | `08_セキュリティポリシー_v1_0.md` | セキュリティ要件 |
+| 法務 | `09_利用規約_v1_0.md` | 利用規約（5種目対応） |
+| 法務 | `10_プライバシーポリシー_v1_0.md` | プライバシーポリシー |
+
+### Expo固有仕様書（`docs/expo/specs`）
+Expo/React Native固有の技術スタックと開発計画
+
+| カテゴリ | ファイル | 内容 |
+|---------|---------|------|
+| 技術 | `01_技術スタック_v1_0.md` | Zustand, Expo Router, React Native Paper, MediaPipe統合 |
+| 開発 | `02_開発計画_v1_0.md` | Phase 1-5詳細タスク、週次スケジュール、マイルストーン |
+| UI | `07_画面遷移図_ワイヤーフレーム_v1_0.md` | 15画面の遷移とUI設計 |
+
+### 開発チケット（`docs/expo/tickets`）
+| カテゴリ | 内容 |
+|---------|------|
+| チケット | `000-ticket-overview.md` + `001-071.md`（71チケット、Phase 1-4） |
 
 ## プロジェクト概要
 
 AIを活用したフィットネスアプリ（MediaPipeによるオンデバイス姿勢検出）。日本市場向けでGDPR準拠、薬機法上の医療機器には該当しない。
 
 - **Firebase Project ID**: `tokyo-list-478804-e5`
-- **開発フェーズ**: MVP Phase 1-2 (0-7ヶ月)
-- **技術スタック**: Flutter (Dart 3.10+) + Firebase Functions (TypeScript/Node 24) + Firestore + BigQuery
+- **開発フェーズ**: MVP Phase 1-5 (0-8ヶ月+）
+- **技術スタック**: Expo/React Native + Firebase Functions (TypeScript/Node 24) + Firestore + BigQuery
+- **対象種目**: スクワット、プッシュアップ、アームカール、サイドレイズ、ショルダープレス（5種目）
 
 ## 開発コマンド
 
-### Flutter (flutter_app/)
+### Expo/React Native (expo_app/)
 ```bash
-flutter pub get                    # 依存関係インストール
-flutter analyze                    # 静的解析
-flutter run                        # デバイス実行
-flutter test                       # 全テスト実行
-flutter test test/screens/auth/    # 特定ディレクトリのテスト
-dart run build_runner build        # Freezed/Riverpodコード生成
+npm install                        # 依存関係インストール
+npx expo start                     # 開発サーバー起動
+npx expo start --android           # Androidエミュレータで実行
+npx expo start --ios               # iOSシミュレータで実行
+npm test                           # Jestテスト実行
+npm run lint                       # ESLintチェック
+npm run type-check                 # TypeScript型チェック
+npx expo prebuild                  # ネイティブプロジェクト生成（MediaPipe用）
 ```
 
 ### Firebase Functions (functions/)
@@ -82,24 +103,31 @@ firebase deploy --only firestore:rules     # セキュリティルールのみ
 ### コードベース構造
 
 ```
-flutter_app/
-├── lib/
-│   ├── main.dart                 # アプリエントリーポイント、Firebase初期化
-│   ├── firebase_options.dart     # Firebase設定（自動生成）
-│   ├── core/
-│   │   ├── auth/                 # 認証サービス、状態管理（Riverpod）
-│   │   ├── router/               # GoRouterベースのナビゲーション
-│   │   ├── theme/                # Material 3テーマ
-│   │   ├── utils/                # バリデーション等ユーティリティ
-│   │   └── widgets/              # 共通ウィジェット
-│   └── screens/                  # 画面コンポーネント（auth/, home/, splash/）
-└── test/                         # ウィジェットテスト
+expo_app/
+├── app/                          # Expo Router（ファイルベースルーティング）
+│   ├── (auth)/                   # 認証関連画面グループ
+│   ├── (tabs)/                   # タブナビゲーション画面グループ
+│   ├── _layout.tsx               # ルートレイアウト
+│   └── index.tsx                 # エントリーポイント
+├── components/                   # 再利用可能なUIコンポーネント
+│   ├── training/                 # トレーニング関連コンポーネント
+│   └── common/                   # 共通コンポーネント
+├── services/                     # ビジネスロジック層
+│   ├── auth/                     # Firebase認証サービス
+│   ├── training/                 # トレーニングデータサービス
+│   └── mediapipe/                # MediaPipe統合
+├── store/                        # Zustand状態管理ストア
+│   ├── authStore.ts              # 認証状態
+│   └── trainingStore.ts          # トレーニング状態
+├── types/                        # TypeScript型定義
+├── utils/                        # ユーティリティ関数
+└── __tests__/                    # Jestテスト
 
 functions/
 ├── src/
 │   ├── index.ts                  # 関数エントリーポイント、グローバル設定
 │   ├── auth/                     # Auth triggers（onCreate, onDelete, customClaims）
-│   ├── api/                      # HTTP callable関数（users/）
+│   ├── api/                      # HTTP callable関数（users/, stripe/）
 │   ├── middleware/               # 認証、バリデーション、レート制限
 │   ├── services/                 # BigQuery、CloudTasksサービス
 │   ├── types/                    # TypeScript型定義
@@ -112,15 +140,17 @@ firebase/
 └── storage.rules                 # Storageセキュリティルール
 
 docs/
-├── specs/                        # 仕様書（参照必須）
-└── tickets/                      # 開発チケット（001-020）
+├── common/specs/                 # 共通仕様書（11ファイル）
+├── expo/
+│   ├── specs/                    # Expo固有仕様書（3ファイル）
+│   └── tickets/                  # 開発チケット（000-071）
 ```
 
 ### 状態管理・ルーティング
 
-- **Riverpod**: `authStateProvider` で認証状態管理、`ProviderScope` でDI
-- **GoRouter**: `appRouterProvider` で認証状態に応じたリダイレクト制御
-- **Freezed**: 不変状態クラス生成（`*.freezed.dart`）
+- **Zustand**: シンプルで柔軟な状態管理（`authStore`, `trainingStore`）
+- **Expo Router**: ファイルベースルーティング、認証状態に応じた自動リダイレクト
+- **React Context**: テーマ、認証コンテキストの提供
 
 ### Firebase Functions グローバル設定
 
@@ -133,25 +163,48 @@ setGlobalOptions({
 });
 ```
 
-### 仕様書の参照順序
+### 仕様書の参照順序（実装時）
 
-1. `00_要件定義書_v3_3.md` → 機能要件（FR-xxx）
-2. `01_システムアーキテクチャ設計書_v3_2.md` → 実装方法
-3. `02_Firestoreデータベース設計書_v3_3.md` → データ構造
-4. `03_API設計書_Firebase_Functions_v3_3.md` → API仕様
-5. `05_画面遷移図_ワイヤーフレーム_v3_3.md` → 15画面（4タブ）
+1. **共通仕様書から開始**:
+   - `docs/common/specs/02-1_機能要件_v1_0.md` → 機能要件（FR-xxx）
+   - `docs/common/specs/02-2_非機能要件_v1_0.md` → 非機能要件（NFR-xxx）
+   - `docs/common/specs/03_Firestoreデータベース設計書_v1_0.md` → データ構造
+   - `docs/common/specs/04_API設計書_Firebase_Functions_v1_0.md` → API仕様
+
+2. **Expo固有仕様書で技術詳細確認**:
+   - `docs/expo/specs/01_技術スタック_v1_0.md` → 使用ライブラリ、MediaPipe統合
+   - `docs/expo/specs/02_開発計画_v1_0.md` → Phase、マイルストーン
+   - `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` → UI設計
+
+3. **必要に応じて専門ドキュメント参照**:
+   - `docs/common/specs/06_フォーム評価ロジック_v1_0.md` → MediaPipe姿勢検出ロジック
+   - `docs/common/specs/08_セキュリティポリシー_v1_0.md` → セキュリティ要件
 
 ### データフローアーキテクチャ
 
 ```
-モバイルアプリ (Flutter)
-    ↓ MediaPipe でローカル処理（プライバシー優先）
+モバイルアプリ (Expo/React Native)
+    ↓ MediaPipe でローカル処理（プライバシー優先、30fps目標）
     ↓ スケルトンデータのみ送信（33関節×4値）
 Cloud Function (HTTPS トリガー)
     ↓ バリデーション後 Firestore 保存
     ↓ Cloud Task で非同期処理
 BigQuery（匿名化された分析データ）
     ↓ 2年保存（GDPR準拠）
+```
+
+### 決済フロー（Stripe統合）
+
+```
+モバイルアプリ
+    ↓ Stripe CheckoutへリダイレクトまたはPayment Sheet表示
+Stripe
+    ↓ 決済完了Webhook → Cloud Function
+Cloud Function
+    ↓ Firestore（users/{userId}/subscriptionStatus 更新）
+    ↓ カスタムクレーム更新（Firebase Auth）
+モバイルアプリ
+    ↓ トークン再取得 → プレミアム機能アンロック
 ```
 
 ### 重要なパターン
@@ -181,50 +234,61 @@ BigQuery（匿名化された分析データ）
 
 ### Firestore主要コレクション
 
-`02_Firestoreデータベース設計書_v3_3.md` より：
+`docs/common/specs/03_Firestoreデータベース設計書_v1_0.md` より：
 
-- **Users**: プロファイル、同意フラグ、`deletionScheduled` 状態
+- **Users**: プロファイル、同意フラグ、サブスクリプション状態、`deletionScheduled` 状態
 - **Sessions**: `poseData` と `sessionMetadata` を含むトレーニングデータ
 - **Consents**: 同意変更の不変監査ログ
 - **DataDeletionRequests**: 30日猶予期間管理
 - **BigQuerySyncFailures**: 分析パイプラインのDLQ
+- **StripeCustomers**: Stripe顧客IDとサブスクリプション情報（Phase 3）
 
-### フォーム評価ロジック
+### フォーム評価ロジック（5種目）
 
-`08_README_form_validation_logic_v3_3.md` による MediaPipe Pose 検出を使用した5種目：
+`docs/common/specs/06_フォーム評価ロジック_v1_0.md` による MediaPipe Pose 検出を使用：
 
 1. **スクワット**: 膝角度 90-110°、膝がつま先を越えないかチェック
-2. **アームカール**: 肘角度 30-160°、反動検出
-3. **サイドレイズ**: 腕の挙上角度 70-90°、左右対称性チェック
-4. **ショルダープレス**: 肘の軌道、腰の反りチェック
-5. **プッシュアップ**: 体のライン維持、肘角度 90°
+2. **プッシュアップ**: 体のライン維持、肘角度 90°
+3. **アームカール**: 肘角度 30-160°、反動検出
+4. **サイドレイズ**: 腕の挙上角度 70-90°、左右対称性チェック
+5. **ショルダープレス**: 肘の軌道、腰の反りチェック
 
 各種目は状態マシンによるレップカウントと0-100点のスコアリングを実装。
+MediaPipe Pose（33ランドマーク、信頼度閾値0.7）を使用。
 
-## 現在の実装状況
+## 現在の実装状況（2025年12月時点）
 
 **完了済み**:
-- 包括的な仕様書（v3.3）
-- Firebase プロジェクトセットアップ、エミュレータ設定
-- Cloud Functions 基盤（auth triggers, API scaffolding, middleware, services）
-- Flutter 認証画面（ログイン、登録、パスワードリセット）、ホーム画面
-- Riverpod 状態管理、GoRouter ルーティング
-- テスト基盤（Jest for Functions, Flutter test）
+- 包括的な仕様書（共通11ファイル + Expo固有3ファイル）
+- 開発チケット作成（000-071、Phase 1-4）
+- Firebase プロジェクトセットアップ (`tokyo-list-478804-e5`)
+- Expo/React Native基本環境構築
+- 認証画面実装（ログイン、登録、パスワードリセット）
+- ホーム画面・タブナビゲーション基盤
 
-**進行中**:
-- Firestore セキュリティルール（現在は開発用の全許可ルール）
-- 追加 API エンドポイント実装
+**Phase 1 進行中** (0-2ヶ月):
+- Firebase Functions基盤構築
+- Firestore セキュリティルール実装
+- MediaPipe統合準備
 
-**未着手**:
-- MediaPipe 統合、フォーム評価アルゴリズム
-- BigQuery パイプライン
-- 決済機能（RevenueCat）
+**Phase 2 計画中** (2-7ヶ月):
+- MediaPipe姿勢検出実装（5種目）
+- トレーニング記録機能
+- BigQuery分析パイプライン
+
+**Phase 3 未着手** (8ヶ月以降):
+- Stripe決済統合
+- Apple認証
+- サブスクリプション管理
 
 ## タスク管理とチケット運用
 
-開発タスクは `/docs/tickets/` ディレクトリに番号付きマークダウンファイル（001-020）として管理。
+開発タスクは `docs/expo/tickets/` ディレクトリに番号付きマークダウンファイル（000-071）として管理。
 
-**進捗管理**: Todoアイテムは `[ ]` → `[x]` で完了マーク。作業完了後は即座に更新。
+**進捗管理**:
+- チケット内のTodoアイテムは `[ ]` → `[x]` で完了マーク
+- 作業完了後は即座に更新
+- `000-ticket-overview.md` で全体進捗を確認
 
 ## 開発上の制約
 
@@ -239,11 +303,11 @@ BigQuery（匿名化された分析データ）
 - 72時間以内の違反通知
 - データ最小化原則
 - ユーザー権利（アクセス、削除、ポータビリティ）
-- 詳細は `docs/specs/06_データ処理記録_ROPA_v1_0.md` 参照
+- 詳細は `docs/common/specs/07_データ処理記録_ROPA_v1_0.md` 参照
 
 **利用規約・プライバシーポリシー**:
-- `docs/specs/利用規約_v3_2.md` で全文確認
-- `docs/specs/プライバシーポリシー_v3.1.md` で全文確認
+- `docs/common/specs/09_利用規約_v1_0.md` で全文確認（5種目対応）
+- `docs/common/specs/10_プライバシーポリシー_v1_0.md` で全文確認
 
 ### パフォーマンス要件
 
@@ -287,6 +351,15 @@ BigQuery（匿名化された分析データ）
 
 ## コーディングベストプラクティス
 
+### TypeScript/React Native (Expo)
+
+- **型安全性**: `any` を避け、明示的な型定義を使用（Zod等でランタイム検証も追加）
+- **コンポーネント設計**: 関数コンポーネント優先、React Hooks活用、小さく分割
+- **状態管理 (Zustand)**: ストアは機能単位で分割、ミューテーション関数を明示的に定義
+- **非同期処理**: `async/await` + `try/catch`、TanStack Query（React Query）でサーバー状態管理
+- **パフォーマンス**: `React.memo`でメモ化、`useMemo`/`useCallback`を適切に使用、FlatListで遅延読み込み
+- **MediaPipe統合**: ネイティブモジュール経由、30fps維持、フレームスキップ考慮
+
 ### TypeScript (Firebase Functions)
 
 - **型安全性**: `any` を避け `unknown` + 型ガードを使用、引数と戻り値に型を明示
@@ -294,13 +367,6 @@ BigQuery（匿名化された分析データ）
 - **関数設計**: 単一責任、純粋関数優先、冪等性を保つ
 - **エラーハンドリング**: `functions.https.HttpsError` でクライアントに返す、ログにコンテキストを含める（センシティブ情報は除外）
 - **パフォーマンス**: Firestore読み取り最小化、バッチは500件以下、不要なインポート削減（コールドスタート対策）
-
-### Dart/Flutter
-
-- **Null Safety**: `?.`, `??` を活用、`late` は初期化保証時のみ
-- **Widget設計**: StatelessWidget優先、`const` コンストラクタ使用、小さく分割
-- **状態管理 (Riverpod)**: Provider機能分割、Notifier内で状態変更完結、UI/ロジック分離
-- **パフォーマンス**: `ListView.builder`で遅延読み込み、MediaPipeは30fps維持（フレームスキップ考慮）
 
 ### Firebase Functions セキュリティパターン
 
@@ -362,149 +428,28 @@ function isAdmin() { return request.auth.token.admin == true; }
 
 **環境分離**: `firebase use dev` / `firebase use production` で切り替え
 
-## フェーズ計画
-
-`09_開発タスク詳細_スケジュール_v3_3.md` より：
-
-### Phase 1 (0-2ヶ月): インフラ構築
-- Firebase セットアップ、認証
-- 基本的な Firestore コレクション
-- セキュリティルール実装
-
-### Phase 2 (2-7ヶ月): 機能実装
-- 5種目のフォーム評価
-- MediaPipe 統合
-- 決済機能（RevenueCat）
-- BigQuery 分析パイプライン
-
-### Phase 3+ (将来): MVP外
-- カスタムMLモデル（MediaPipe置き換え）
-- ソーシャル機能
-- 多言語対応
-
-**実装前に必ず機能のフェーズを確認してください。**
-
-## 重要な注意事項
-
-- **推測禁止**: ドキュメントにない実装は必ず「推測」と明記
-- **仕様書優先**: コード実装より仕様書の内容を優先（上記「仕様書の参照順序」参照）
-- **フェーズ厳守**: Phase 3の機能をPhase 1-2で実装しない
-- **法令遵守**: 薬機法（医療用語禁止）・GDPR・個人情報保護法を必ず確認
-
 ---
 
-## サブエージェントプロトコル
+## 制約
 
-### 利用可能なサブエージェント
+### 重要要件
+- **機能実装前に必ず `docs/common/specs` と `docs/expo/specs` を確認すること**
+- **推測禁止**: ドキュメントにない実装は必ず「推測」と明記
+- **仕様書優先**: コード実装より仕様書の内容を優先（上記「仕様書の参照順序」参照）
+- **フェーズ厳守**: Phase 3以降の機能をPhase 1-2で実装しない
+- **法令遵守**: 薬機法（医療用語禁止）・GDPR・個人情報保護法を必ず確認
 
-| エージェント | 役割 | 使用場面 |
-|-------------|------|----------|
-| `flutter-expert` | Flutter開発専門家 | Flutter/Dart実装、ウィジェット設計、状態管理 |
-| `typescript-pro` | TypeScript/JavaScript開発専門家 | Cloud Functions、API実装、型定義 |
-| `qa-expert` | テスト自動化スペシャリスト | 単体テスト、統合テスト、品質保証 |
-| `cloud-architect` | クラウドアーキテクト | Firebase/GCP設計、インフラ構築、監視設定 |
-| `git-workflow-manager` | Gitワークフロー専門家 | ブランチ戦略、コミット管理、PR作成 |
-| `devops-engineer` | CI/CD自動化エンジニア | デプロイパイプライン、自動化設定 |
-| `mcp-developer` | MCPスペシャリスト | MCP サーバー開発、ツール統合 |
-| `error-detective` | エラー分析・解決エキスパート | デバッグ、エラー調査、根本原因分析 |
-| `business-analyst` | ビジネスアナリスト | 要件定義、プロセス改善、ROI分析、ステークホルダー管理 |
-| `search-specialist` | 高度な情報検索専門家 | 複雑なコード検索、ドキュメント調査、パターン発見 |
-| `security-auditor` | セキュリティ監査専門家 | 脆弱性スキャン、セキュリティレビュー、OWASP対応 |
-| `competitive-analyst` | 競合分析専門家 | 市場調査、競合比較、戦略分析 |
-| `documentation-engineer` | 技術ドキュメント専門家 | API文書、README作成、仕様書整備 |
-| `refactoring-specialist` | リファクタリング専門家 | コード品質改善、設計パターン適用、技術的負債解消 |
-| `compliance-auditor` | コンプライアンス監査専門家 | GDPR準拠、法令遵守、規制対応、監査証跡 |
+### サブエージェント使用
+- 全てのタスクはサブエージェントを使用すること
+- サブエージェントには必ず読ませる: この CLAUDE.md + `docs/common/specs` + `docs/expo/specs`
+- 適切なエージェントがない場合はユーザーに報告
 
-### 全サブエージェント共通ルール
+### 出力言語
+- 結果サマリーは日本語で出力すること
+- 作成するドキュメント（README、コメント等）は日本語で記述すること
+- コード内の変数名・関数名は英語を使用
 
-1. **タスク開始時**: 必ず関連する仕様書とCLAUDE.mdを確認すること
-2. **仕様との整合性**: 実装中は常に仕様との整合性を検証すること
-3. **完了報告**: サマリーのみ報告（詳細な仕様内容は含めない）
-4. **不明点対応**: 仕様書を再確認してからメインに質問すること
 
-### 実装系エージェントプロトコル
-
-#### タスク実行フロー
-1. **仕様確認**: `docs/specs` 配下の関連仕様書を確認
-2. **関連セクション読込**: 該当する仕様セクションのみ読む
-3. **実装**: 仕様要件を厳密に守って実装
-4. **自己検証**: 実装が仕様と一致しているか確認
-5. **サマリー報告**: 以下の形式でメインに報告
-
-#### 報告フォーマット
-```
-✅ 実装完了: [機能名]
-📋 参照仕様: [ファイル名:セクション]
-🔧 実装内容:
-  - [主要な実装ポイント1]
-  - [主要な実装ポイント2]
-📁 変更ファイル: [ファイルリスト]
-⚠️ 注意点: [あれば]
-```
-
-#### 実装原則
-- 仕様書の要件を厳密に守る
-- エラーハンドリングを適切に実装
-- 仕様に明記されていない拡張は提案のみ（勝手に実装しない）
-
-### テスト系エージェントプロトコル
-
-#### タスク実行フロー
-1. **要件仕様確認**: 実装すべき機能の要件を読む
-2. **テストケース抽出**: 仕様からテストケースを導出
-3. **テスト実装**: 仕様の各要件をカバーするテストを作成
-4. **カバレッジ報告**: どの仕様要件をテストしたか明記
-
-#### 報告フォーマット
-```
-✅ テスト作成完了
-📋 参照仕様: [ファイル名:セクション]
-🧪 テストケース:
-  - [仕様要件1] → [テスト名]
-  - [仕様要件2] → [テスト名]
-📊 カバレッジ: [X/Y 要件をカバー]
-```
-
-#### テスト原則
-- 仕様の全要件をテストでカバー
-- エッジケースも仕様から導出
-- 仕様にない動作はテストしない（実装に引きずられない）
-
-### セキュリティ系エージェントプロトコル
-
-#### タスク実行フロー
-1. **セキュリティ要件確認**: `docs/specs/07_セキュリティポリシー_v1_0.md` を確認
-2. **実装検証**: セキュリティ要件との整合性をチェック
-3. **脆弱性スキャン**: 仕様で禁止されている実装パターンを検出
-4. **報告**: 仕様違反と推奨対策を報告
-
-#### 報告フォーマット
-```
-🔒 セキュリティレビュー完了
-📋 参照仕様: [セキュリティ要件セクション]
-⚠️ 検出事項:
-  - [仕様要件違反] → [推奨対策]
-✅ 準拠確認: [満たしている要件リスト]
-```
-
-### ドキュメント系エージェントプロトコル
-
-#### タスク実行フロー
-1. **仕様確認**: 実装の元となった仕様を確認
-2. **整合性検証**: 実装とドキュメントが仕様と一致しているか確認
-3. **ドキュメント作成**: 仕様を基にしたドキュメントを生成
-4. **クロスリファレンス**: 仕様書へのリンクを含める
-
-#### 報告フォーマット
-```
-📝 ドキュメント作成完了
-📋 参照仕様: [ファイル名:セクション]
-📄 作成内容: [ドキュメント概要]
-🔗 仕様リンク: [含めた参照リンク]
-```
-
-### タスク委譲ルール
-
-1. **サブエージェントが存在する場合**: 該当するサブエージェントにタスクを委譲
-2. **サブエージェントが存在しない場合**: 実行前にユーザーに確認を取る
-3. **複数エージェントが必要な場合**: 適切な順序で委譲（例: 実装 → テスト → レビュー）
+### トークン制限
+- 1ファイルあたりの読み込み上限: 25,000トークン以下
+- 大きなファイルは分割して読み込むこと
