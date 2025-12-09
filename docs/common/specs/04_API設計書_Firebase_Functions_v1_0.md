@@ -30,7 +30,7 @@
 
 **設計の目標**:
 - GDPR完全準拠のAPI設計
-- Stripe決済との統合（Expo版）
+- Stripe決済との統合（Expo/Flutter共通）
 - セキュリティファーストの実装
 - エラーハンドリングの標準化
 
@@ -57,8 +57,8 @@
 | **Firebase Functions** | サーバーレスバックエンド実行環境 |
 | **Callable Functions** | クライアントから直接呼び出せるHTTPS関数 |
 | **Cloud Tasks** | 非同期タスクキュー |
-| **Stripe** | 決済処理プラットフォーム（Expo版） |
-| **RevenueCat** | サブスクリプション管理プラットフォーム（Flutter版） |
+| **Stripe** | 決済処理プラットフォーム（Expo/Flutter共通） |
+| **RevenueCat** | サブスクリプション管理プラットフォーム（緊急時の代替手段） |
 | **DLQ** | Dead Letter Queue（処理失敗メッセージの保管場所） |
 
 ---
@@ -569,9 +569,12 @@ interface AccountDeletionResponse {
 
 ## 8. 課金API（Stripe連携）
 
-**重要**: Expo版はStripe、Flutter版はRevenueCatを使用
+**決済サービスの統一方針（2025年12月更新）**:
+- Expo版、Flutter版ともに**Stripeをメイン決済サービス**として使用
+- RevenueCatは緊急時の代替手段としてのみ位置づけ
+- 理由: Web版との統一、バックエンド（Cloud Functions）での一元管理が可能
 
-### 8.1 stripe_createCheckoutSession（Expo版）
+### 8.1 stripe_createCheckoutSession（共通）
 
 **HTTP Method**: POST
 **認証**: 必須
@@ -656,6 +659,11 @@ export const stripe_createCheckoutSession = onCall(async (request) => {
 });
 ```
 
+**Flutter版の実装**:
+- `flutter_stripe`パッケージを使用（`flutter pub add flutter_stripe`でインストール）
+- Payment Sheetの表示コードはExpo版とほぼ同じフロー
+- iOSの場合はApple Pay、AndroidはGoogle Payも利用可能
+
 ### 8.2 stripe_webhook（Webhook）
 
 **HTTP Method**: POST
@@ -729,17 +737,29 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 }
 ```
 
-### 8.3 revenuecat_webhook（Flutter版）
+### 8.3 revenuecat_webhook（緊急時の代替手段）
+
+> **注意**: このAPIは緊急時の代替手段としてのみ使用します。通常はStripeを使用してください。
 
 **HTTP Method**: POST
 **認証**: RevenueCat Webhook署名検証
 **目的**: RevenueCatイベントを受信してFirestoreを更新
+
+**RevenueCatを使用する緊急時の例**:
+- Stripeの重大な障害が発生した場合
+- 特定の地域でStripeが利用できない場合
+- アプリストア（Apple/Google）からの直接課金が必須となった場合
 
 **処理するイベント**:
 - `INITIAL_PURCHASE`: 初回購入
 - `RENEWAL`: サブスクリプション更新
 - `CANCELLATION`: キャンセル
 - `EXPIRATION`: 有効期限切れ
+
+**切り替え時の注意点**:
+- 既存のStripeユーザーとの整合性を保つため、移行計画を立てること
+- RevenueCatのダッシュボードでFirebase UIDとの紐付けを設定すること
+- バックエンドのsubscriptionStatusフィールドは共通で使用可能
 
 ---
 
@@ -831,6 +851,7 @@ async function syncToBigQueryWithRetry(tableName: string, data: any) {
 | バージョン | 日付 | 主な変更内容 |
 |-----------|------|-------------|
 | **v1.0** | 2025年12月9日 | 初版作成。Flutter版v3.3を基に、Expo版向けにStripe決済統合を追加。RevenueCatのWebhookも残して両プラットフォーム対応。 |
+| **v1.0** | 2025年12月10日 | 決済サービス統一方針を追加。Expo/Flutter両版でStripeをメイン決済サービスに統一。RevenueCatは緊急時の代替手段に格下げ。 |
 
 ---
 

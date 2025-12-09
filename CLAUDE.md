@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 必ず守るべき開発ルール
 
 1. **ドキュメント優先の原則**
-   - コード実装・設計・レビュー・タスク分解などを行う際は、**必ず `docs/common/specs` と `docs/expo/specs` 配下のドキュメントを最優先で参照してください**
+   - コード実装・設計・レビュー・タスク分解などを行う際は、**必ず `docs/common/specs` と `docs/expo/specs` または `docs/flutter/specs` 配下のドキュメントを最優先で参照してください**
    - 推測ではなく、**要件定義書・各種設計書・ポリシー類を根拠に判断してください**
 
 2. **推測を行う場合の明示**
@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 3. **仕様書の参照順序**
    1. まず `docs/common/specs` の機能要件・非機能要件を確認
-   2. `docs/expo/specs` のExpo固有技術スタックと開発計画を確認
+   2. `docs/expo/specs`（Expo版）または `docs/flutter/specs`（Flutter版）のプラットフォーム固有技術スタックと開発計画を確認
    3. 該当する設計書（Firestore, API, BigQuery等）で詳細設計を確認
    4. 実装に入る前に関連する全ドキュメントを確認
 
@@ -48,6 +48,14 @@ Expo/React Native固有の技術スタックと開発計画
 | 開発 | `02_開発計画_v1_0.md` | Phase 1-5詳細タスク、週次スケジュール、マイルストーン |
 | UI | `07_画面遷移図_ワイヤーフレーム_v1_0.md` | 15画面の遷移とUI設計 |
 
+### Flutter固有仕様書（`docs/flutter/specs`）
+Flutter/Dart固有の技術スタックと開発計画
+
+| カテゴリ | ファイル | 内容 |
+|---------|---------|------|
+| 技術 | `01_技術スタック_v1_0.md` | Riverpod, GoRouter, Material 3, google_mlkit_pose_detection統合 |
+| 開発 | `02_開発計画_v1_0.md` | Phase 1-5詳細タスク、週次スケジュール、マイルストーン |
+
 ### 開発チケット（`docs/expo/tickets`）
 | カテゴリ | 内容 |
 |---------|------|
@@ -59,7 +67,9 @@ AIを活用したフィットネスアプリ（MediaPipeによるオンデバイ
 
 - **Firebase Project ID**: `tokyo-list-478804-e5`
 - **開発フェーズ**: MVP Phase 1-5 (0-8ヶ月+）
-- **技術スタック**: Expo/React Native + Firebase Functions (TypeScript/Node 24) + Firestore + BigQuery
+- **技術スタック**:
+  - **Expo版**: Expo/React Native + Firebase Functions (TypeScript/Node 24) + Firestore + BigQuery
+  - **Flutter版**: Flutter (Dart 3.10+) + Firebase Functions (TypeScript/Node 24) + Firestore + BigQuery
 - **対象種目**: スクワット、プッシュアップ、アームカール、サイドレイズ、ショルダープレス（5種目）
 
 ## 開発コマンド
@@ -74,6 +84,17 @@ npm test                           # Jestテスト実行
 npm run lint                       # ESLintチェック
 npm run type-check                 # TypeScript型チェック
 npx expo prebuild                  # ネイティブプロジェクト生成（MediaPipe用）
+```
+
+### Flutter (flutter_app/)
+```bash
+flutter pub get                    # 依存関係インストール
+flutter analyze                    # 静的解析
+flutter run                        # デバイス実行
+flutter test                       # 全テスト実行
+flutter test test/screens/auth/    # 特定ディレクトリのテスト
+dart run build_runner build        # Freezed/Riverpodコード生成
+dart run build_runner watch        # ウォッチモード
 ```
 
 ### Firebase Functions (functions/)
@@ -102,6 +123,7 @@ firebase deploy --only firestore:rules     # セキュリティルールのみ
 
 ### コードベース構造
 
+#### Expo版 (expo_app/)
 ```
 expo_app/
 ├── app/                          # Expo Router（ファイルベースルーティング）
@@ -122,6 +144,22 @@ expo_app/
 ├── types/                        # TypeScript型定義
 ├── utils/                        # ユーティリティ関数
 └── __tests__/                    # Jestテスト
+```
+
+#### Flutter版 (flutter_app/)
+```
+flutter_app/
+├── lib/
+│   ├── main.dart                 # アプリエントリーポイント、Firebase初期化
+│   ├── firebase_options.dart     # Firebase設定（自動生成）
+│   ├── core/
+│   │   ├── auth/                 # 認証サービス、状態管理（Riverpod）
+│   │   ├── router/               # GoRouterベースのナビゲーション
+│   │   ├── theme/                # Material 3テーマ
+│   │   ├── utils/                # バリデーション等ユーティリティ
+│   │   └── widgets/              # 共通ウィジェット
+│   └── screens/                  # 画面コンポーネント（auth/, home/, splash/）
+└── test/                         # ウィジェットテスト
 
 functions/
 ├── src/
@@ -144,13 +182,21 @@ docs/
 ├── expo/
 │   ├── specs/                    # Expo固有仕様書（3ファイル）
 │   └── tickets/                  # 開発チケット（000-071）
+└── flutter/
+    └── specs/                    # Flutter固有仕様書（2ファイル）
 ```
 
 ### 状態管理・ルーティング
 
+**Expo版**:
 - **Zustand**: シンプルで柔軟な状態管理（`authStore`, `trainingStore`）
 - **Expo Router**: ファイルベースルーティング、認証状態に応じた自動リダイレクト
 - **React Context**: テーマ、認証コンテキストの提供
+
+**Flutter版**:
+- **Riverpod**: `authStateProvider` で認証状態管理、`ProviderScope` でDI
+- **GoRouter**: `appRouterProvider` で認証状態に応じたリダイレクト制御
+- **Freezed**: 不変状態クラス生成（`*.freezed.dart`）
 
 ### Firebase Functions グローバル設定
 
@@ -171,10 +217,16 @@ setGlobalOptions({
    - `docs/common/specs/03_Firestoreデータベース設計書_v1_0.md` → データ構造
    - `docs/common/specs/04_API設計書_Firebase_Functions_v1_0.md` → API仕様
 
-2. **Expo固有仕様書で技術詳細確認**:
+2. **プラットフォーム固有仕様書で技術詳細確認**:
+
+   **Expo版**:
    - `docs/expo/specs/01_技術スタック_v1_0.md` → 使用ライブラリ、MediaPipe統合
    - `docs/expo/specs/02_開発計画_v1_0.md` → Phase、マイルストーン
    - `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` → UI設計
+
+   **Flutter版**:
+   - `docs/flutter/specs/01_技術スタック_v1_0.md` → Riverpod, GoRouter, google_mlkit_pose_detection
+   - `docs/flutter/specs/02_開発計画_v1_0.md` → Phase、マイルストーン
 
 3. **必要に応じて専門ドキュメント参照**:
    - `docs/common/specs/06_フォーム評価ロジック_v1_0.md` → MediaPipe姿勢検出ロジック
@@ -183,8 +235,8 @@ setGlobalOptions({
 ### データフローアーキテクチャ
 
 ```
-モバイルアプリ (Expo/React Native)
-    ↓ MediaPipe でローカル処理（プライバシー優先、30fps目標）
+モバイルアプリ (Expo/React Native または Flutter)
+    ↓ MediaPipe / ML Kit でローカル処理（プライバシー優先、30fps目標）
     ↓ スケルトンデータのみ送信（33関節×4値）
 Cloud Function (HTTPS トリガー)
     ↓ バリデーション後 Firestore 保存
@@ -245,7 +297,10 @@ Cloud Function
 
 ### フォーム評価ロジック（5種目）
 
-`docs/common/specs/06_フォーム評価ロジック_v1_0.md` による MediaPipe Pose 検出を使用：
+`docs/common/specs/06_フォーム評価ロジック_v1_0.md` による姿勢検出を使用：
+
+- **Expo版**: MediaPipe Pose（ネイティブモジュール経由）
+- **Flutter版**: google_mlkit_pose_detection（ML Kit、MediaPipeベース）
 
 1. **スクワット**: 膝角度 90-110°、膝がつま先を越えないかチェック
 2. **プッシュアップ**: 体のライン維持、肘角度 90°
@@ -254,25 +309,26 @@ Cloud Function
 5. **ショルダープレス**: 肘の軌道、腰の反りチェック
 
 各種目は状態マシンによるレップカウントと0-100点のスコアリングを実装。
-MediaPipe Pose（33ランドマーク、信頼度閾値0.7）を使用。
+両プラットフォームとも33ランドマーク、信頼度閾値0.7を使用。
 
 ## 現在の実装状況（2025年12月時点）
 
 **完了済み**:
-- 包括的な仕様書（共通11ファイル + Expo固有3ファイル）
+- 包括的な仕様書（共通11ファイル + Expo固有3ファイル + Flutter固有2ファイル）
 - 開発チケット作成（000-071、Phase 1-4）
 - Firebase プロジェクトセットアップ (`tokyo-list-478804-e5`)
 - Expo/React Native基本環境構築
+- Flutter基本環境構築（認証画面、ホーム画面、Riverpod状態管理、GoRouterルーティング）
 - 認証画面実装（ログイン、登録、パスワードリセット）
 - ホーム画面・タブナビゲーション基盤
 
 **Phase 1 進行中** (0-2ヶ月):
 - Firebase Functions基盤構築
 - Firestore セキュリティルール実装
-- MediaPipe統合準備
+- 姿勢検出統合準備（Expo版: MediaPipe、Flutter版: ML Kit）
 
 **Phase 2 計画中** (2-7ヶ月):
-- MediaPipe姿勢検出実装（5種目）
+- 姿勢検出実装（5種目）
 - トレーニング記録機能
 - BigQuery分析パイプライン
 
@@ -360,6 +416,14 @@ MediaPipe Pose（33ランドマーク、信頼度閾値0.7）を使用。
 - **パフォーマンス**: `React.memo`でメモ化、`useMemo`/`useCallback`を適切に使用、FlatListで遅延読み込み
 - **MediaPipe統合**: ネイティブモジュール経由、30fps維持、フレームスキップ考慮
 
+### Dart/Flutter
+
+- **Null Safety**: `?.`, `??` を活用、`late` は初期化保証時のみ
+- **Widget設計**: StatelessWidget優先、`const` コンストラクタ使用、小さく分割
+- **状態管理 (Riverpod)**: Provider機能分割、Notifier内で状態変更完結、UI/ロジック分離
+- **パフォーマンス**: `ListView.builder`で遅延読み込み、ML Kitは30fps維持（フレームスキップ考慮）
+- **コード生成**: Freezedで不変データクラス、`dart run build_runner build` で生成
+
 ### TypeScript (Firebase Functions)
 
 - **型安全性**: `any` を避け `unknown` + 型ガードを使用、引数と戻り値に型を明示
@@ -433,7 +497,7 @@ function isAdmin() { return request.auth.token.admin == true; }
 ## 制約
 
 ### 重要要件
-- **機能実装前に必ず `docs/common/specs` と `docs/expo/specs` を確認すること**
+- **機能実装前に必ず `docs/common/specs` と `docs/expo/specs` または `docs/flutter/specs` を確認すること**
 - **推測禁止**: ドキュメントにない実装は必ず「推測」と明記
 - **仕様書優先**: コード実装より仕様書の内容を優先（上記「仕様書の参照順序」参照）
 - **フェーズ厳守**: Phase 3以降の機能をPhase 1-2で実装しない
@@ -441,7 +505,7 @@ function isAdmin() { return request.auth.token.admin == true; }
 
 ### サブエージェント使用
 - 全てのタスクはサブエージェントを使用すること
-- サブエージェントには必ず読ませる: この CLAUDE.md + `docs/common/specs` + `docs/expo/specs`
+- サブエージェントには必ず読ませる: この CLAUDE.md + `docs/common/specs` + `docs/expo/specs` または `docs/flutter/specs`
 - 適切なエージェントがない場合はユーザーに報告
 
 ### 出力言語
