@@ -11,5 +11,8 @@ export * from "./sessions";
 // 同意変更トリガー
 export * from "./consents";
 
+// データ削除リクエストトリガー
+export * from "./dataDeletionRequests";
+
 // ユーザー削除トリガー
 // export * from "./users";

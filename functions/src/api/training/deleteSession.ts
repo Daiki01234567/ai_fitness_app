@@ -15,10 +15,12 @@ import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import { requireAuthWithWritePermission } from "../../middleware/auth";
+import { rateLimiter } from "../../middleware/rateLimiter";
 import {
   TrainingDeleteSessionRequest,
   TrainingDeleteSessionResponse,
 } from "../../types/training";
+import { RateLimitError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
 
 // Admin SDK がまだ初期化されていない場合は初期化
@@ -54,6 +56,19 @@ export const deleteSession = onCall(
       userId,
       sessionId: data.sessionId,
     });
+
+    // Rate limiting: 20 requests per hour per user
+    try {
+      await rateLimiter.check("TRAINING_DELETE_SESSION", userId);
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "レート制限を超えました。しばらくしてからお試しください。",
+        );
+      }
+      throw error;
+    }
 
     try {
       // バリデーション

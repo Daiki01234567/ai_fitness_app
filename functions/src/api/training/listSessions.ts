@@ -15,12 +15,14 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import { requireAuth } from "../../middleware/auth";
+import { rateLimiter } from "../../middleware/rateLimiter";
 import {
   TrainingExerciseType,
   TrainingListSessionsRequest,
   TrainingListSessionsResponse,
   TrainingSessionSummary,
 } from "../../types/training";
+import { RateLimitError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
 
 // Admin SDK がまだ初期化されていない場合は初期化
@@ -78,6 +80,19 @@ export const listSessions = onCall(
       limit: data.limit,
       exerciseType: data.exerciseType,
     });
+
+    // Rate limiting: 50 requests per hour per user
+    try {
+      await rateLimiter.check("TRAINING_GET_SESSIONS", userId);
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "レート制限を超えました。しばらくしてからお試しください。",
+        );
+      }
+      throw error;
+    }
 
     try {
       // バリデーション

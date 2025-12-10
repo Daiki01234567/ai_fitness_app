@@ -30,16 +30,16 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] ユーザー作成トリガーを実装（`users/{userId}`のonCreate）
-- [ ] ユーザー削除トリガーを実装（`users/{userId}`のonDelete）
-- [ ] セッション作成トリガーを実装（`sessions/{sessionId}`のonCreate）
-- [ ] セッション完了トリガーを実装（`sessions/{sessionId}`のonUpdate）
-- [ ] 同意記録トリガーを実装（`consents/{consentId}`のonCreate）
-- [ ] 削除リクエストトリガーを実装（`dataDeletionRequests/{requestId}`のonCreate）
-- [ ] イベントハンドラーのエラーハンドリング
-- [ ] イベント処理のログ記録
-- [ ] ユニットテストを作成（カバレッジ80%以上）
-- [ ] エミュレータでの動作確認
+- [x] ユーザー作成トリガーを実装（`users/{userId}`のonCreate）
+- [x] ユーザー削除トリガーを実装（`users/{userId}`のonDelete）
+- [x] セッション作成トリガーを実装（`sessions/{sessionId}`のonCreate）
+- [x] セッション完了トリガーを実装（`sessions/{sessionId}`のonUpdate）
+- [x] 同意記録トリガーを実装（`consents/{consentId}`のonCreate）
+- [x] 削除リクエストトリガーを実装（`dataDeletionRequests/{requestId}`のonCreate）
+- [x] イベントハンドラーのエラーハンドリング
+- [x] イベント処理のログ記録
+- [x] ユニットテストを作成（カバレッジ80%以上）
+- [ ] エミュレータでの動作確認（オプション）
 
 ## 参照ドキュメント
 
@@ -333,11 +333,20 @@ function isCriticalError(error: any): boolean {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装ファイル
+
+- `functions/src/auth/onCreate.ts` - ユーザー作成トリガー
+- `functions/src/auth/onDelete.ts` - ユーザー削除トリガー
+- `functions/src/triggers/sessions.ts` - セッション作成・完了トリガー
+- `functions/src/triggers/consents.ts` - 同意トリガー
+- `functions/src/triggers/dataDeletionRequests.ts` - 削除リクエストトリガー
+- `functions/src/triggers/index.ts` - エクスポート
 
 ## 備考
 

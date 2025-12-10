@@ -89,6 +89,7 @@ function RootLayoutNav() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(app)" />
           <Stack.Screen name="onboarding" />
+          <Stack.Screen name="training" />
           <Stack.Screen name="+not-found" options={{ headerShown: true, title: "Not Found" }} />
         </Stack>
       </PaperProvider>

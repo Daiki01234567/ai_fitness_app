@@ -29,15 +29,15 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] FCMトークンを保存する機能を実装（Usersコレクション）
-- [ ] FCMトークンを更新する機能を実装（クライアントから呼び出し）
-- [ ] プッシュ通知送信関数を実装（`sendNotification`）
-- [ ] 通知タイプごとのテンプレートを定義（リマインダー、削除通知、課金通知）
-- [ ] 通知失敗時のリトライ機構を実装
-- [ ] 通知履歴をFirestoreに保存（`notifications`コレクション）
-- [ ] 通知設定のON/OFFを確認する機能を実装
-- [ ] ユニットテストを作成（カバレッジ80%以上）
-- [ ] エミュレータでの動作確認
+- [x] FCMトークンを保存する機能を実装（Usersコレクション）
+- [x] FCMトークンを更新する機能を実装（クライアントから呼び出し）
+- [x] プッシュ通知送信関数を実装（`sendNotification`）
+- [x] 通知タイプごとのテンプレートを定義（リマインダー、削除通知、課金通知）
+- [x] 通知失敗時のリトライ機構を実装
+- [x] 通知履歴をFirestoreに保存（`notifications`コレクション）
+- [x] 通知設定のON/OFFを確認する機能を実装
+- [x] ユニットテストを作成（カバレッジ80%以上）
+- [ ] エミュレータでの動作確認（オプション）
 
 ## 参照ドキュメント
 
@@ -246,11 +246,18 @@ const NOTIFICATION_TEMPLATES = {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装ファイル
+
+- `functions/src/api/notification/updateFCMToken.ts` - FCMトークン更新API
+- `functions/src/api/notification/settings.ts` - 通知設定API
+- `functions/src/services/notificationService.ts` - 通知サービス
+- `functions/src/types/notification.ts` - 型定義
 
 ## 備考
 

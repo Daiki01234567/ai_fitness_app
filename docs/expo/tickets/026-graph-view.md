@@ -28,14 +28,14 @@ expo（フロントエンド）
 
 ## 受け入れ条件（Todo）
 
-- [ ] スコア推移の折れ線グラフが表示される
-- [ ] 種目別の回数推移の棒グラフが表示される
-- [ ] 週間・月間の統計サマリーが表示される
-- [ ] 期間フィルター（週、月、3ヶ月、全期間）が機能する
-- [ ] 種目フィルター（全て、個別種目）が機能する
-- [ ] グラフをタップすると該当日の詳細が表示される
-- [ ] データがない場合は空状態メッセージが表示される
-- [ ] 横スクロールで長期間のデータを閲覧できる
+- [x] スコア推移の折れ線グラフが表示される
+- [x] 種目別の回数推移の棒グラフが表示される
+- [x] 週間・月間の統計サマリーが表示される
+- [x] 期間フィルター（週、月、3ヶ月、全期間）が機能する
+- [x] 種目フィルター（全て、個別種目）が機能する
+- [x] グラフをタップすると該当日の詳細が表示される
+- [x] データがない場合は空状態メッセージが表示される
+- [x] 横スクロールで長期間のデータを閲覧できる
 
 ## 参照ドキュメント
 
@@ -405,9 +405,11 @@ export async function fetchGraphData({
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了（2025-12-11）
 
 ## 完了日
+
+2025-12-11
 
 
 
@@ -417,8 +419,17 @@ export async function fetchGraphData({
 - グラフライブラリは react-native-chart-kit を使用
 - 長期間データの場合は横スクロールで対応
 
+## 実装済みファイル一覧
+
+- `expo_app/app/history/graph.tsx` - グラフ画面
+- `expo_app/components/history/GraphView.tsx` - グラフ表示コンポーネント
+- `expo_app/components/history/StatsCard.tsx` - 統計サマリーカード
+- `expo_app/components/history/ScoreLineChart.tsx` - スコア推移折れ線グラフ
+- `expo_app/components/history/RepsBarChart.tsx` - 回数推移棒グラフ
+
 ## 変更履歴
 
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | コード実装完了（GraphView, StatsCard, ScoreLineChart, RepsBarChart） |

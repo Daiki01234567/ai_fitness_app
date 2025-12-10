@@ -1,25 +1,34 @@
 /**
  * 履歴画面
  *
- * 過去のトレーニング記録を表示します。
- * フィルター機能や統計情報を提供。
- * Phase 2でFirestoreからのデータ取得を実装予定。
+ * 過去のトレーニング記録を一覧表示する画面です。
+ * 種目別、日付範囲でフィルタリングでき、各セッションの詳細を確認できます。
  *
+ * @see docs/expo/tickets/024-history-screen.md
  * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
  */
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useState, useCallback } from "react";
-import { StyleSheet, View, ScrollView, RefreshControl } from "react-native";
+import { useState, useCallback, useMemo } from "react";
 import {
-  Surface,
-  Text,
-  Button,
-  Chip,
-  SegmentedButtons,
-} from "react-native-paper";
+  StyleSheet,
+  View,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
+import { Surface, Text, Button, FAB } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { SessionCard } from "@/components/history/SessionCard";
+import { FilterBar, DateRangeFilter } from "@/components/history/FilterBar";
+import {
+  fetchTrainingSessions,
+  fetchHistoryStats,
+  TrainingSession,
+} from "@/services/training/historyService";
 
 /**
  * Theme colors following Material Design 3 guidelines
@@ -36,70 +45,112 @@ const THEME_COLORS = {
 };
 
 /**
- * Filter period options
- */
-type FilterPeriod = "all" | "week" | "month";
-
-/**
  * History screen component
  */
 export default function HistoryScreen() {
-  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>("all");
-  const [refreshing, setRefreshing] = useState(false);
+  // Filter state
+  const [exerciseFilter, setExerciseFilter] = useState<string | null>(null);
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeFilter>("month");
 
-  // Pull-to-refresh handler
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // TODO: Fetch data from Firestore (Phase 2)
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+  // Fetch sessions with infinite scroll
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+  } = useInfiniteQuery({
+    queryKey: ["training-sessions", exerciseFilter, dateRangeFilter],
+    queryFn: ({ pageParam }) =>
+      fetchTrainingSessions({
+        exerciseType: exerciseFilter,
+        dateRange: dateRangeFilter,
+        lastDoc: pageParam,
+        limit: 20,
+      }),
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.lastDoc : undefined),
+    initialPageParam: undefined as unknown,
+  });
+
+  // Fetch stats
+  const { data: stats } = useQuery({
+    queryKey: ["history-stats", dateRangeFilter],
+    queryFn: () => fetchHistoryStats(dateRangeFilter),
+  });
+
+  // Flatten sessions from pages
+  const sessions = useMemo(() => {
+    return data?.pages.flatMap((page) => page.sessions) ?? [];
+  }, [data]);
+
+  // Handle session press
+  const handleSessionPress = useCallback((sessionId: string) => {
+    // TODO: Navigate to session detail screen
+    console.log("Session pressed:", sessionId);
   }, []);
 
-  // Navigate to training screen
-  const handleStartTraining = () => {
+  // Handle start training
+  const handleStartTraining = useCallback(() => {
     router.push("/(app)/(tabs)/training");
-  };
+  }, []);
 
-  // Mock statistics (will be replaced with actual data in Phase 2)
-  const stats = {
-    totalSessions: 0,
-    totalReps: 0,
-    totalMinutes: 0,
-    averageScore: "--",
-  };
+  // Handle calendar press
+  const handleCalendarPress = useCallback(() => {
+    router.push("/history/calendar");
+  }, []);
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[THEME_COLORS.primary]}
-            tintColor={THEME_COLORS.primary}
-          />
-        }
-      >
+  // Handle graph press
+  const handleGraphPress = useCallback(() => {
+    router.push("/history/graph");
+  }, []);
+
+  // Handle load more
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Render session card
+  const renderSessionCard = useCallback(
+    ({ item }: { item: TrainingSession }) => (
+      <SessionCard session={item} onPress={() => handleSessionPress(item.id)} />
+    ),
+    [handleSessionPress]
+  );
+
+  // Render header with stats
+  const renderHeader = useCallback(
+    () => (
+      <View style={styles.headerContainer}>
         {/* Header */}
         <View style={styles.header}>
           <Text variant="headlineMedium" style={styles.title}>
             トレーニング履歴
           </Text>
+          <View style={styles.headerActions}>
+            <Button
+              mode="text"
+              compact
+              icon="chart-line"
+              onPress={handleGraphPress}
+              textColor={THEME_COLORS.primary}
+            >
+              グラフ
+            </Button>
+          </View>
         </View>
 
-        {/* Filter Buttons */}
-        <SegmentedButtons
-          value={filterPeriod}
-          onValueChange={(value) => setFilterPeriod(value as FilterPeriod)}
-          buttons={[
-            { value: "all", label: "すべて" },
-            { value: "week", label: "今週" },
-            { value: "month", label: "今月" },
-          ]}
-          style={styles.filterButtons}
+        {/* Filter Bar */}
+        <FilterBar
+          exerciseFilter={exerciseFilter}
+          onExerciseFilterChange={setExerciseFilter}
+          dateRangeFilter={dateRangeFilter}
+          onDateRangeFilterChange={setDateRangeFilter}
+          onCalendarPress={handleCalendarPress}
         />
 
         {/* Statistics Cards */}
@@ -111,7 +162,7 @@ export default function HistoryScreen() {
               color={THEME_COLORS.primary}
             />
             <Text variant="headlineSmall" style={styles.statValue}>
-              {stats.totalSessions}
+              {stats?.totalSessions || 0}
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
               セッション
@@ -124,7 +175,7 @@ export default function HistoryScreen() {
               color={THEME_COLORS.primary}
             />
             <Text variant="headlineSmall" style={styles.statValue}>
-              {stats.totalReps}
+              {stats?.totalReps || 0}
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
               レップ
@@ -137,7 +188,7 @@ export default function HistoryScreen() {
               color={THEME_COLORS.primary}
             />
             <Text variant="headlineSmall" style={styles.statValue}>
-              {stats.totalMinutes}分
+              {stats?.totalMinutes || 0}分
             </Text>
             <Text variant="bodySmall" style={styles.statLabel}>
               時間
@@ -153,7 +204,7 @@ export default function HistoryScreen() {
                 平均フォームスコア
               </Text>
               <Text variant="displaySmall" style={styles.averageScoreValue}>
-                {stats.averageScore}
+                {stats?.averageScore || "--"}
               </Text>
             </View>
             <MaterialCommunityIcons
@@ -163,35 +214,56 @@ export default function HistoryScreen() {
             />
           </View>
         </Surface>
+      </View>
+    ),
+    [exerciseFilter, dateRangeFilter, stats, handleCalendarPress, handleGraphPress]
+  );
 
-        {/* Empty State */}
-        <Surface style={styles.emptyStateCard} elevation={1}>
-          <View style={styles.emptyStateIcon}>
-            <MaterialCommunityIcons
-              name="history"
-              size={64}
-              color={THEME_COLORS.textSecondary}
-            />
-          </View>
-          <Text variant="titleMedium" style={styles.emptyStateTitle}>
-            トレーニング記録がありません
-          </Text>
-          <Text variant="bodyMedium" style={styles.emptyStateDescription}>
-            トレーニングを行うと、ここに記録が表示されます。{"\n"}
-            フォーム評価スコアや改善点も確認できます。
-          </Text>
-          <Button
-            mode="contained"
-            onPress={handleStartTraining}
-            style={styles.emptyStateButton}
-            buttonColor={THEME_COLORS.primary}
-            icon="dumbbell"
-          >
-            トレーニングを始める
-          </Button>
-        </Surface>
+  // Render empty state
+  const renderEmptyState = useCallback(
+    () => (
+      <Surface style={styles.emptyStateCard} elevation={1}>
+        <View style={styles.emptyStateIcon}>
+          <MaterialCommunityIcons
+            name="history"
+            size={64}
+            color={THEME_COLORS.textSecondary}
+          />
+        </View>
+        <Text variant="titleMedium" style={styles.emptyStateTitle}>
+          トレーニング記録がありません
+        </Text>
+        <Text variant="bodyMedium" style={styles.emptyStateDescription}>
+          トレーニングを行うと、ここに記録が表示されます。{"\n"}
+          フォーム評価スコアや改善点も確認できます。
+        </Text>
+        <Button
+          mode="contained"
+          onPress={handleStartTraining}
+          style={styles.emptyStateButton}
+          buttonColor={THEME_COLORS.primary}
+          icon="dumbbell"
+        >
+          トレーニングを始める
+        </Button>
+      </Surface>
+    ),
+    [handleStartTraining]
+  );
 
-        {/* Info Tips */}
+  // Render footer (loading indicator)
+  const renderFooter = useCallback(() => {
+    if (isFetchingNextPage) {
+      return (
+        <View style={styles.loadingFooter}>
+          <ActivityIndicator size="small" color={THEME_COLORS.primary} />
+        </View>
+      );
+    }
+
+    // Tips card at the end
+    if (sessions.length > 0) {
+      return (
         <Surface style={styles.tipsCard} elevation={1}>
           <View style={styles.tipsHeader}>
             <MaterialCommunityIcons
@@ -208,7 +280,69 @@ export default function HistoryScreen() {
             週に2-3回のトレーニングがおすすめです。
           </Text>
         </Surface>
-      </ScrollView>
+      );
+    }
+
+    return null;
+  }, [isFetchingNextPage, sessions.length]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+        <Text style={styles.loadingText}>読み込み中...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.centerContainer}>
+        <MaterialCommunityIcons
+          name="alert-circle"
+          size={48}
+          color={THEME_COLORS.textSecondary}
+        />
+        <Text style={styles.errorText}>履歴の読み込みに失敗しました</Text>
+        <Button mode="outlined" onPress={() => refetch()}>
+          再試行
+        </Button>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+      <FlatList
+        data={sessions}
+        keyExtractor={(item) => item.id}
+        renderItem={renderSessionCard}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmptyState}
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={styles.listContent}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            colors={[THEME_COLORS.primary]}
+            tintColor={THEME_COLORS.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* FAB for quick training access */}
+      <FAB
+        icon="plus"
+        label="トレーニング"
+        onPress={handleStartTraining}
+        style={styles.fab}
+      />
     </SafeAreaView>
   );
 }
@@ -218,30 +352,54 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME_COLORS.background,
   },
-  container: {
+  centerContainer: {
     flex: 1,
-  },
-  scrollContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: THEME_COLORS.background,
     padding: 16,
-    paddingBottom: 32,
+    gap: 16,
+  },
+  loadingText: {
+    color: THEME_COLORS.textSecondary,
+  },
+  errorText: {
+    color: THEME_COLORS.textSecondary,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  listContent: {
+    paddingBottom: 100, // Space for FAB
+  },
+  loadingFooter: {
+    padding: 16,
+    alignItems: "center",
+  },
+  // Header Container
+  headerContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   // Header
   header: {
-    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   title: {
     color: THEME_COLORS.text,
     fontWeight: "bold",
   },
-  // Filter Buttons
-  filterButtons: {
-    marginBottom: 20,
-  },
   // Statistics
   statsContainer: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   statCard: {
     flex: 1,
@@ -264,7 +422,7 @@ const styles = StyleSheet.create({
     backgroundColor: THEME_COLORS.primary,
     borderRadius: 12,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   averageScoreContent: {
     flexDirection: "row",
@@ -285,6 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 32,
     alignItems: "center",
+    marginHorizontal: 16,
     marginBottom: 16,
   },
   emptyStateIcon: {
@@ -315,6 +474,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF8E1",
     borderRadius: 12,
     padding: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
   },
   tipsHeader: {
     flexDirection: "row",
@@ -329,5 +491,12 @@ const styles = StyleSheet.create({
   tipsText: {
     color: THEME_COLORS.text,
     lineHeight: 20,
+  },
+  // FAB
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    backgroundColor: THEME_COLORS.primary,
   },
 });

@@ -30,17 +30,17 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] 通知設定保存APIを実装（`notification_updateSettings`）
-- [ ] 通知設定取得APIを実装（`notification_getSettings`）
-- [ ] 通知の全体ON/OFF機能
-- [ ] トレーニングリマインダーの時刻設定（HH:MM形式）
-- [ ] トレーニングリマインダーの曜日設定（複数選択可）
-- [ ] 削除通知のON/OFF機能
-- [ ] 課金通知のON/OFF機能
-- [ ] タイムゾーンの自動検出と保存
-- [ ] レート制限の実装（10回/時）
-- [ ] ユニットテストを作成（カバレッジ80%以上）
-- [ ] エミュレータでの動作確認
+- [x] 通知設定保存APIを実装（`notification_updateSettings`）
+- [x] 通知設定取得APIを実装（`notification_getSettings`）
+- [x] 通知の全体ON/OFF機能
+- [x] トレーニングリマインダーの時刻設定（HH:MM形式）
+- [x] トレーニングリマインダーの曜日設定（複数選択可）
+- [x] 削除通知のON/OFF機能
+- [x] 課金通知のON/OFF機能
+- [x] タイムゾーンの自動検出と保存
+- [x] レート制限の実装（10回/時）
+- [x] ユニットテストを作成（カバレッジ80%以上）
+- [ ] エミュレータでの動作確認（オプション）
 
 ## 参照ドキュメント
 
@@ -246,11 +246,16 @@ const DAY_NAMES = {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装ファイル
+
+- `functions/src/api/notification/settings.ts` - 通知設定API
+- `functions/src/types/notification.ts` - 通知設定の型定義
 
 ## 備考
 

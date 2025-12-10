@@ -36,6 +36,10 @@ interface SettingsState {
   theme: Theme;
   /** 音声フィードバック有効フラグ（トレーニング中） */
   audioFeedback: boolean;
+  /** 音声フィードバック音量 (0.0 - 1.0) */
+  voiceVolume: number;
+  /** 音声フィードバック速度 (0.5 - 2.0) */
+  voiceRate: number;
   /** リマインダー通知有効フラグ */
   reminderNotification: boolean;
   /** お知らせ通知有効フラグ */
@@ -54,6 +58,10 @@ interface SettingsState {
   setTheme: (theme: Theme) => void;
   /** 音声フィードバック設定を変更 */
   setAudioFeedback: (enabled: boolean) => void;
+  /** 音声フィードバック音量を変更 */
+  setVoiceVolume: (volume: number) => void;
+  /** 音声フィードバック速度を変更 */
+  setVoiceRate: (rate: number) => void;
   /** リマインダー通知設定を変更 */
   setReminderNotification: (enabled: boolean) => void;
   /** お知らせ通知設定を変更 */
@@ -73,6 +81,8 @@ const DEFAULT_SETTINGS = {
   language: "ja" as Language,
   theme: "system" as Theme,
   audioFeedback: true,
+  voiceVolume: 0.8,
+  voiceRate: 1.0,
   reminderNotification: false,
   newsNotification: true,
 };
@@ -158,6 +168,10 @@ export const useSettingsStore = create<SettingsState>()(
 
       setAudioFeedback: (enabled) => set({ audioFeedback: enabled }),
 
+      setVoiceVolume: (volume) => set({ voiceVolume: Math.max(0, Math.min(1, volume)) }),
+
+      setVoiceRate: (rate) => set({ voiceRate: Math.max(0.5, Math.min(2, rate)) }),
+
       setReminderNotification: (enabled) => set({ reminderNotification: enabled }),
 
       setNewsNotification: (enabled) => set({ newsNotification: enabled }),
@@ -176,6 +190,8 @@ export const useSettingsStore = create<SettingsState>()(
         language: state.language,
         theme: state.theme,
         audioFeedback: state.audioFeedback,
+        voiceVolume: state.voiceVolume,
+        voiceRate: state.voiceRate,
         reminderNotification: state.reminderNotification,
         newsNotification: state.newsNotification,
       }),

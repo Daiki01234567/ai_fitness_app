@@ -28,10 +28,19 @@ export * from "./training";
 export * from "./gdpr";
 
 // ユーザー設定
-// export * from "./settings";
+export * from "./settings";
 
 // サブスクリプション管理
 // export * from "./subscription";
 
 // 分析API（BigQuery）
 export * from "./analytics";
+
+// フィードバック管理
+export * from "./feedback";
+
+// 通知管理（Ticket 022, 023, 026）
+export * from "./notification";
+
+// バックアップ管理（Ticket 030）
+export * from "./backup";

@@ -295,6 +295,14 @@ export default function SettingsScreen() {
               />
             )}
           />
+          <Divider />
+          <List.Item
+            title="通知の詳細設定"
+            description="時刻や頻度を設定"
+            left={(props) => <List.Icon {...props} icon="cog-outline" />}
+            right={() => <List.Icon icon="chevron-right" />}
+            onPress={() => router.push("/settings/notifications")}
+          />
         </Surface>
 
         {/* Data Management */}
@@ -336,10 +344,7 @@ export default function SettingsScreen() {
           <List.Item
             title="ヘルプ"
             left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
-            onPress={() => {
-              // TODO: Navigate to help center (Phase 2)
-              Alert.alert("準備中", "ヘルプ機能は現在開発中です");
-            }}
+            onPress={() => router.push("/help")}
             right={() => <List.Icon icon="chevron-right" />}
           />
           <Divider />
@@ -366,10 +371,7 @@ export default function SettingsScreen() {
           <List.Item
             title="お問い合わせ"
             left={(props) => <List.Icon {...props} icon="email-outline" />}
-            onPress={() => {
-              // TODO: Open contact form
-              Alert.alert("準備中", "お問い合わせ機能は現在開発中です");
-            }}
+            onPress={() => router.push("/help/contact")}
             right={() => <List.Icon icon="chevron-right" />}
           />
         </Surface>

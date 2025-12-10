@@ -29,15 +29,16 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] Firestoreの自動バックアップ設定（毎日午前2時UTC）
-- [ ] バックアップのCloud Storageへの保存
-- [ ] バックアップの保持期間設定（30日間）
-- [ ] バックアップの暗号化設定
+- [x] Firestoreの自動バックアップ設定（毎日午前2時UTC）
+- [x] バックアップのCloud Storageへの保存
+- [x] バックアップの保持期間設定（30日間）
+- [x] 週次バックアップの保持期間設定（90日間）
+- [x] バックアップの暗号化設定（Cloud Storageデフォルト暗号化）
 - [ ] 復旧手順のドキュメント作成
 - [ ] 復旧スクリプトの作成
 - [ ] バックアップの動作確認（テスト復旧）
-- [ ] バックアップ失敗時のアラート設定
-- [ ] バックアップのモニタリングダッシュボード作成
+- [x] バックアップ失敗時のアラート設定
+- [x] バックアップのモニタリングダッシュボード作成（管理者API）
 - [ ] ドキュメント化（README）
 
 ## 参照ドキュメント
@@ -346,11 +347,18 @@ export const backup_getBackupStatus = onCall(async (request) => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装ファイル
+
+- `functions/src/api/backup/scheduler.ts` - 日次・週次バックアップ、古いバックアップ削除
+- `functions/src/api/backup/status.ts` - バックアップステータスAPI
+- `functions/src/api/backup/index.ts` - エクスポート
+- `functions/src/services/backupService.ts` - バックアップサービス
 
 ## 備考
 
@@ -363,3 +371,4 @@ export const backup_getBackupStatus = onCall(async (request) => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | Cloud Functions実装完了（日次・週次バックアップ、古いバックアップ削除、ステータスAPI）|

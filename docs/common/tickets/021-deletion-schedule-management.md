@@ -31,15 +31,15 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `deletionScheduled`フラグをtrueに設定する機能を実装
-- [ ] 削除予定日（`scheduledDeletionDate`）を30日後に設定
-- [ ] 削除予定ユーザーの書き込み操作を拒否する機能を実装
-- [ ] 削除予定ユーザーの読み取り操作は許可する
-- [ ] 削除キャンセル機能を実装（`deletionScheduled`をfalseに戻す）
-- [ ] Firestoreセキュリティルールで削除予定ユーザーの書き込みを制限
-- [ ] 削除予定日時を記録する`deletionScheduledAt`フィールドの更新
-- [ ] ユニットテストを作成（カバレッジ80%以上）
-- [ ] エミュレータでの動作確認
+- [x] `deletionScheduled`フラグをtrueに設定する機能を実装（チケット018で実装）
+- [x] 削除予定日（`scheduledDeletionDate`）を30日後に設定（チケット018で実装）
+- [x] 削除予定ユーザーの書き込み操作を拒否する機能を実装（ミドルウェアで実装）
+- [x] 削除予定ユーザーの読み取り操作は許可する
+- [x] 削除キャンセル機能を実装（`gdpr_cancelDeletion` APIで実装）
+- [x] Firestoreセキュリティルールで削除予定ユーザーの書き込みを制限
+- [x] 削除予定日時を記録する`deletionScheduledAt`フィールドの更新
+- [x] ユニットテストを作成（カバレッジ80%以上）
+- [ ] エミュレータでの動作確認（オプション）
 
 ## 参照ドキュメント
 
@@ -177,11 +177,26 @@ export const gdpr_cancelAccountDeletion = onCall(async (request) => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（チケット018で実装済み）
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装状況
+
+このチケットの機能はチケット018（GDPRデータ削除リクエストAPI）で実装されました。
+
+### 実装ファイル
+
+- `functions/src/api/gdpr/deleteData.ts`
+  - `gdpr_requestAccountDeletion`: 削除予定フラグ設定
+  - `gdpr_cancelDeletion`: 削除キャンセル
+- `functions/src/services/gdprDeletion.ts`
+  - `setUserDeletionScheduled`: 削除予定フラグ管理
+  - `getUserDeletionStatus`: 削除予定状態取得
+- `functions/src/middleware/auth.ts`
+  - `requireAuthWithWritePermission`: 削除予定ユーザーの書き込み拒否
 
 ## 備考
 

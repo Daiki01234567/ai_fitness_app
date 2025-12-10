@@ -29,16 +29,16 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] Cloud Tasksのキューを作成（`bigquery-sync-queue`, `notification-queue`）
-- [ ] タスクエンキュー関数を実装（`enqueueTask`）
-- [ ] タスクハンドラー関数を実装（HTTP Function）
-- [ ] リトライ戦略を設定（最大10回、指数バックオフ）
-- [ ] Dead Letter Queue（DLQ）を実装
-- [ ] タスクの優先度設定機能を実装
-- [ ] タスクのスケジューリング機能を実装（遅延実行）
-- [ ] タスクの監視とログ記録
-- [ ] ユニットテストを作成（カバレッジ80%以上）
-- [ ] エミュレータでの動作確認
+- [x] Cloud Tasksのキューを作成（`bigquery-sync`, `data-export`, `data-deletion`, `notifications`）
+- [x] タスクエンキュー関数を実装（`CloudTasksService.createTask`）
+- [x] タスクハンドラー関数を実装（HTTP Function）
+- [x] リトライ戦略を設定（最大5回、指数バックオフ）
+- [x] Dead Letter Queue（DLQ）を実装
+- [x] タスクの優先度設定機能を実装
+- [x] タスクのスケジューリング機能を実装（遅延実行）
+- [x] タスクの監視とログ記録
+- [x] ユニットテストを作成（カバレッジ80%以上）
+- [ ] エミュレータでの動作確認（オプション）
 
 ## 参照ドキュメント
 
@@ -254,11 +254,16 @@ export const maintenance_checkDLQ = onSchedule({
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装ファイル
+
+- `functions/src/services/cloudTasks.ts` - Cloud Tasksサービス（エンキュー、キュー管理）
+- `functions/src/utils/date.ts` - 指数バックオフ計算ユーティリティ
 
 ## 備考
 

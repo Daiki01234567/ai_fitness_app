@@ -346,6 +346,60 @@ export interface SetCustomClaimsResponse {
 }
 
 // ============================================================================
+// フィードバック API 型 (Ticket 024)
+// ============================================================================
+
+export type FeedbackType = "bug_report" | "feature_request" | "general_feedback" | "other";
+
+export type FeedbackStatus = "pending" | "in_review" | "resolved" | "closed";
+
+export interface FeedbackDeviceInfo {
+  platform: "iOS" | "Android" | "Web";
+  osVersion: string;
+  appVersion: string;
+  deviceModel: string | null;
+}
+
+export interface SubmitFeedbackRequest {
+  type: FeedbackType;
+  subject: string;
+  message: string;
+  deviceInfo: FeedbackDeviceInfo;
+}
+
+export interface SubmitFeedbackResponse {
+  feedbackId: string;
+  message: string;
+  submittedAt: string;
+}
+
+export interface ListFeedbacksRequest {
+  limit?: number;
+  offset?: number;
+  status?: FeedbackStatus | "all";
+  type?: FeedbackType | "all";
+}
+
+export interface FeedbackItem {
+  feedbackId: string;
+  type: FeedbackType;
+  subject: string;
+  message: string;
+  status: FeedbackStatus;
+  deviceInfo: FeedbackDeviceInfo;
+  submittedAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface ListFeedbacksResponse {
+  feedbacks: FeedbackItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+// ============================================================================
 // Webhook 型
 // ============================================================================
 

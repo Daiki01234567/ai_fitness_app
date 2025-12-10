@@ -699,11 +699,44 @@ match /dataAccessLogs/{logId} {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未定
+2025-12-10
+
+## 実装状況
+
+### 完了項目
+
+1. **同意履歴一覧API（`consent_getHistory`）**: 実装完了
+   - `functions/src/api/consent/history.ts`
+   - 期間フィルタリング、同意タイプフィルタリング
+   - ページネーション（1ページ最大100件）
+   - ユーザー本人のみアクセス可能
+   - レート制限：60回/時間/ユーザー
+
+2. **監査ログ検索API（`consent_searchAuditLogs`）**: 実装完了
+   - `functions/src/api/consent/auditLogs.ts`
+   - 管理者権限チェック（カスタムクレーム `admin: true`）
+   - 複合検索条件（ユーザーID、期間、操作タイプ、同意タイプ）
+   - レート制限：30回/時間/管理者
+
+3. **同意率統計API（`consent_getStatistics`）**: 実装完了
+   - `functions/src/api/consent/statistics.ts`
+   - 日次/週次/月次集計
+   - 同意率、撤回率の自動計算
+   - レート制限：20回/時間/管理者
+
+4. **ユニットテスト**: 実装完了
+   - `functions/tests/api/consent/history.test.ts`
+   - 16テストケース全てパス
+
+### 未実装項目（オプション機能）
+
+- CSV/JSONエクスポート機能（将来実装予定）
+- BigQueryへの同意データストリーミング（Phase 3以降）
+- dataAccessLogsコレクション（必要に応じて実装）
 
 ## 備考
 

@@ -5,6 +5,12 @@
 // Re-export environment types (for IDE support)
 import "./env.d";
 
+// MediaPipe types
+export * from "./mediapipe";
+
+// Exercise types (Ticket 020)
+export * from "./exercise";
+
 /**
  * API レスポンスの基本型
  */

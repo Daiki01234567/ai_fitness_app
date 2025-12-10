@@ -28,14 +28,14 @@ expo（フロントエンド）
 
 ## 受け入れ条件（Todo）
 
-- [ ] 月別カレンダーが表示される
-- [ ] トレーニング実施日にマーカー（ドット）が表示される
-- [ ] 日付をタップするとその日のセッション一覧が表示される
-- [ ] 前月・次月への移動ができる
-- [ ] 今日の日付が強調表示される
-- [ ] セッション数が多い日は複数のドットで表現される
-- [ ] データがない月は空カレンダーが表示される
-- [ ] カレンダーから履歴画面に戻れる
+- [x] 月別カレンダーが表示される
+- [x] トレーニング実施日にマーカー（ドット）が表示される
+- [x] 日付をタップするとその日のセッション一覧が表示される
+- [x] 前月・次月への移動ができる
+- [x] 今日の日付が強調表示される
+- [x] セッション数が多い日は複数のドットで表現される
+- [x] データがない月は空カレンダーが表示される
+- [x] カレンダーから履歴画面に戻れる
 
 ## 参照ドキュメント
 
@@ -344,9 +344,11 @@ export function getExerciseLabel(exerciseType: string): string {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了（2025-12-11）
 
 ## 完了日
+
+2025-12-11
 
 
 
@@ -356,8 +358,17 @@ export function getExerciseLabel(exerciseType: string): string {
 - カレンダーライブラリは react-native-calendars を使用
 - 種目ごとにドットの色を変えることで視覚的に分かりやすく表現
 
+## 実装済みファイル一覧
+
+- `expo_app/app/history/calendar.tsx` - カレンダー画面
+- `expo_app/app/history/_layout.tsx` - 履歴関連画面レイアウト
+- `expo_app/components/history/CalendarView.tsx` - カレンダー表示コンポーネント
+- `expo_app/components/history/SessionListItem.tsx` - セッションリストアイテム
+- `expo_app/utils/exerciseUtils.ts` - 種目ユーティリティ
+
 ## 変更履歴
 
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | コード実装完了（CalendarView, SessionListItem, exerciseUtils） |

@@ -32,15 +32,15 @@ expo（フロントエンド）
 
 ## 受け入れ条件（Todo）
 
-- [ ] MediaPipe Poseのモデルファイルをアプリにバンドル
-- [ ] カメラフレームをMediaPipe Poseに渡す処理を実装
-- [ ] 33個の関節点（x, y, z, visibility）を取得できることを確認
-- [ ] 信頼度（visibility）が0.5以上の関節点のみをフィルタリング
-- [ ] 検出された骨格を画面にオーバーレイ表示（デバッグ用）
-- [ ] 骨格データをZustandストアに保存
-- [ ] FPSを測定し、30fps以上を維持できることを確認
-- [ ] 低スペック端末で15fps以上を維持できることを確認（フレームスキップ対応）
-- [ ] 骨格検出が失敗した場合のエラーハンドリング（ユーザーへのフィードバック）
+- [ ] MediaPipe Poseのモデルファイルをアプリにバンドル（react-native-mediapipe使用）
+- [x] カメラフレームをMediaPipe Poseに渡す処理を実装
+- [x] 33個の関節点（x, y, z, visibility）を取得できることを確認
+- [x] 信頼度（visibility）が0.5以上の関節点のみをフィルタリング
+- [x] 検出された骨格を画面にオーバーレイ表示（デバッグ用）
+- [x] 骨格データをZustandストアに保存
+- [ ] FPSを測定し、30fps以上を維持できることを確認（実機テスト未実施）
+- [ ] 低スペック端末で15fps以上を維持できることを確認（実機テスト未実施）
+- [x] 骨格検出が失敗した場合のエラーハンドリング（ユーザーへのフィードバック）
 
 ## 参照ドキュメント
 
@@ -333,11 +333,27 @@ export const usePoseStore = create<PoseStore>((set) => ({
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了（実機テスト未実施）
 
 ## 完了日
 
-未定
+2025-12-11（実機テスト除く）
+
+## 実装ファイル
+
+```
+expo_app/services/mediapipe/
+├── PoseDetector.ts         # MediaPipe Poseラッパークラス
+├── types.ts                # 拡張型定義
+└── index.ts                # エクスポート
+
+expo_app/store/
+├── poseStore.ts            # Zustandストア
+└── index.ts                # エクスポート
+
+expo_app/components/training/
+└── SkeletonOverlay.tsx     # 骨格オーバーレイ表示
+```
 
 ## 備考
 
@@ -350,3 +366,4 @@ export const usePoseStore = create<PoseStore>((set) => ({
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | コード実装完了 - PoseDetector、Zustand poseStore、SkeletonOverlay実装（実機テスト待ち） |

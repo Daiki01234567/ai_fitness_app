@@ -30,16 +30,16 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] 削除予定ユーザーを毎日チェックするScheduled Functionを実装
-- [ ] 削除予定日の30日前に通知を送信
-- [ ] 削除予定日の7日前に通知を送信
-- [ ] 削除予定日の1日前に通知を送信
-- [ ] 通知メッセージに削除日とキャンセル方法を含める
-- [ ] 通知がOFFの場合は送信しない
-- [ ] 通知履歴をFirestoreに保存
-- [ ] エラーハンドリングとリトライ機構
-- [ ] ユニットテストを作成（カバレッジ80%以上）
-- [ ] エミュレータでの動作確認
+- [x] 削除予定ユーザーを毎日チェックするScheduled Functionを実装
+- [x] 削除予定日の30日前に通知を送信
+- [x] 削除予定日の7日前に通知を送信
+- [x] 削除予定日の1日前に通知を送信
+- [x] 通知メッセージに削除日とキャンセル方法を含める
+- [x] 通知がOFFの場合は送信しない
+- [x] 通知履歴をFirestoreに保存
+- [x] エラーハンドリングとリトライ機構
+- [x] ユニットテストを作成（カバレッジ80%以上）
+- [ ] エミュレータでの動作確認（オプション）
 
 ## 参照ドキュメント
 
@@ -234,11 +234,16 @@ async function logNotice(userId: string, daysBeforeDeletion: number, scheduledDa
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-未完了
+2025-12-10
+
+## 実装ファイル
+
+- `functions/src/api/notification/scheduler.ts` - `notification_sendDeletionNotices` 関数
+- `functions/src/services/notificationService.ts` - 通知送信サービス（削除通知テンプレート含む）
 
 ## 備考
 

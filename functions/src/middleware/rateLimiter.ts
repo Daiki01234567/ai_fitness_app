@@ -48,7 +48,9 @@ export const RateLimits = {
 
   // トレーニング
   TRAINING_CREATE_SESSION: { maxRequests: 100, windowSeconds: 86400 }, // 100/日
-  TRAINING_GET_SESSIONS: { maxRequests: 100, windowSeconds: 3600 }, // 100/時間
+  TRAINING_GET_SESSION: { maxRequests: 50, windowSeconds: 3600 }, // 50/時間
+  TRAINING_GET_SESSIONS: { maxRequests: 50, windowSeconds: 3600 }, // 50/時間 (listSessions)
+  TRAINING_DELETE_SESSION: { maxRequests: 20, windowSeconds: 3600 }, // 20/時間
   TRAINING_GET_STATISTICS: { maxRequests: 50, windowSeconds: 3600 }, // 50/時間
 
   // GDPR
@@ -58,8 +60,22 @@ export const RateLimits = {
   GDPR_RECOVERY_VERIFY: { maxRequests: 10, windowSeconds: 3600 }, // 10/時間
   GDPR_RECOVER_ACCOUNT: { maxRequests: 5, windowSeconds: 86400 }, // 5/日
 
+  // Consent Management (Ticket 020)
+  CONSENT_HISTORY: { maxRequests: 60, windowSeconds: 3600 }, // 60/時間/ユーザー
+  ADMIN_CONSENT_AUDIT: { maxRequests: 30, windowSeconds: 3600 }, // 30/時間/管理者
+  ADMIN_CONSENT_STATS: { maxRequests: 20, windowSeconds: 3600 }, // 20/時間/管理者
+
+  // Feedback (Ticket 024)
+  FEEDBACK_SUBMIT: { maxRequests: 10, windowSeconds: 86400 }, // 10/日/ユーザー
+  FEEDBACK_LIST: { maxRequests: 60, windowSeconds: 3600 }, // 60/時間/ユーザー
+
+  // Notification (Ticket 022, 023, 026)
+  NOTIFICATION_SETTINGS: { maxRequests: 10, windowSeconds: 3600 }, // 10/時間/ユーザー
+  NOTIFICATION_FCM_UPDATE: { maxRequests: 10, windowSeconds: 3600 }, // 10/時間/ユーザー
+
   // 設定
   SETTINGS_UPDATE: { maxRequests: 30, windowSeconds: 3600 }, // 30/時間
+  USER_SETTINGS: { maxRequests: 50, windowSeconds: 3600 }, // 50/時間 (Ticket 025)
 
   // デフォルト
   DEFAULT: { maxRequests: 60, windowSeconds: 60 }, // 60/分

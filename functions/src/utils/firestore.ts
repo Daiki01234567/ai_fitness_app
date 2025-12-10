@@ -403,3 +403,17 @@ export function dataDeletionRequestsCollection(): CollectionReference {
 export function bigquerySyncFailuresCollection(): CollectionReference {
   return getFirestore().collection("bigquerySyncFailures");
 }
+
+/**
+ * Feedbacks コレクション参照
+ */
+export function feedbacksCollection(): CollectionReference {
+  return getFirestore().collection("feedbacks");
+}
+
+/**
+ * Feedback ドキュメント参照
+ */
+export function feedbackRef(feedbackId: string): DocumentReference {
+  return feedbacksCollection().doc(feedbackId);
+}

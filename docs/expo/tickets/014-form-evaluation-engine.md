@@ -30,15 +30,15 @@ expo（フロントエンド）
 
 ## 受け入れ条件（Todo）
 
-- [ ] 3点から角度を計算する`calculateAngle`関数を実装
-- [ ] 2点間の距離を計算する`calculateDistance`関数を実装
-- [ ] 関節点の信頼度をチェックする`isLandmarkVisible`関数を実装
-- [ ] フレーム単位のスコアを計算する`calculateFrameScore`関数を実装
-- [ ] セッション全体のスコアを計算する`calculateOverallScore`関数を実装
-- [ ] 状態マシン（State Machine）の基底クラス`BaseExerciseStateMachine`を実装
-- [ ] レップカウンターの基底クラス`BaseRepCounter`を実装
-- [ ] ユニットテストを作成し、全てのヘルパー関数が正しく動作することを確認
-- [ ] 各関数にJSDocコメントを追加
+- [x] 3点から角度を計算する`calculateAngle`関数を実装
+- [x] 2点間の距離を計算する`calculateDistance`関数を実装
+- [x] 関節点の信頼度をチェックする`isLandmarkVisible`関数を実装
+- [x] フレーム単位のスコアを計算する`calculateFrameScore`関数を実装
+- [x] セッション全体のスコアを計算する`calculateOverallScore`関数を実装
+- [x] 状態マシン（State Machine）の基底クラス`BaseExerciseStateMachine`を実装
+- [x] レップカウンターの基底クラス`BaseRepCounter`を実装
+- [x] ユニットテストを作成し、全てのヘルパー関数が正しく動作することを確認
+- [x] 各関数にJSDocコメントを追加
 
 ## 参照ドキュメント
 
@@ -198,11 +198,26 @@ describe('calculateAngle', () => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了
 
 ## 完了日
 
-未定
+2025-12-11
+
+## 実装ファイル
+
+```
+expo_app/services/evaluation/
+├── types.ts                # 評価関連型定義
+├── helpers.ts              # 角度・距離計算ヘルパー関数
+├── scoring.ts              # スコアリングロジック
+├── BaseStateMachine.ts     # 状態マシン基底クラス
+├── BaseRepCounter.ts       # レップカウンター基底クラス
+├── index.ts                # エクスポート
+└── __tests__/
+    ├── helpers.test.ts     # ヘルパー関数ユニットテスト
+    └── scoring.test.ts     # スコアリングユニットテスト
+```
 
 ## 実装アーキテクチャ
 
@@ -234,3 +249,4 @@ describe('calculateAngle', () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | 実装完了 - ヘルパー関数、スコアリング、BaseStateMachine、BaseRepCounter、ユニットテスト完了 |

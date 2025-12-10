@@ -25,3 +25,7 @@ export type {
 // Settings Store - アプリ設定管理（永続化付き）
 export { useSettingsStore } from "./settingsStore";
 export type { Language, Theme } from "./settingsStore";
+
+// Notification Store - 通知設定管理（永続化付き）
+export { useNotificationStore, getDayLabel, getDayLabelLong, ALL_DAYS } from "./notificationStore";
+export type { DayOfWeek, FrequencyPreset } from "./notificationStore";
