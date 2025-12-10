@@ -46,7 +46,7 @@ Expo（フロントエンド）
 
 - `docs/common/specs/02-1_機能要件_v1_0.md` - FR-001, FR-002, FR-003
 - `docs/expo/specs/01_技術スタック_v1_0.md` - Zod、Firebase Auth使用方法
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - 認証画面設計
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - 認証画面設計
 
 ## 技術詳細
 

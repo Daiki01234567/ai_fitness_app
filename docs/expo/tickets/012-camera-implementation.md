@@ -46,7 +46,7 @@ expo（フロントエンド）
 - `docs/common/specs/02-1_機能要件_v1_0.md` - FR-012, FR-013
 - `docs/common/specs/02-2_非機能要件_v1_0.md` - NFR-007, NFR-024, NFR-026
 - `docs/expo/specs/01_技術スタック_v1_0.md` - react-native-vision-camera
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - トレーニング実行画面
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - トレーニング実行画面
 
 ## 技術詳細
 
@@ -125,6 +125,136 @@ const processFrame = useFrameProcessor((frame) => {
   console.log(`Frame: ${frame.width}x${frame.height}`);
 }, []);
 ```
+
+## フレームスキップ制御
+
+### アルゴリズム概要
+
+フレームスキップ制御により、デバイスの処理能力に応じて動的にFPSを調整し、安定したパフォーマンスを実現します。
+
+#### 基本アルゴリズム
+
+```typescript
+/**
+ * フレームスキップ制御クラス
+ * デバイスの処理能力に応じて動的にFPSを調整
+ */
+class FrameSkipController {
+  private lastProcessedTime: number = 0;
+  private targetInterval: number = 1000 / 30; // 30fps = 33.3ms間隔
+  private consecutiveSkips: number = 0;
+  private readonly MAX_CONSECUTIVE_SKIPS = 3;
+
+  /**
+   * フレームを処理すべきかどうかを判定
+   * @param currentTime 現在のタイムスタンプ（ミリ秒）
+   * @returns true: 処理する、false: スキップする
+   */
+  shouldProcessFrame(currentTime: number): boolean {
+    const elapsed = currentTime - this.lastProcessedTime;
+
+    // 目標インターバルを超えた場合、または連続スキップが上限に達した場合
+    if (elapsed >= this.targetInterval || this.consecutiveSkips >= this.MAX_CONSECUTIVE_SKIPS) {
+      this.lastProcessedTime = currentTime;
+      this.consecutiveSkips = 0;
+      return true;
+    }
+
+    // スキップ
+    this.consecutiveSkips++;
+    return false;
+  }
+
+  /**
+   * 動的FPS調整
+   * MediaPipe処理時間に応じてターゲットFPSを調整
+   * @param processingTime MediaPipe処理にかかった時間（ミリ秒）
+   */
+  adjustTargetFPS(processingTime: number): void {
+    if (processingTime > 50) {
+      // 処理が重い場合は15fpsに落とす
+      this.targetInterval = 1000 / 15; // 66.7ms
+      console.log('[FrameSkip] FPS調整: 15fps（処理時間: ${processingTime}ms）');
+    } else if (processingTime > 33) {
+      // やや重い場合は24fpsに
+      this.targetInterval = 1000 / 24; // 41.7ms
+      console.log('[FrameSkip] FPS調整: 24fps（処理時間: ${processingTime}ms）');
+    } else {
+      // 正常時は30fps
+      this.targetInterval = 1000 / 30; // 33.3ms
+    }
+  }
+
+  /**
+   * スキップ率の取得（デバッグ用）
+   */
+  getSkipRate(): number {
+    // 実装は省略（フレーム総数とスキップ数から計算）
+    return 0;
+  }
+}
+```
+
+#### 使用例
+
+```typescript
+const frameSkipController = new FrameSkipController();
+
+const processFrame = useFrameProcessor((frame) => {
+  'worklet';
+
+  const currentTime = Date.now();
+
+  // フレームをスキップすべきかチェック
+  if (!frameSkipController.shouldProcessFrame(currentTime)) {
+    return; // このフレームはスキップ
+  }
+
+  // MediaPipe処理（時間計測）
+  const startTime = performance.now();
+  const poseResult = detectPose(frame);
+  const processingTime = performance.now() - startTime;
+
+  // 処理時間に応じてFPSを動的調整
+  frameSkipController.adjustTargetFPS(processingTime);
+
+  // 結果をストアに保存
+  updatePoseStore(poseResult);
+}, []);
+```
+
+### 実装上の注意点
+
+1. **フレームドロップ時のUI更新**
+   - フレームをスキップしても、UI（カメラプレビュー、FPS表示など）は継続して更新すること
+   - ユーザーにはカメラが停止しているように見えないようにする
+
+2. **連続フレームスキップの制限**
+   - 最大3フレーム連続スキップまで（約100ms）
+   - それ以上スキップすると、フォーム評価の精度が低下する
+   - 3フレームスキップ後は、必ず次のフレームを処理する
+
+3. **スキップ率のログ記録**
+   - 品質監視のため、スキップ率をログに記録
+   - 1分ごとに集計し、以下の情報を記録:
+     ```typescript
+     interface FrameSkipMetrics {
+       totalFrames: number;        // 総フレーム数
+       skippedFrames: number;      // スキップしたフレーム数
+       skipRate: number;           // スキップ率（0.0 - 1.0）
+       averageFPS: number;         // 平均FPS
+       currentTargetFPS: number;   // 現在のターゲットFPS
+       deviceModel: string;        // デバイスモデル
+       timestamp: number;          // タイムスタンプ
+     }
+     ```
+
+4. **パフォーマンスモニタリング**
+   - FPS低下の原因を特定するため、以下を記録:
+     - MediaPipe処理時間
+     - フレーム解像度
+     - メモリ使用量
+     - CPU使用率（可能な場合）
 
 ## 見積もり
 

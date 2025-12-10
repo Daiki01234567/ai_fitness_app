@@ -1,8 +1,23 @@
-# 020 GDPR同意追跡API
+# 020 GDPR同意履歴・監査機能（拡張機能）
 
 ## 概要
 
-GDPR第6条（同意）を実装するチケットです。利用規約とプライバシーポリシーへの同意を記録・管理し、同意変更履歴を不変の監査ログとして保存します。同意撤回時には強制ログアウト機能も実装します。
+**チケット006で実装した基本的な同意管理API（recordConsent, revokeConsent, getConsent）の拡張機能**として、同意履歴の詳細な監査機能、データアクセスログ機能、管理者向けレポート機能を実装します。
+
+GDPR Article 7（同意の条件）およびArticle 15（アクセス権）に準拠した、監査証跡の完全性を保証する機能群です。
+
+## チケット006との違い
+
+| 機能カテゴリ | チケット006（基本機能） | チケット020（本チケット：拡張機能） |
+|------------|---------------------|--------------------------------|
+| **同意記録** | ✅ user_updateConsent 実装済み | - |
+| **同意撤回** | ✅ user_revokeConsent 実装済み | - |
+| **同意状態取得** | ✅ user_getConsent 実装済み | - |
+| **同意履歴一覧** | - | ✅ **consent_getHistory 新規実装** |
+| **監査ログ検索** | - | ✅ **consent_searchAuditLogs 新規実装** |
+| **データアクセスログ** | - | ✅ **データアクセス記録機能 新規実装** |
+| **管理者向けレポート** | - | ✅ **統計レポート機能 新規実装** |
+| **GDPR準拠** | Article 6（同意の合法性） | Article 7（同意の条件）、Article 15（アクセス権） |
 
 ## Phase
 
@@ -14,32 +29,53 @@ common（バックエンド共通）
 
 ## 依存チケット
 
+- **006: GDPR同意管理API（必須）** - 本チケットは006の完了が前提
 - 002: Firestoreセキュリティルール実装
-- 004: ユーザープロフィールAPI
+- 003: Cloud Functions基盤
 
 ## 要件
 
 ### 機能要件
 
-- FR-034: GDPR第6条（同意）対応
+- FR-034: GDPR第7条（同意の条件）対応 - 同意履歴の透明性
+- FR-035: GDPR第15条（アクセス権）対応 - データアクセスログ
 
 ### 非機能要件
 
 - NFR-008: データ最小化原則
+- NFR-019: 同意管理 - 記録保持
 - NFR-032: データ保護
 
 ## 受け入れ条件（Todo）
 
-- [ ] `user_updateConsent` Callable Functionを実装
-- [ ] `user_revokeConsent` Callable Functionを実装
-- [ ] Usersコレクションの同意フィールド更新実装（tosAccepted、ppAccepted）
-- [ ] Consentsコレクションへの履歴記録実装（不変ログ）
-- [ ] IPアドレスとユーザーエージェントの記録実装
-- [ ] 同意撤回時の強制ログアウト実装（リフレッシュトークン無効化）
-- [ ] カスタムクレームによる強制ログアウト設定実装
-- [ ] レート制限（10回/時、5回/日）を実装
-- [ ] エラーハンドリング実装
+### 1. 同意履歴一覧API
+- [ ] `consent_getHistory` Callable Functionを実装
+- [ ] 期間フィルタリング機能（開始日時・終了日時）
+- [ ] 同意タイプフィルタリング（ToS/PP/Marketing）
+- [ ] ページネーション実装（1ページ20件）
+- [ ] ユーザー本人のみアクセス可能（認証チェック）
+
+### 2. 監査ログ検索API
+- [ ] `consent_searchAuditLogs` Callable Functionを実装（管理者専用）
+- [ ] 管理者権限チェック（カスタムクレーム `admin: true`）
+- [ ] 複合検索条件実装（ユーザーID、期間、操作タイプ）
+- [ ] CSV/JSONエクスポート機能
+
+### 3. データアクセスログ
+- [ ] `dataAccessLogs` コレクションのスキーマ設計
+- [ ] アクセスログ記録関数（汎用ミドルウェア）
+- [ ] GDPR Article 15対応（データポータビリティ）
+- [ ] 保持期間設定（2年間）
+
+### 4. 管理者向けレポート
+- [ ] 同意率統計API（日次/週次/月次）
+- [ ] 撤回理由の集計機能
+- [ ] ダッシュボード用データ整形
+
+### 5. テスト
 - [ ] ユニットテスト実装（カバレッジ80%以上）
+- [ ] 管理者権限のテストケース
+- [ ] ページネーションのテストケース
 - [ ] ローカルエミュレータでの動作確認
 
 ## 参照ドキュメント
@@ -51,216 +87,519 @@ common（バックエンド共通）
 
 ## 技術詳細
 
-### APIエンドポイント
+### 新規実装API一覧
 
-#### 1. user_updateConsent
+| API名 | メソッド | 権限 | 目的 |
+|-------|---------|------|------|
+| `consent_getHistory` | Callable | ユーザー本人 | 同意変更履歴の時系列取得 |
+| `consent_searchAuditLogs` | Callable | 管理者のみ | 監査ログの複合検索 |
+| `consent_getStatistics` | Callable | 管理者のみ | 同意率統計レポート |
 
-**目的**: 利用規約・プライバシーポリシーへの同意を記録
+### APIエンドポイント詳細
+
+#### 1. consent_getHistory（同意履歴一覧）
+
+**目的**: ユーザー本人の同意変更履歴を時系列で取得（GDPR Article 15対応）
+
+**権限**: 認証済みユーザー（本人のみ）
 
 **リクエスト**:
 
 ```typescript
-interface UpdateConsentRequest {
-  tosAccepted: boolean;
-  tosVersion: string;  // 例: "1.0"
-  ppAccepted: boolean;
-  ppVersion: string;   // 例: "1.0"
+interface GetHistoryRequest {
+  startDate?: string;      // ISO 8601形式（例: "2025-01-01T00:00:00Z"）
+  endDate?: string;        // ISO 8601形式
+  consentType?: "tos" | "pp" | "marketing" | "all";  // フィルタ条件
+  limit?: number;          // 1ページあたりの件数（デフォルト: 20、最大: 100）
+  offset?: number;         // スキップ件数（ページネーション用）
 }
 ```
 
 **レスポンス**:
 
 ```typescript
-interface UpdateConsentResponse {
+interface GetHistoryResponse {
   success: true;
-  message: string;
+  data: {
+    history: Array<{
+      consentId: string;
+      consentType: "tos" | "pp" | "marketing";
+      version: string | null;
+      action: "accepted" | "revoked";
+      timestamp: string;     // ISO 8601形式
+      ipAddress: string | null;
+      userAgent: string | null;
+    }>;
+    total: number;           // 全件数
+    limit: number;
+    offset: number;
+    hasMore: boolean;        // 次のページが存在するか
+  };
 }
 ```
 
-#### 2. user_revokeConsent
+#### 2. consent_searchAuditLogs（監査ログ検索）
 
-**目的**: 同意撤回と強制ログアウト
+**目的**: 管理者向けの監査ログ複合検索（GDPR監査対応）
+
+**権限**: 管理者のみ（カスタムクレーム `admin: true`）
 
 **リクエスト**:
 
 ```typescript
-interface RevokeConsentRequest {
-  // リクエストボディなし
+interface SearchAuditLogsRequest {
+  userId?: string;         // 特定ユーザーの検索
+  startDate?: string;      // ISO 8601形式
+  endDate?: string;        // ISO 8601形式
+  action?: "accepted" | "revoked" | "all";
+  consentType?: "tos" | "pp" | "marketing" | "all";
+  exportFormat?: "json" | "csv";  // エクスポート形式
+  limit?: number;          // デフォルト: 50、最大: 500
+  offset?: number;
 }
 ```
 
 **レスポンス**:
 
 ```typescript
-interface RevokeConsentResponse {
+interface SearchAuditLogsResponse {
   success: true;
-  message: string;
-  forceLogout: true;
+  data: {
+    logs: Array<{
+      consentId: string;
+      userId: string;
+      consentType: "tos" | "pp" | "marketing";
+      version: string | null;
+      action: "accepted" | "revoked";
+      timestamp: string;
+      ipAddress: string | null;
+      userAgent: string | null;
+    }>;
+    total: number;
+    exportUrl?: string;    // CSV/JSONエクスポート時のダウンロードURL
+  };
+}
+```
+
+#### 3. consent_getStatistics（同意率統計）
+
+**目的**: 管理者向けの同意率統計レポート
+
+**権限**: 管理者のみ
+
+**リクエスト**:
+
+```typescript
+interface GetStatisticsRequest {
+  period: "daily" | "weekly" | "monthly";
+  startDate: string;       // ISO 8601形式
+  endDate: string;         // ISO 8601形式
+  consentType?: "tos" | "pp" | "marketing" | "all";
+}
+```
+
+**レスポンス**:
+
+```typescript
+interface GetStatisticsResponse {
+  success: true;
+  data: {
+    period: "daily" | "weekly" | "monthly";
+    statistics: Array<{
+      date: string;        // 期間の開始日
+      totalUsers: number;  // アクティブユーザー数
+      acceptedCount: number;
+      revokedCount: number;
+      acceptanceRate: number;  // 同意率（0-100%）
+    }>;
+    summary: {
+      totalAccepted: number;
+      totalRevoked: number;
+      averageAcceptanceRate: number;
+    };
+  };
 }
 ```
 
 ### 実装例
 
-#### user_updateConsent
+#### consent_getHistory（同意履歴一覧）
 
 ```typescript
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import * as admin from 'firebase-admin';
+// functions/src/api/consents/getHistory.ts
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { createLogger } from "../../utils/logger";
 
-export const user_updateConsent = onCall(async (request) => {
-  // 1. 認証チェック
+const logger = createLogger("consent_getHistory");
+
+interface GetHistoryRequest {
+  startDate?: string;
+  endDate?: string;
+  consentType?: "tos" | "pp" | "marketing" | "all";
+  limit?: number;
+  offset?: number;
+}
+
+export const consent_getHistory = onCall(async (request) => {
+  // 1. 認証チェック（本人のみ）
   if (!request.auth) {
-    throw new HttpsError('unauthenticated', '認証が必要です');
+    throw new HttpsError("unauthenticated", "認証が必要です");
   }
 
   const uid = request.auth.uid;
-  const { tosAccepted, tosVersion, ppAccepted, ppVersion } = request.data;
+  const data = request.data as GetHistoryRequest;
 
   // 2. バリデーション
-  if (typeof tosAccepted !== 'boolean' || typeof ppAccepted !== 'boolean') {
-    throw new HttpsError('invalid-argument', '同意フラグが無効です');
-  }
+  const limit = Math.min(data.limit || 20, 100);  // 最大100件
+  const offset = data.offset || 0;
 
-  if (!tosVersion || !ppVersion) {
-    throw new HttpsError('invalid-argument', 'バージョンが無効です');
-  }
+  logger.info("同意履歴取得リクエスト", { uid, limit, offset });
 
-  // 3. Usersコレクションを更新（Cloud Functionsのみ可能）
   const db = getFirestore();
-  const userRef = db.collection('users').doc(uid);
+  let query = db.collection("consents")
+    .where("userId", "==", uid)
+    .orderBy("timestamp", "desc");
 
-  await userRef.update({
-    tosAccepted,
-    tosAcceptedAt: tosAccepted ? FieldValue.serverTimestamp() : null,
-    tosVersion: tosAccepted ? tosVersion : null,
-    ppAccepted,
-    ppAcceptedAt: ppAccepted ? FieldValue.serverTimestamp() : null,
-    ppVersion: ppAccepted ? ppVersion : null,
-    updatedAt: FieldValue.serverTimestamp()
+  // 3. フィルタリング
+  if (data.consentType && data.consentType !== "all") {
+    query = query.where("consentType", "==", data.consentType);
+  }
+
+  if (data.startDate) {
+    query = query.where("timestamp", ">=", Timestamp.fromDate(new Date(data.startDate)));
+  }
+
+  if (data.endDate) {
+    query = query.where("timestamp", "<=", Timestamp.fromDate(new Date(data.endDate)));
+  }
+
+  // 4. 全件数を取得（ページネーション用）
+  const countSnapshot = await query.count().get();
+  const total = countSnapshot.data().count;
+
+  // 5. ページネーション
+  const snapshot = await query.offset(offset).limit(limit + 1).get();
+  const hasMore = snapshot.docs.length > limit;
+  const docs = hasMore ? snapshot.docs.slice(0, limit) : snapshot.docs;
+
+  // 6. レスポンス整形
+  const history = docs.map((doc) => {
+    const consentData = doc.data();
+    return {
+      consentId: doc.id,
+      consentType: consentData.consentType,
+      version: consentData.version,
+      action: consentData.action,
+      timestamp: consentData.timestamp?.toDate?.()?.toISOString() || null,
+      ipAddress: consentData.ipAddress,
+      userAgent: consentData.userAgent,
+    };
   });
 
-  // 4. Consentsコレクションに履歴を記録
-  await recordConsentHistory(uid, 'tos', tosVersion, tosAccepted, request);
-  await recordConsentHistory(uid, 'pp', ppVersion, ppAccepted, request);
-
-  console.log(`Consent updated: userId=${uid}, tosAccepted=${tosAccepted}, ppAccepted=${ppAccepted}`);
+  logger.info("同意履歴取得完了", { uid, count: history.length });
 
   return {
     success: true,
-    message: '同意情報を更新しました'
+    data: {
+      history,
+      total,
+      limit,
+      offset,
+      hasMore,
+    },
+  };
+});
+```
+
+#### consent_searchAuditLogs（監査ログ検索）
+
+```typescript
+// functions/src/api/consents/searchAuditLogs.ts
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { createLogger } from "../../utils/logger";
+
+const logger = createLogger("consent_searchAuditLogs");
+
+interface SearchAuditLogsRequest {
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+  action?: "accepted" | "revoked" | "all";
+  consentType?: "tos" | "pp" | "marketing" | "all";
+  exportFormat?: "json" | "csv";
+  limit?: number;
+  offset?: number;
+}
+
+export const consent_searchAuditLogs = onCall(async (request) => {
+  // 1. 管理者権限チェック
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "認証が必要です");
+  }
+
+  const claims = request.auth.token;
+  if (!claims.admin) {
+    throw new HttpsError("permission-denied", "管理者権限が必要です");
+  }
+
+  const data = request.data as SearchAuditLogsRequest;
+
+  // 2. バリデーション
+  const limit = Math.min(data.limit || 50, 500);  // 最大500件
+  const offset = data.offset || 0;
+
+  logger.info("監査ログ検索リクエスト", { adminUid: request.auth.uid, filters: data });
+
+  const db = getFirestore();
+  let query = db.collection("consents").orderBy("timestamp", "desc");
+
+  // 3. フィルタリング
+  if (data.userId) {
+    query = query.where("userId", "==", data.userId);
+  }
+
+  if (data.consentType && data.consentType !== "all") {
+    query = query.where("consentType", "==", data.consentType);
+  }
+
+  if (data.action && data.action !== "all") {
+    query = query.where("action", "==", data.action);
+  }
+
+  if (data.startDate) {
+    query = query.where("timestamp", ">=", Timestamp.fromDate(new Date(data.startDate)));
+  }
+
+  if (data.endDate) {
+    query = query.where("timestamp", "<=", Timestamp.fromDate(new Date(data.endDate)));
+  }
+
+  // 4. データ取得
+  const countSnapshot = await query.count().get();
+  const total = countSnapshot.data().count;
+
+  const snapshot = await query.offset(offset).limit(limit).get();
+
+  const logs = snapshot.docs.map((doc) => {
+    const logData = doc.data();
+    return {
+      consentId: doc.id,
+      userId: logData.userId,
+      consentType: logData.consentType,
+      version: logData.version,
+      action: logData.action,
+      timestamp: logData.timestamp?.toDate?.()?.toISOString() || null,
+      ipAddress: logData.ipAddress,
+      userAgent: logData.userAgent,
+    };
+  });
+
+  // 5. CSV/JSONエクスポート（オプション）
+  let exportUrl: string | undefined;
+  if (data.exportFormat) {
+    // TODO: Cloud Storageに保存してダウンロードURLを生成
+    exportUrl = undefined;  // 将来実装
+  }
+
+  logger.info("監査ログ検索完了", { total, returnedCount: logs.length });
+
+  return {
+    success: true,
+    data: {
+      logs,
+      total,
+      exportUrl,
+    },
+  };
+});
+```
+
+#### consent_getStatistics（同意率統計）
+
+```typescript
+// functions/src/api/consents/getStatistics.ts
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { createLogger } from "../../utils/logger";
+
+const logger = createLogger("consent_getStatistics");
+
+interface GetStatisticsRequest {
+  period: "daily" | "weekly" | "monthly";
+  startDate: string;
+  endDate: string;
+  consentType?: "tos" | "pp" | "marketing" | "all";
+}
+
+export const consent_getStatistics = onCall(async (request) => {
+  // 1. 管理者権限チェック
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "認証が必要です");
+  }
+
+  const claims = request.auth.token;
+  if (!claims.admin) {
+    throw new HttpsError("permission-denied", "管理者権限が必要です");
+  }
+
+  const data = request.data as GetStatisticsRequest;
+
+  logger.info("統計取得リクエスト", { period: data.period, startDate: data.startDate, endDate: data.endDate });
+
+  const db = getFirestore();
+  const startTimestamp = Timestamp.fromDate(new Date(data.startDate));
+  const endTimestamp = Timestamp.fromDate(new Date(data.endDate));
+
+  // 2. 期間内の全同意ログを取得
+  let query = db.collection("consents")
+    .where("timestamp", ">=", startTimestamp)
+    .where("timestamp", "<=", endTimestamp);
+
+  if (data.consentType && data.consentType !== "all") {
+    query = query.where("consentType", "==", data.consentType);
+  }
+
+  const snapshot = await query.get();
+
+  // 3. 期間ごとに集計
+  const statsMap = new Map<string, { accepted: number; revoked: number }>();
+
+  snapshot.docs.forEach((doc) => {
+    const logData = doc.data();
+    const timestamp = logData.timestamp?.toDate();
+    if (!timestamp) return;
+
+    // 期間キーを生成（daily: "2025-12-10", weekly: "2025-W50", monthly: "2025-12"）
+    const periodKey = getPeriodKey(timestamp, data.period);
+
+    const stats = statsMap.get(periodKey) || { accepted: 0, revoked: 0 };
+    if (logData.action === "accepted") {
+      stats.accepted++;
+    } else if (logData.action === "revoked") {
+      stats.revoked++;
+    }
+    statsMap.set(periodKey, stats);
+  });
+
+  // 4. レスポンス整形
+  const statistics = Array.from(statsMap.entries()).map(([date, stats]) => ({
+    date,
+    totalUsers: stats.accepted + stats.revoked,
+    acceptedCount: stats.accepted,
+    revokedCount: stats.revoked,
+    acceptanceRate: stats.accepted / (stats.accepted + stats.revoked) * 100,
+  }));
+
+  const totalAccepted = statistics.reduce((sum, s) => sum + s.acceptedCount, 0);
+  const totalRevoked = statistics.reduce((sum, s) => sum + s.revokedCount, 0);
+  const averageAcceptanceRate = totalAccepted / (totalAccepted + totalRevoked) * 100;
+
+  logger.info("統計取得完了", { totalAccepted, totalRevoked });
+
+  return {
+    success: true,
+    data: {
+      period: data.period,
+      statistics,
+      summary: {
+        totalAccepted,
+        totalRevoked,
+        averageAcceptanceRate,
+      },
+    },
   };
 });
 
 /**
- * 同意履歴を記録（不変ログ）
+ * タイムスタンプから期間キーを生成
  */
-async function recordConsentHistory(
-  userId: string,
-  consentType: 'tos' | 'pp',
-  version: string,
-  accepted: boolean,
-  request: any
-): Promise<void> {
-  const db = getFirestore();
+function getPeriodKey(date: Date, period: "daily" | "weekly" | "monthly"): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
-  await db.collection('consents').add({
-    userId,
-    consentType,
-    version,
-    action: accepted ? 'accepted' : 'revoked',
-    timestamp: FieldValue.serverTimestamp(),
-    ipAddress: request.rawRequest?.ip || null,
-    userAgent: request.rawRequest?.headers['user-agent'] || null
-  });
+  if (period === "daily") {
+    return `${year}-${month}-${day}`;
+  } else if (period === "weekly") {
+    // ISO週番号を計算
+    const weekNumber = getISOWeek(date);
+    return `${year}-W${String(weekNumber).padStart(2, "0")}`;
+  } else {
+    return `${year}-${month}`;
+  }
+}
+
+function getISOWeek(date: Date): number {
+  const target = new Date(date.valueOf());
+  const dayNumber = (date.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNumber + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
 }
 ```
 
-#### user_revokeConsent
+### データアクセスログ
+
+#### dataAccessLogsコレクションのスキーマ
 
 ```typescript
-export const user_revokeConsent = onCall(async (request) => {
-  // 1. 認証チェック
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', '認証が必要です');
-  }
+interface DataAccessLog {
+  logId: string;              // ログID
+  userId: string;             // アクセスされたユーザーID
+  accessedBy: string;         // アクセス実行者のユーザーID
+  accessType: "read" | "write" | "delete";  // アクセスタイプ
+  resource: string;           // アクセスされたリソース（例: "users", "sessions"）
+  resourceId: string;         // リソースのドキュメントID
+  timestamp: Timestamp;       // アクセス日時
+  ipAddress: string | null;   // IPアドレス
+  userAgent: string | null;   // ユーザーエージェント
+  purpose: string;            // アクセス目的（GDPR Article 15対応）
+}
+```
 
-  const uid = request.auth.uid;
+#### アクセスログ記録ミドルウェア
 
-  // 2. Usersコレクションで同意を撤回
+```typescript
+// functions/src/middleware/logDataAccess.ts
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+
+interface LogDataAccessParams {
+  userId: string;
+  accessedBy: string;
+  accessType: "read" | "write" | "delete";
+  resource: string;
+  resourceId: string;
+  purpose: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+export async function logDataAccess(params: LogDataAccessParams): Promise<void> {
   const db = getFirestore();
-  await db.collection('users').doc(uid).update({
-    tosAccepted: false,
-    tosAcceptedAt: null,
-    tosVersion: null,
-    ppAccepted: false,
-    ppAcceptedAt: null,
-    ppVersion: null,
-    forceLogout: true,
-    forceLogoutAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp()
-  });
 
-  // 3. Consentsコレクションに履歴を記録
-  await db.collection('consents').add({
-    userId: uid,
-    consentType: 'tos',
-    version: null,
-    action: 'revoked',
+  await db.collection("dataAccessLogs").add({
+    userId: params.userId,
+    accessedBy: params.accessedBy,
+    accessType: params.accessType,
+    resource: params.resource,
+    resourceId: params.resourceId,
     timestamp: FieldValue.serverTimestamp(),
-    ipAddress: request.rawRequest?.ip || null,
-    userAgent: request.rawRequest?.headers['user-agent'] || null
+    ipAddress: params.ipAddress || null,
+    userAgent: params.userAgent || null,
+    purpose: params.purpose,
   });
-
-  await db.collection('consents').add({
-    userId: uid,
-    consentType: 'pp',
-    version: null,
-    action: 'revoked',
-    timestamp: FieldValue.serverTimestamp(),
-    ipAddress: request.rawRequest?.ip || null,
-    userAgent: request.rawRequest?.headers['user-agent'] || null
-  });
-
-  // 4. リフレッシュトークンを無効化
-  await admin.auth().revokeRefreshTokens(uid);
-
-  // 5. カスタムクレームで強制ログアウト
-  await admin.auth().setCustomUserClaims(uid, {
-    forceLogout: true,
-    forceLogoutAt: Date.now()
-  });
-
-  console.log(`Consent revoked: userId=${uid}`);
-
-  return {
-    success: true,
-    message: '同意を撤回しました。即座にログアウトされます。',
-    forceLogout: true
-  };
-});
+}
 ```
 
 ### Firestoreセキュリティルール
 
-#### 同意フィールドの保護
-
-```javascript
-match /users/{userId} {
-  // 同意フィールドはCloud Functionsのみ変更可能
-  allow update: if request.auth != null
-                && request.auth.uid == userId
-                // 同意フィールドは変更禁止
-                && request.resource.data.tosAccepted == resource.data.tosAccepted
-                && request.resource.data.tosAcceptedAt == resource.data.tosAcceptedAt
-                && request.resource.data.tosVersion == resource.data.tosVersion
-                && request.resource.data.ppAccepted == resource.data.ppAccepted
-                && request.resource.data.ppAcceptedAt == resource.data.ppAcceptedAt
-                && request.resource.data.ppVersion == resource.data.ppVersion;
-}
-```
-
-#### Consentsコレクションの保護
+#### Consentsコレクションの読み取り権限（変更なし）
 
 ```javascript
 match /consents/{consentId} {
@@ -273,27 +612,62 @@ match /consents/{consentId} {
 }
 ```
 
-### クライアント側の実装例
+#### dataAccessLogsコレクションの保護
 
-#### 強制ログアウトの検出
+```javascript
+match /dataAccessLogs/{logId} {
+  // 本人のみ読み取り可能
+  allow read: if request.auth != null
+              && (resource.data.userId == request.auth.uid
+                  || resource.data.accessedBy == request.auth.uid);
 
-```typescript
-// Expo/React Native
-import { getAuth, onIdTokenChanged } from 'firebase/auth';
+  // 書き込みはCloud Functionsのみ
+  allow write: if false;
+}
+```
 
-const auth = getAuth();
+### 必要なFirestoreインデックス
 
-onIdTokenChanged(auth, async (user) => {
-  if (user) {
-    const idTokenResult = await user.getIdTokenResult();
+チケット020の実装には以下の複合インデックスが必要です：
 
-    if (idTokenResult.claims.forceLogout) {
-      // 強制ログアウト
-      await auth.signOut();
-      alert('同意が撤回されたため、ログアウトしました。');
+```json
+{
+  "indexes": [
+    {
+      "collectionGroup": "consents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "consents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "consentType", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "consents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "action", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "dataAccessLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
     }
-  }
-});
+  ]
+}
 ```
 
 ### エラーハンドリング
@@ -301,28 +675,26 @@ onIdTokenChanged(auth, async (user) => {
 | エラーコード | 発生条件 | HTTPステータス |
 |------------|---------|---------------|
 | `unauthenticated` | 認証されていない | 401 |
+| `permission-denied` | 管理者権限がない | 403 |
 | `invalid-argument` | バリデーションエラー | 400 |
+| `not-found` | データが見つからない | 404 |
 | `internal` | Firestore更新エラー | 500 |
 
-### GDPR監査証跡
+### レート制限
 
-#### Consentsコレクションの照会
-
-```typescript
-// 特定ユーザーの同意履歴を取得
-async function getConsentHistory(userId: string) {
-  const snapshot = await db.collection('consents')
-    .where('userId', '==', userId)
-    .orderBy('timestamp', 'desc')
-    .get();
-
-  return snapshot.docs.map(doc => doc.data());
-}
-```
+| API | 制限 | 時間窓 |
+|-----|------|--------|
+| consent_getHistory | 60回 | 1時間/ユーザー |
+| consent_searchAuditLogs | 30回 | 1時間/管理者 |
+| consent_getStatistics | 20回 | 1時間/管理者 |
 
 ## 見積もり
 
-- 工数: 2日
+- 工数: 3日
+  - 同意履歴一覧API実装: 0.5日
+  - 監査ログ検索API実装: 1日
+  - データアクセスログ実装: 1日
+  - 統計レポートAPI実装: 0.5日
 - 難易度: 中
 
 ## 進捗
@@ -335,12 +707,30 @@ async function getConsentHistory(userId: string) {
 
 ## 備考
 
-- IPアドレスの記録はGDPR監査用（同意取得の証明）
-- Consentsコレクションは削除不可（不変ログ）
-- 同意撤回後も履歴は保持（法的義務）
+### チケット006との関係
+- **前提条件**: チケット006（GDPR同意管理API）が完了していること
+- **依存関係**: チケット006のConsentsコレクションを拡張利用
+- **重複排除**: 基本的な同意記録・撤回・状態取得はチケット006で実装済み
+
+### GDPR準拠のポイント
+- **Article 7（同意の条件）**: 同意履歴の透明性を確保
+- **Article 15（アクセス権）**: ユーザーが自身の同意履歴にアクセス可能
+- **監査証跡**: 管理者向けの監査ログ検索機能（コンプライアンス対応）
+- **データ保持期間**: Consentsコレクションは削除不可（法的義務）
+
+### セキュリティ上の注意
+- 管理者権限チェックは必須（カスタムクレーム `admin: true`）
+- データアクセスログは本人と管理者のみアクセス可能
+- IPアドレス・ユーザーエージェントの記録はGDPR監査用
+
+### 将来的な拡張
+- CSV/JSONエクスポート機能（Cloud Storage連携）
+- BigQueryへの同意データストリーミング（分析用）
+- 撤回理由の詳細分析（ユーザー体験改善）
 
 ## 変更履歴
 
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | チケット006との重複解消、拡張機能として再定義 |

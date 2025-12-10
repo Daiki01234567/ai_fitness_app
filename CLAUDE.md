@@ -38,6 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | セキュリティ | `08_セキュリティポリシー_v1_0.md` | セキュリティ要件 |
 | 法務 | `09_利用規約_v1_0.md` | 利用規約（5種目対応） |
 | 法務 | `10_プライバシーポリシー_v1_0.md` | プライバシーポリシー |
+| UI | `11_画面遷移図_ワイヤーフレーム_v1_0.md` | 15画面の遷移とUI設計（Expo/Flutter共通） |
 
 ### Expo固有仕様書（`docs/expo/specs`）
 Expo/React Native固有の技術スタックと開発計画
@@ -46,7 +47,6 @@ Expo/React Native固有の技術スタックと開発計画
 |---------|---------|------|
 | 技術 | `01_技術スタック_v1_0.md` | Zustand, Expo Router, React Native Paper, MediaPipe統合 |
 | 開発 | `02_開発計画_v1_0.md` | Phase 1-5詳細タスク、週次スケジュール、マイルストーン |
-| UI | `07_画面遷移図_ワイヤーフレーム_v1_0.md` | 15画面の遷移とUI設計 |
 
 ### Flutter固有仕様書（`docs/flutter/specs`）
 Flutter/Dart固有の技術スタックと開発計画
@@ -222,11 +222,13 @@ setGlobalOptions({
    **Expo版**:
    - `docs/expo/specs/01_技術スタック_v1_0.md` → 使用ライブラリ、MediaPipe統合
    - `docs/expo/specs/02_開発計画_v1_0.md` → Phase、マイルストーン
-   - `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` → UI設計
 
    **Flutter版**:
    - `docs/flutter/specs/01_技術スタック_v1_0.md` → Riverpod, GoRouter, google_mlkit_pose_detection
    - `docs/flutter/specs/02_開発計画_v1_0.md` → Phase、マイルストーン
+
+   **UI設計（共通）**:
+   - `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` → 15画面の遷移とUI設計
 
 3. **必要に応じて専門ドキュメント参照**:
    - `docs/common/specs/06_フォーム評価ロジック_v1_0.md` → MediaPipe姿勢検出ロジック
@@ -339,12 +341,32 @@ Cloud Function
 
 ## タスク管理とチケット運用
 
-開発タスクは `docs/expo/tickets/` ディレクトリに番号付きマークダウンファイル（000-071）として管理。
+開発タスクは3つのプラットフォーム別にチケット管理されています。
 
-**進捗管理**:
-- チケット内のTodoアイテムは `[ ]` → `[x]` で完了マーク
-- 作業完了後は即座に更新
-- `000-ticket-overview.md` で全体進捗を確認
+### チケットディレクトリ構成
+
+| プラットフォーム | ディレクトリ | 概要ファイル |
+|-----------------|-------------|-------------|
+| Common（共通バックエンド） | `docs/common/tickets/` | `000-ticket-overview.md` |
+| Expo版（フロントエンド） | `docs/expo/tickets/` | `000-ticket-overview.md` |
+| Flutter版（フロントエンド） | `docs/flutter/tickets/` | `000-ticket-overview.md` |
+
+### Phase構成
+
+各プラットフォームは4つのPhaseで構成されています：
+
+| Phase | 期間 | チケット範囲 | 目標 |
+|-------|------|------------|------|
+| Phase 1 | 0-2ヶ月 | 001-010 | 基盤構築 |
+| Phase 2 | 2-7ヶ月 | 011-030 | コア機能実装 |
+| Phase 3 | 8ヶ月目以降 | 031-040 | 課金機能 |
+| Phase 4 | 将来 | 041-050 | 管理者機能 |
+
+### 進捗管理ルール
+
+- チケット概要は各ディレクトリの `000-ticket-overview.md` を正として参照
+- Todoアイテムは `[ ]` → `[x]` で完了マーク
+- 作業完了後は即座にチケットファイルを更新
 
 ## 開発上の制約
 

@@ -40,7 +40,7 @@ Expo（フロントエンド）
 ## 参照ドキュメント
 
 - `docs/expo/specs/01_技術スタック_v1_0.md` - Expo Router使用方法
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - 画面遷移設計
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - 画面遷移設計
 - Expo Router公式ドキュメント: https://docs.expo.dev/router/introduction/
 
 ## 技術詳細

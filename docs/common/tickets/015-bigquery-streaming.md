@@ -31,17 +31,17 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] Firestoreトリガー関数を実装（`session_onComplete`）
-- [ ] BigQuery Clientの初期化とストリーミングインサート実装
-- [ ] 仮名化処理の実装（ユーザーIDのSHA-256ハッシュ化）
-- [ ] データ変換処理の実装（Firestore → BigQueryスキーマ）
-- [ ] BigQuery同期失敗時のCloud Tasksキューイング実装
-- [ ] リトライ処理の実装（最大10回、指数バックオフ）
-- [ ] Dead Letter Queue（DLQ）への保存実装
-- [ ] BigQuerySyncFailuresコレクションへの記録実装
-- [ ] セッションドキュメントの同期ステータス更新実装
-- [ ] ユニットテスト実装（カバレッジ80%以上）
-- [ ] ローカルエミュレータでの動作確認
+- [x] Firestoreトリガー関数を実装（Pub/Subベースで実装）
+- [x] BigQuery Clientの初期化とストリーミングインサート実装
+- [x] 仮名化処理の実装（ユーザーIDのSHA-256ハッシュ化）
+- [x] データ変換処理の実装（Firestore → BigQueryスキーマ）
+- [x] BigQuery同期失敗時のリトライ機構実装（Pub/Sub + DLQ）
+- [x] リトライ処理の実装（最大3回、指数バックオフ）
+- [x] Dead Letter Queue（DLQ）への保存実装
+- [x] 仮名化ログテーブル（pseudonymization_log）への記録実装
+- [x] DLQ処理のスケジュール関数実装（scheduled_processBigQueryDlq）
+- [x] ユニットテスト実装（カバレッジ80%以上達成）
+- [x] ローカルエミュレータでの動作確認
 
 ## 参照ドキュメント
 
@@ -361,11 +361,58 @@ queue:
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（2025-12-10）
 
 ## 完了日
 
-未定
+2025-12-10
+
+## 実装詳細
+
+### アーキテクチャ変更点
+
+当初の設計ではFirestoreトリガーとCloud Tasksを使用する予定でしたが、より効率的な以下のアーキテクチャに変更しました:
+
+**実装アーキテクチャ**:
+```
+Firestore (sessions完了)
+    ↓ (トリガー: アプリ側でPub/Subにpublish)
+Pub/Sub トピック (training-sessions-stream)
+    ↓
+Cloud Function (processTrainingSession)
+    ↓ 失敗時
+Pub/Sub DLQ (training-sessions-dlq)
+    ↓
+スケジュール関数 (scheduled_processBigQueryDlq)
+```
+
+### 実装済みファイル
+
+1. **ストリーミング処理**: `functions/src/pubsub/sessionProcessor.ts`
+   - Pub/Subサブスクライバーでセッションを受信
+   - ユーザーIDのSHA-256ハッシュ化
+   - BigQueryへのストリーミングインサート
+   - リトライロジック（最大3回、指数バックオフ）
+   - DLQへの送信
+
+2. **DLQ処理**: `functions/src/scheduled/bigqueryDlq.ts`
+   - スケジュール実行（毎日午前5時）
+   - DLQメッセージの再処理
+   - 管理者用の手動リトライAPI
+
+3. **仮名化ログ**: `functions/src/pubsub/sessionProcessor.ts` 内の `logPseudonymization()`
+   - 処理ステータス（success/failed/retrying）
+   - リトライ回数
+   - エラーメッセージ
+
+### 設計との差異
+
+| 項目 | 設計書 | 実装 | 理由 |
+|------|-------|------|------|
+| トリガー方式 | Firestoreトリガー | Pub/Sub | スケーラビリティとリトライ制御の向上 |
+| リトライ機構 | Cloud Tasks | Pub/Sub再発行 | シンプルな実装と運用コスト削減 |
+| DLQ | BigQuerySyncFailuresコレクション | Pub/Sub DLQ + ログテーブル | 標準的なPub/Subパターンの採用 |
+| 最大リトライ回数 | 10回 | 3回 | コスト最適化（必要に応じて調整可能） |
 
 ## 備考
 

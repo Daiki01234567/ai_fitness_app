@@ -43,7 +43,7 @@ expo（フロントエンド）
 - `docs/common/specs/02-1_機能要件_v1_0.md` - FR-001, FR-014
 - `docs/common/specs/02-2_非機能要件_v1_0.md` - NFR-026, NFR-028
 - `docs/common/specs/01_プロジェクト概要_v1_0.md` - 5種目定義
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - メニュー選択画面UI
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - メニュー選択画面UI
 
 ## 技術詳細
 

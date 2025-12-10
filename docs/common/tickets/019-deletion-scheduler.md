@@ -30,14 +30,14 @@ common（バックエンド共通）
 ## 受け入れ条件（Todo）
 
 - [ ] Cloud Scheduler設定（毎日午前4時UTC実行）
-- [ ] `gdpr_executeScheduledDeletions` Scheduled Functionを実装
-- [ ] 削除予定日を過ぎたユーザーの検索実装
-- [ ] Firestoreからユーザーデータ完全削除実装（サブコレクション含む）
-- [ ] BigQueryから仮名化データ削除実装
-- [ ] Firebase Authenticationからアカウント削除実装
-- [ ] DataDeletionRequestsのステータス更新実装（'completed'）
-- [ ] 削除失敗時のリトライ機構実装
-- [ ] 削除処理のログ出力実装（監査用）
+- [x] `gdpr_executeScheduledDeletions` Scheduled Functionを実装
+- [x] 削除予定日を過ぎたユーザーの検索実装
+- [x] Firestoreからユーザーデータ完全削除実装（サブコレクション含む）
+- [x] BigQueryから仮名化データ削除実装
+- [x] Firebase Authenticationからアカウント削除実装
+- [x] DataDeletionRequestsのステータス更新実装（'completed'）
+- [x] 削除失敗時のリトライ機構実装
+- [x] 削除処理のログ出力実装（監査用）
 - [ ] ユニットテスト実装（カバレッジ80%以上）
 - [ ] ステージング環境でのテスト実行
 
@@ -292,20 +292,24 @@ async function executeScheduledDeletions(): Promise<void> {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（スケジューラ設定・テスト以外）
 
 ## 完了日
 
-未定
+2025-12-10（Cloud Tasksによる削除処理実装完了、スケジューラ設定除く）
 
 ## 備考
 
 - 削除前にバックアップを取得する仕組みは別途検討（チケット030）
 - Stripe顧客情報の削除はWebhook経由で実施（課金機能実装時に対応）
 - 削除処理の監査ログはCloud Loggingに永続保存
+- 現在の実装はCloud Tasksベースで、gdpr_processDataDeletionがタスクとして実行される
+- Storage削除、BigQuery削除、削除証明書生成まで含む完全な削除処理を実装済み
+- scheduled/index.ts ではまだコメントアウト状態（Cloud Scheduler設定待ち）
 
 ## 変更履歴
 
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | データ削除処理実装完了（Cloud Tasks版、Storage・BigQuery・Auth削除含む） |

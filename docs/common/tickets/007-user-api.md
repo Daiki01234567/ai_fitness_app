@@ -32,18 +32,18 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] user_getProfile API を実装
-  - [ ] ユーザー情報を取得
-  - [ ] 存在しないユーザーのエラーハンドリング
-  - [ ] 削除予定ユーザーでも取得可能（読み取り専用）
-- [ ] user_updateProfile API を実装
-  - [ ] プロフィール情報の更新
-  - [ ] 部分更新に対応（指定したフィールドのみ更新）
-  - [ ] バリデーション（身長・体重の範囲チェック等）
-  - [ ] 削除予定ユーザーは更新不可
-- [ ] プロフィール画像URL管理を実装
-  - [ ] photoURLの更新
-  - [ ] Storage連携（画像アップロードはクライアント側）
+- [x] user_getProfile API を実装
+  - [x] ユーザー情報を取得
+  - [x] 存在しないユーザーのエラーハンドリング
+  - [x] 削除予定ユーザーでも取得可能（読み取り専用）
+- [x] user_updateProfile API を実装
+  - [x] プロフィール情報の更新
+  - [x] 部分更新に対応（指定したフィールドのみ更新）
+  - [x] バリデーション（身長・体重の範囲チェック等）
+  - [x] 削除予定ユーザーは更新不可
+- [x] プロフィール画像URL管理を実装
+  - [x] photoURLの更新
+  - [x] Storage連携（画像アップロードはクライアント側）
 - [ ] ユニットテストを作成
 - [ ] エミュレータでテストが通ることを確認
 
@@ -290,7 +290,7 @@ export function validateProfile(profile: Partial<ProfileInput>): ValidationResul
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（テスト以外）
 
 ## 備考
 
@@ -303,3 +303,4 @@ export function validateProfile(profile: Partial<ProfileInput>): ValidationResul
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | ユーザーAPI実装完了（updateProfile、バリデーション含む） |

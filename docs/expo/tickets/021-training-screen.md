@@ -49,7 +49,7 @@ expo（フロントエンド）
 - `docs/common/specs/02-1_機能要件_v1_0.md` - FR-004, FR-005
 - `docs/common/specs/02-2_非機能要件_v1_0.md` - NFR-024, NFR-025
 - `docs/common/specs/06_フォーム評価ロジック_v1_0.md` - MediaPipe統合詳細
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - トレーニング実行画面UI設計
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - トレーニング実行画面UI設計
 
 ## 技術詳細
 

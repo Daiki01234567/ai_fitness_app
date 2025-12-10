@@ -30,15 +30,15 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `gdpr_requestAccountDeletion` Callable Functionを実装
-- [ ] `gdpr_cancelAccountDeletion` Callable Functionを実装
-- [ ] 削除リクエスト時の処理実装（deletionScheduled=true、scheduledDeletionDate=+30日）
-- [ ] DataDeletionRequestsコレクションへの記録実装
-- [ ] キャンセル時の処理実装（deletionScheduled=false、status='cancelled'）
-- [ ] 削除予定ユーザーのアクセス制御実装（読み取り専用）
+- [x] `gdpr_requestAccountDeletion` Callable Functionを実装
+- [x] `gdpr_cancelAccountDeletion` Callable Functionを実装
+- [x] 削除リクエスト時の処理実装（deletionScheduled=true、scheduledDeletionDate=+30日）
+- [x] DataDeletionRequestsコレクションへの記録実装
+- [x] キャンセル時の処理実装（deletionScheduled=false、status='cancelled'）
+- [x] 削除予定ユーザーのアクセス制御実装（読み取り専用）
 - [ ] メール通知実装（削除リクエスト、キャンセル確認）
-- [ ] レート制限（3回/月）を実装
-- [ ] エラーハンドリング実装
+- [x] レート制限（3回/月）を実装
+- [x] エラーハンドリング実装
 - [ ] ユニットテスト実装（カバレッジ80%以上）
 - [ ] ローカルエミュレータでの動作確認
 
@@ -322,11 +322,11 @@ async function sendDeletionRequestEmail(email: string, deletionDate: Date) {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（メール通知・テスト以外）
 
 ## 完了日
 
-未定
+2025-12-10（メール通知・テスト除く）
 
 ## 備考
 
@@ -339,3 +339,4 @@ async function sendDeletionRequestEmail(email: string, deletionDate: Date) {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | GDPR削除リクエストAPI実装完了（requestAccountDeletion, cancelDeletion含む） |

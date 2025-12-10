@@ -40,7 +40,7 @@ expo（フロントエンド）
 ## 参照ドキュメント
 
 - `docs/common/specs/02-1_機能要件_v1_0.md` - FR-008
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - グラフ画面UI設計
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - グラフ画面UI設計
 
 ## 技術詳細
 

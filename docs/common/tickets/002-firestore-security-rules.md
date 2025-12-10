@@ -33,14 +33,14 @@ common（バックエンド共通）
 ## 受け入れ条件（Todo）
 
 - [x] usersコレクションの基本ルール（本人のみ読み書き）を実装
-- [ ] usersコレクションのフィールドレベル制御を実装
-  - [ ] tosAccepted, ppAccepted は読み取り専用
-  - [ ] deletionScheduled はCloud Functionsのみ変更可能
-- [ ] sessionsサブコレクションのルールを実装
-- [ ] consentsコレクションのルール（本人読み取り専用、作成はCloud Functionsのみ）を実装
-- [ ] dataDeletionRequestsコレクションのルールを実装
-- [ ] bigquerySyncFailuresコレクションのルール（管理者のみ）を実装
-- [ ] 削除予定ユーザーの書き込み禁止ルールを実装
+- [x] usersコレクションのフィールドレベル制御を実装
+  - [x] tosAccepted, ppAccepted は読み取り専用
+  - [x] deletionScheduled はCloud Functionsのみ変更可能
+- [x] sessionsサブコレクションのルールを実装
+- [x] consentsコレクションのルール（本人読み取り専用、作成はCloud Functionsのみ）を実装
+- [x] dataDeletionRequestsコレクションのルールを実装
+- [x] bigquerySyncFailuresコレクションのルール（管理者のみ）を実装
+- [x] 削除予定ユーザーの書き込み禁止ルールを実装
 - [ ] セキュリティルールのユニットテストを作成
 - [ ] エミュレータでテストが全て通ることを確認
 
@@ -229,7 +229,7 @@ describe("Firestore Security Rules", () => {
 
 ## 進捗
 
-- [ ] 進行中
+- [x] 完了（テスト以外）
 
 ## 備考
 
@@ -242,3 +242,4 @@ describe("Firestore Security Rules", () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | セキュリティルール実装完了（578行、フィールドレベル制御含む）|

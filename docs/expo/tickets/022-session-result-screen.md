@@ -42,7 +42,7 @@ expo（フロントエンド）
 
 - `docs/common/specs/02-1_機能要件_v1_0.md` - FR-007
 - `docs/common/specs/03_Firestoreデータベース設計書_v1_0.md` - Sessionsコレクション
-- `docs/expo/specs/07_画面遷移図_ワイヤーフレーム_v1_0.md` - セッション結果画面UI設計
+- `docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md` - セッション結果画面UI設計
 
 ## 技術詳細
 

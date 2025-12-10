@@ -120,11 +120,108 @@ export enum LandmarkIndex {
 }
 ```
 
+### 信頼度閾値設定
+
+骨格検出の品質を確保するため、ランドマークの信頼度（visibility）に基づいてフィルタリングを行います。
+
+#### ランドマーク信頼度レベル
+
+| 信頼度レベル | 閾値 | 用途 | 説明 |
+|------------|------|------|------|
+| **高信頼度** | >= 0.8 | フォーム評価に使用 | 正確な角度計算が可能、評価ロジックに利用 |
+| **中信頼度** | >= 0.5 | 表示のみ | 骨格の可視化には使用するが、評価には使用しない |
+| **低信頼度** | < 0.5 | 非表示 | 検出精度が低いため非表示、ユーザーに姿勢調整を促す |
+
+#### 信頼度フィルタリング実装
+
+```typescript
+/**
+ * 可視性に基づいてランドマークをフィルタリング
+ * @param landmarks 検出されたランドマーク配列
+ * @param threshold 信頼度閾値（デフォルト: 0.5）
+ * @returns フィルタリング済みランドマーク配列
+ */
+function filterVisibleLandmarks(
+  landmarks: PoseLandmark[],
+  threshold: number = 0.5
+): PoseLandmark[] {
+  return landmarks.filter(landmark =>
+    landmark.visibility !== undefined && landmark.visibility >= threshold
+  );
+}
+
+/**
+ * フォーム評価用の高信頼度ランドマークのみを取得
+ * @param landmarks 検出されたランドマーク配列
+ * @returns 高信頼度ランドマーク配列
+ */
+function getHighConfidenceLandmarks(
+  landmarks: PoseLandmark[]
+): PoseLandmark[] {
+  return filterVisibleLandmarks(landmarks, 0.8);
+}
+
+/**
+ * 特定の関節点が評価可能かチェック
+ * @param landmarks ランドマーク配列
+ * @param indices チェックする関節点のインデックス配列
+ * @returns true: 全て高信頼度、false: 一部または全部が低信頼度
+ */
+function areJointsVisible(
+  landmarks: PoseLandmark[],
+  indices: number[]
+): boolean {
+  return indices.every(index => {
+    const landmark = landmarks[index];
+    return landmark && landmark.visibility >= 0.8;
+  });
+}
+
+// 使用例: スクワット評価に必要な関節点の信頼度チェック
+const requiredJoints = [
+  LandmarkIndex.LEFT_HIP,
+  LandmarkIndex.RIGHT_HIP,
+  LandmarkIndex.LEFT_KNEE,
+  LandmarkIndex.RIGHT_KNEE,
+  LandmarkIndex.LEFT_ANKLE,
+  LandmarkIndex.RIGHT_ANKLE,
+];
+
+if (!areJointsVisible(landmarks, requiredJoints)) {
+  // ユーザーに姿勢調整を促すメッセージを表示
+  showFeedback('全身が映るように調整してください');
+}
+```
+
+#### ユーザーフィードバック戦略
+
+低信頼度ランドマークが検出された場合、以下のフィードバックをユーザーに提供します:
+
+1. **全身が映っていない場合**
+   - メッセージ: 「全身が映るようにカメラを調整してください」
+   - 条件: 下半身（腰、膝、足首）の信頼度 < 0.5
+
+2. **照明が不足している場合**
+   - メッセージ: 「明るい場所に移動してください」
+   - 条件: 全体的に信頼度が低い（平均 < 0.6）
+
+3. **カメラが遠すぎる/近すぎる場合**
+   - メッセージ: 「カメラとの距離を調整してください」
+   - 条件: 身体の一部のみが高信頼度
+
+4. **動きが速すぎる場合**
+   - メッセージ: 「ゆっくりとした動作で行ってください」
+   - 条件: フレーム間の信頼度変動が大きい
+
 ### PoseDetectorクラス
 
 ```typescript
 export class PoseDetector {
-  private visibilityThreshold: number = 0.5;
+  // 信頼度閾値の定義
+  private readonly VISIBILITY_THRESHOLD_HIGH = 0.8;  // フォーム評価用
+  private readonly VISIBILITY_THRESHOLD_LOW = 0.5;   // 表示用
+  private consecutiveLowConfidenceFrames = 0;
+  private readonly MAX_LOW_CONFIDENCE_FRAMES = 30;   // 約1秒（30fps想定）
 
   async detectPose(frame: Frame): Promise<PoseDetectionResult | null> {
     try {
@@ -134,13 +231,35 @@ export class PoseDetector {
         return null;
       }
 
-      // 信頼度でフィルタリング
-      const filteredLandmarks = result.landmarks.filter(
-        (landmark) => landmark.visibility >= this.visibilityThreshold
+      // 表示用フィルタリング（信頼度 >= 0.5）
+      const visibleLandmarks = result.landmarks.filter(
+        (landmark) => landmark.visibility >= this.VISIBILITY_THRESHOLD_LOW
       );
 
+      // フォーム評価用フィルタリング（信頼度 >= 0.8）
+      const evaluatableLandmarks = result.landmarks.filter(
+        (landmark) => landmark.visibility >= this.VISIBILITY_THRESHOLD_HIGH
+      );
+
+      // 平均信頼度の計算
+      const avgConfidence = this.calculateAverageConfidence(result.landmarks);
+
+      // 低信頼度フレームのカウント
+      if (avgConfidence < this.VISIBILITY_THRESHOLD_LOW) {
+        this.consecutiveLowConfidenceFrames++;
+
+        // 連続して低信頼度が続く場合、ユーザーに警告
+        if (this.consecutiveLowConfidenceFrames >= this.MAX_LOW_CONFIDENCE_FRAMES) {
+          this.emitLowConfidenceWarning(avgConfidence);
+        }
+      } else {
+        this.consecutiveLowConfidenceFrames = 0;
+      }
+
       return {
-        landmarks: filteredLandmarks,
+        landmarks: visibleLandmarks,
+        evaluatableLandmarks: evaluatableLandmarks,
+        avgConfidence: avgConfidence,
         timestamp: Date.now(),
         fps: this.calculateFPS(),
       };
@@ -150,9 +269,38 @@ export class PoseDetector {
     }
   }
 
+  /**
+   * ランドマークの平均信頼度を計算
+   */
+  private calculateAverageConfidence(landmarks: Landmark[]): number {
+    const sum = landmarks.reduce((acc, landmark) => acc + landmark.visibility, 0);
+    return sum / landmarks.length;
+  }
+
+  /**
+   * 低信頼度警告を発行
+   */
+  private emitLowConfidenceWarning(avgConfidence: number): void {
+    console.warn(`[PoseDetector] 低信頼度が継続: ${avgConfidence.toFixed(2)}`);
+    // イベントを発行してUIに通知
+    // eventEmitter.emit('lowConfidence', { avgConfidence });
+  }
+
   private calculateFPS(): number {
     // FPS計算ロジック（011で実装済み）
   }
+}
+```
+
+#### 拡張されたデータ構造
+
+```typescript
+export interface PoseDetectionResult {
+  landmarks: Landmark[];              // 表示用ランドマーク（信頼度 >= 0.5）
+  evaluatableLandmarks: Landmark[];   // 評価用ランドマーク（信頼度 >= 0.8）
+  avgConfidence: number;              // 平均信頼度
+  timestamp: number;                  // タイムスタンプ
+  fps: number;                        // 現在のFPS
 }
 ```
 

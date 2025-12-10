@@ -165,17 +165,55 @@ Flutter版の開発は4つのPhaseに分かれています。
 
 ---
 
-## 4. Commonチケットへの依存関係
+## 4. Commonバックエンドとの依存関係
 
-Flutter版のチケットは、Common（共通バックエンド）のチケット完了を待つ必要がある場合があります。
+Flutter版のチケットは、Common（共通バックエンド）のチケット完了に依存しています。
+詳細は `docs/common/tickets/000-ticket-overview.md` の「フロントエンドチケットとの依存関係」セクションを参照してください。
 
-| Flutterチケット | 依存するCommonチケット | 説明 |
-|----------------|---------------------|------|
-| flutter/006 | common/002 | Security Rules完了後に認証画面のテストが可能 |
-| flutter/006 | common/003 | Firebase Auth統合完了後に認証画面が動作 |
-| flutter/024 | common/011-014 | セッションAPI完了後に履歴画面の実装が可能 |
-| flutter/032 | common/031 | Stripe Backend完了後にフロントエンド実装が可能 |
-| flutter/041 | common/041 | 管理者認証API完了後にダッシュボード実装が可能 |
+### 主要な依存関係
+
+| Flutterチケット | 依存するCommonチケット | Common状態 | 説明 |
+|----------------|---------------------|-----------|------|
+| flutter/001 Firebase接続設定 | common/001 Firebase環境確認 | ✅ 完了 | Firebase基盤完了後にフロントエンド接続設定が可能 |
+| flutter/006 認証画面 | common/002 Firestore Security Rules | 🔄 進行中 | Security Rules完了後に認証画面のテストが可能 |
+| flutter/006 認証画面 | common/003 Cloud Functions基盤 | ✅ 完了 | Functions基盤完了後に認証機能が動作 |
+| flutter/006 認証画面 | common/004 認証トリガー実装 | ✅ 完了 | 認証トリガー完了後にユーザー作成・削除が可能 |
+| flutter/007 利用規約同意画面 | common/006 GDPR同意管理API | ⏳ 未着手 | 同意管理API完了後に利用規約画面が実装可能 |
+| flutter/009 プロフィール画面 | common/007 ユーザーAPI | ⏳ 未着手 | ユーザーAPI完了後にプロフィール画面が実装可能 |
+| flutter/024 履歴画面実装 | common/011-014 セッションAPI群 | ⏳ 未着手 | セッションAPI完了後に履歴画面が実装可能 |
+| flutter/027 設定画面 | common/018 GDPR削除リクエストAPI | ⏳ 未着手 | 削除リクエストAPI完了後に削除機能が実装可能 |
+| flutter/027 設定画面 | common/020 GDPR同意追跡API | ⏳ 未着手 | 同意追跡API完了後に同意管理機能が実装可能 |
+| flutter/027 設定画面 | common/025 設定保存API | ⏳ 未着手 | 設定API完了後に設定保存機能が実装可能 |
+| flutter/028 通知設定機能 | common/022 プッシュ通知トリガー | ⏳ 未着手 | 通知トリガー完了後に通知機能が実装可能 |
+| flutter/028 通知設定機能 | common/023 プッシュ通知スケジューラ | ⏳ 未着手 | スケジューラ完了後に定期通知が可能 |
+| flutter/028 通知設定機能 | common/026 通知設定API | ⏳ 未着手 | 通知設定API完了後に通知設定画面が実装可能 |
+| flutter/029 ヘルプセンター | common/024 ユーザーフィードバックAPI | ⏳ 未着手 | フィードバックAPI完了後にフィードバック送信が可能 |
+| flutter/032 Stripe Payment Sheet | common/031 Stripe統合基盤 | ⏳ Phase 3 | Stripe Backend完了後にフロント実装が可能 |
+| flutter/033 課金画面 | common/032 サブスクリプション作成API | ⏳ Phase 3 | 作成API完了後に課金画面が実装可能 |
+| flutter/034 サブスクリプション管理 | common/033-034 サブスク確認・更新API | ⏳ Phase 3 | 確認・更新API完了後にサブスク管理画面が実装可能 |
+| flutter/035 無料トライアル機能 | common/036 無料トライアル管理API | ⏳ Phase 3 | トライアルAPI完了後にトライアル機能が実装可能 |
+| flutter/036 課金履歴画面 | common/039 課金履歴API | ⏳ Phase 3 | 履歴API完了後に課金履歴画面が実装可能 |
+| flutter/041 管理者ダッシュボード | common/041 管理者認証API | ⏳ Phase 4 | 管理者認証API完了後にダッシュボード実装が可能 |
+| flutter/041 管理者ダッシュボード | common/045-047 統計・監視・ログAPI | ⏳ Phase 4 | 各API完了後にダッシュボード機能が実装可能 |
+| flutter/042 ユーザー管理画面 | common/042-044 ユーザー管理・検索・削除API | ⏳ Phase 4 | ユーザー管理API完了後にユーザー管理画面が実装可能 |
+| flutter/042 ユーザー管理画面 | common/048 データエクスポートAPI | ⏳ Phase 4 | エクスポートAPI完了後にデータエクスポート機能が実装可能 |
+
+### 状態アイコン凡例
+
+| アイコン | 意味 |
+|---------|------|
+| ✅ 完了 | Commonチケットが完了しており、Flutter実装が着手可能 |
+| 🔄 進行中 | Commonチケットが進行中、完了後にFlutter実装が着手可能 |
+| ⏳ 未着手 | Commonチケットが未着手、完了を待つ必要あり |
+| ⏳ Phase 3 | Phase 3のため現時点では未着手 |
+| ⏳ Phase 4 | Phase 4のため現時点では未着手 |
+
+### 進捗同期ルール
+
+1. **Commonチケット完了時**: Commonチケットが完了したら、依存するFlutterチケットを「着手可能」に更新
+2. **週次確認**: 毎週金曜日に依存関係の確認を実施
+3. **ブロック報告**: Commonチケットの遅延によりFlutterチケットがブロックされた場合は即座にチーム内で報告
+4. **モック開発**: Commonチケット完了前でも、モックデータを使ってUI実装を先行可能（ただし結合テストはCommon完了後）
 
 ### 依存関係のルール
 
@@ -188,6 +226,13 @@ Flutter版のチケットは、Common（共通バックエンド）のチケッ�
 - flutter/010（ボトムナビゲーション）が完了
 
 の4つすべてが完了している必要があります。
+
+### 依存関係の注意事項
+
+- Flutter版のチケットに着手する前に、対応するCommonチケットが完了しているか確認してください
+- CommonチケットがブロックされているとFlutter版も進められない場合があります
+- 画面のUI実装はCommonチケット完了前でも着手できますが、動作テストにはCommonが必要です
+- 完全な依存関係マトリクスは `docs/common/tickets/000-ticket-overview.md` の「フロントエンドチケットとの依存関係」セクションを参照してください
 
 ---
 
