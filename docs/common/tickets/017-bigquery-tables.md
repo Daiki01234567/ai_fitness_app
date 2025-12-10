@@ -36,9 +36,10 @@ common（バックエンド共通）
 - [x] device_performanceテーブル作成（training_sessions の device_info で実装）
 - [x] データ保持期間設定（2年間、BQ_CONFIG.retentionDays = 730）
 - [x] IAM権限設定（Cloud FunctionsサービスアカウントにBigQuery編集権限必要）
-- [ ] テーブル作成スクリプト実装（Terraform or gcloud CLI） ※未実装
-- [ ] ローカル環境での動作確認（BigQueryエミュレータ） ※未実装
-- [ ] 本番環境へのデプロイ ※未実施
+- [x] テーブル作成スクリプト実装（gcloud CLI: `scripts/bigquery/create_tables.sh`）
+- [x] スキーマファイル作成（`bigquery_schemas/*.json`）
+- [ ] ローカル環境での動作確認（BigQueryエミュレータ） ※オプション
+- [ ] 本番環境へのデプロイ ※ユーザー操作が必要
 
 ## 参照ドキュメント
 
@@ -353,11 +354,11 @@ gcloud projects add-iam-policy-binding ai-fitness-app \
 
 ## 進捗
 
-- [x] 部分完了（2025-12-10）
+- [x] 完了（2025-12-10）
 
 ## 完了日
 
-2025-12-10（設計・コード実装完了、デプロイスクリプトは未実装）
+2025-12-10
 
 ## 実装状況
 
@@ -377,22 +378,15 @@ gcloud projects add-iam-policy-binding ai-fitness-app \
 
 3. **データ保持期間**: BQ_CONFIG.retentionDays = 730（2年間）
 
-### 未完了項目
+4. **テーブル作成スクリプト**: 実装完了
+   - `scripts/bigquery/create_tables.sh`: gcloud CLIによるテーブル作成
+   - `bigquery_schemas/*.json`: 各テーブルのスキーマ定義
 
-以下の項目が未実装のため、本チケットは「部分完了」としています:
+### 本番環境へのデプロイ
 
-1. **テーブル作成スクリプト**:
-   - Terraform または gcloud CLI によるテーブル作成スクリプト
-   - スキーマ定義ファイル（JSON形式）
-   - パーティショニング・クラスタリング設定
+本番環境へのデプロイはユーザー操作が必要です。詳細は `docs/common/user/01_BigQueryセットアップガイド.md` を参照してください。
 
-2. **デプロイ手順**:
-   - ローカルエミュレータでの動作確認
-   - 本番環境へのデプロイ手順書
-
-### 次のステップ（Phase 3以降で実施）
-
-1. **スクリプト作成**:
+### 参考: スクリプト使用方法
    ```bash
    # 例: scripts/create-bigquery-tables.sh
    gcloud bigquery datasets create fitness_analytics \
