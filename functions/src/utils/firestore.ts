@@ -17,16 +17,36 @@ import {
 
 import { logger } from "./logger";
 
+// =====================================
+// Cold Start Optimization
+// =====================================
+
+/**
+ * グローバルスコープでキャッシュ（コールドスタート対策）
+ * Cloud Functions の同じインスタンスでの再利用により、
+ * 初期化コストを削減
+ */
+let cachedFirestoreInstance: admin.firestore.Firestore | null = null;
+
 // Admin SDK がまだ初期化されていない場合は初期化
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 /**
- * Firestore インスタンスを取得
+ * Firestore インスタンスを取得（キャッシュ付き）
+ *
+ * コールドスタート時: 新しい Firestore インスタンスを作成してキャッシュ
+ * ウォームスタート時: キャッシュされたインスタンスを再利用
+ *
+ * @returns Firestore インスタンス
  */
 export function getFirestore(): admin.firestore.Firestore {
-  return admin.firestore();
+  if (!cachedFirestoreInstance) {
+    cachedFirestoreInstance = admin.firestore();
+    logger.debug("Firestore instance created and cached");
+  }
+  return cachedFirestoreInstance;
 }
 
 /**

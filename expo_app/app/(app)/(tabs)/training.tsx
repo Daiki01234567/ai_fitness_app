@@ -1,113 +1,274 @@
 /**
- * トレーニング画面（スタブ）
+ * トレーニング画面
  *
  * トレーニング種目の選択と開始を行う画面です。
- * MediaPipeを使用したフォーム評価は後続のチケットで実装します。
+ * 5種目（スクワット、プッシュアップ、アームカール、サイドレイズ、ショルダープレス）を表示。
+ * MediaPipeを使用したフォーム評価は後続のチケット（Phase 2）で実装予定。
  *
- * @see docs/expo/specs/05_画面遷移図_Expo版_v1.md
- * @see docs/specs/08_README_form_validation_logic_v3_3.md
+ * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
+ * @see docs/common/specs/06_フォーム評価ロジック_v1_0.md
  */
 
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StyleSheet, View, ScrollView, Alert } from "react-native";
+import {
+  Card,
+  Text,
+  Button,
+  Surface,
+  Chip,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
- * 対応予定のトレーニング種目
- * @see docs/specs/08_README_form_validation_logic_v3_3.md
+ * Theme colors following Material Design 3 guidelines
  */
-const EXERCISE_TYPES = [
+const THEME_COLORS = {
+  primary: "#4CAF50",
+  primaryLight: "#E8F5E9",
+  surface: "#FFFFFF",
+  background: "#F5F5F5",
+  text: "#212121",
+  textSecondary: "#757575",
+  disabled: "#BDBDBD",
+};
+
+/**
+ * アイコン名の型定義
+ */
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+
+/**
+ * トレーニング種目の定義
+ * @see docs/common/specs/06_フォーム評価ロジック_v1_0.md
+ */
+interface ExerciseType {
+  id: string;
+  name: string;
+  description: string;
+  icon: IconName;
+  targetMuscles: string[];
+  available: boolean;
+}
+
+const EXERCISE_TYPES: ExerciseType[] = [
   {
     id: "squat",
     name: "スクワット",
     description: "下半身強化の基本種目",
-    icon: "legs",
-    available: false,
-  },
-  {
-    id: "arm-curl",
-    name: "アームカール",
-    description: "上腕二頭筋を鍛える種目",
-    icon: "arm",
-    available: false,
-  },
-  {
-    id: "side-raise",
-    name: "サイドレイズ",
-    description: "肩（三角筋）を鍛える種目",
-    icon: "shoulder",
-    available: false,
-  },
-  {
-    id: "shoulder-press",
-    name: "ショルダープレス",
-    description: "肩と上腕三頭筋を鍛える種目",
-    icon: "press",
+    icon: "human-handsdown",
+    targetMuscles: ["大腿四頭筋", "臀筋", "ハムストリング"],
     available: false,
   },
   {
     id: "push-up",
     name: "プッシュアップ",
     description: "胸と上腕三頭筋を鍛える種目",
-    icon: "chest",
+    icon: "arm-flex",
+    targetMuscles: ["大胸筋", "上腕三頭筋", "三角筋"],
+    available: false,
+  },
+  {
+    id: "arm-curl",
+    name: "アームカール",
+    description: "上腕二頭筋を鍛える種目",
+    icon: "arm-flex-outline",
+    targetMuscles: ["上腕二頭筋", "前腕"],
+    available: false,
+  },
+  {
+    id: "side-raise",
+    name: "サイドレイズ",
+    description: "肩（三角筋）を鍛える種目",
+    icon: "human-handsup",
+    targetMuscles: ["三角筋（側部）"],
+    available: false,
+  },
+  {
+    id: "shoulder-press",
+    name: "ショルダープレス",
+    description: "肩と上腕三頭筋を鍛える種目",
+    icon: "weight-lifter",
+    targetMuscles: ["三角筋", "上腕三頭筋"],
     available: false,
   },
 ];
 
+/**
+ * Training screen component
+ */
 export default function TrainingScreen() {
+  /**
+   * Handle starting a training session
+   */
   const handleStartTraining = (exerciseId: string) => {
-    // TODO: Navigate to training session screen
+    const exercise = EXERCISE_TYPES.find((e) => e.id === exerciseId);
+    if (!exercise?.available) {
+      Alert.alert(
+        "準備中",
+        "この種目は現在開発中です。今後のアップデートをお待ちください。"
+      );
+      return;
+    }
+    // TODO: Navigate to training session screen (Phase 2)
     console.log("Start training:", exerciseId);
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header Section */}
         <View style={styles.header}>
-          <Text style={styles.title}>トレーニング種目</Text>
-          <Text style={styles.subtitle}>AIがあなたのフォームを分析します</Text>
+          <Text variant="headlineMedium" style={styles.title}>
+            トレーニング種目
+          </Text>
+          <Text variant="bodyMedium" style={styles.subtitle}>
+            AIがあなたのフォームをリアルタイムで分析します
+          </Text>
         </View>
 
-        {/* Exercise List */}
+        {/* Exercise Cards */}
         <View style={styles.exerciseList}>
           {EXERCISE_TYPES.map((exercise) => (
-            <TouchableOpacity
+            <Card
               key={exercise.id}
-              style={[styles.exerciseCard, !exercise.available && styles.exerciseCardDisabled]}
+              style={[
+                styles.exerciseCard,
+                !exercise.available && styles.exerciseCardDisabled,
+              ]}
+              mode="elevated"
               onPress={() => handleStartTraining(exercise.id)}
-              disabled={!exercise.available}
             >
-              <View style={styles.exerciseIcon}>
-                <Text style={styles.exerciseIconText}>
-                  {exercise.name.charAt(0)}
-                </Text>
-              </View>
-              <View style={styles.exerciseContent}>
-                <Text style={[styles.exerciseName, !exercise.available && styles.textDisabled]}>
-                  {exercise.name}
-                </Text>
-                <Text style={[styles.exerciseDescription, !exercise.available && styles.textDisabled]}>
-                  {exercise.description}
-                </Text>
-              </View>
-              {!exercise.available && (
-                <View style={styles.comingSoonBadge}>
-                  <Text style={styles.comingSoonText}>準備中</Text>
+              <Card.Content style={styles.exerciseContent}>
+                <View style={styles.exerciseIconContainer}>
+                  <MaterialCommunityIcons
+                    name={exercise.icon}
+                    size={32}
+                    color={exercise.available ? THEME_COLORS.primary : THEME_COLORS.disabled}
+                  />
                 </View>
-              )}
-            </TouchableOpacity>
+                <View style={styles.exerciseInfo}>
+                  <View style={styles.exerciseTitleRow}>
+                    <Text
+                      variant="titleMedium"
+                      style={[
+                        styles.exerciseName,
+                        !exercise.available && styles.textDisabled,
+                      ]}
+                    >
+                      {exercise.name}
+                    </Text>
+                    {!exercise.available && (
+                      <Chip
+                        mode="flat"
+                        style={styles.comingSoonChip}
+                        textStyle={styles.comingSoonText}
+                      >
+                        準備中
+                      </Chip>
+                    )}
+                  </View>
+                  <Text
+                    variant="bodySmall"
+                    style={[
+                      styles.exerciseDescription,
+                      !exercise.available && styles.textDisabled,
+                    ]}
+                  >
+                    {exercise.description}
+                  </Text>
+                  <View style={styles.muscleChips}>
+                    {exercise.targetMuscles.slice(0, 2).map((muscle, index) => (
+                      <Chip
+                        key={index}
+                        mode="outlined"
+                        style={styles.muscleChip}
+                        textStyle={styles.muscleChipText}
+                        compact
+                      >
+                        {muscle}
+                      </Chip>
+                    ))}
+                  </View>
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={24}
+                  color={exercise.available ? THEME_COLORS.textSecondary : THEME_COLORS.disabled}
+                />
+              </Card.Content>
+            </Card>
           ))}
         </View>
 
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>フォーム評価について</Text>
-          <Text style={styles.infoText}>
-            トレーニング中、AIがリアルタイムでフォームを分析し、
-            正しい動作ができているかフィードバックします。
-            カメラの映像はデバイス内でのみ処理され、
-            サーバーには送信されません。
+        {/* Privacy Info Card */}
+        <Surface style={styles.infoCard} elevation={1}>
+          <View style={styles.infoHeader}>
+            <MaterialCommunityIcons
+              name="shield-check"
+              size={24}
+              color={THEME_COLORS.primary}
+            />
+            <Text variant="titleSmall" style={styles.infoTitle}>
+              プライバシー保護
+            </Text>
+          </View>
+          <Text variant="bodySmall" style={styles.infoText}>
+            トレーニング中のカメラ映像はデバイス内でのみ処理され、サーバーには送信されません。
+            AIによるフォーム分析はオンデバイスで完結します。
           </Text>
+        </Surface>
+
+        {/* How It Works Section */}
+        <View style={styles.howItWorksSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            フォーム評価について
+          </Text>
+          <View style={styles.stepList}>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text variant="labelLarge" style={styles.stepNumberText}>1</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text variant="bodyMedium" style={styles.stepTitle}>
+                  種目を選択
+                </Text>
+                <Text variant="bodySmall" style={styles.stepDescription}>
+                  トレーニングしたい種目を選びます
+                </Text>
+              </View>
+            </View>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text variant="labelLarge" style={styles.stepNumberText}>2</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text variant="bodyMedium" style={styles.stepTitle}>
+                  カメラをセット
+                </Text>
+                <Text variant="bodySmall" style={styles.stepDescription}>
+                  全身が映るようにカメラを配置します
+                </Text>
+              </View>
+            </View>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text variant="labelLarge" style={styles.stepNumberText}>3</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text variant="bodyMedium" style={styles.stepTitle}>
+                  リアルタイムフィードバック
+                </Text>
+                <Text variant="bodySmall" style={styles.stepDescription}>
+                  AIがフォームを分析してアドバイスします
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -117,101 +278,151 @@ export default function TrainingScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: THEME_COLORS.background,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
+  // Header
   header: {
     marginBottom: 24,
   },
   title: {
-    fontSize: 24,
+    color: THEME_COLORS.text,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#666",
+    color: THEME_COLORS.textSecondary,
   },
+  // Exercise List
   exerciseList: {
     gap: 12,
     marginBottom: 24,
   },
   exerciseCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: THEME_COLORS.surface,
   },
   exerciseCardDisabled: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
-  exerciseIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#2f95dc",
+  exerciseContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  exerciseIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: THEME_COLORS.primaryLight,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 16,
   },
-  exerciseIconText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  exerciseContent: {
+  exerciseInfo: {
     flex: 1,
   },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+  exerciseTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     marginBottom: 4,
   },
-  exerciseDescription: {
-    fontSize: 14,
-    color: "#666",
-  },
-  textDisabled: {
-    color: "#999",
-  },
-  comingSoonBadge: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  comingSoonText: {
-    fontSize: 12,
-    color: "#999",
-    fontWeight: "500",
-  },
-  infoSection: {
-    backgroundColor: "#e8f4fd",
-    borderRadius: 12,
-    padding: 16,
-  },
-  infoTitle: {
-    fontSize: 14,
+  exerciseName: {
+    color: THEME_COLORS.text,
     fontWeight: "600",
-    color: "#2f95dc",
+  },
+  exerciseDescription: {
+    color: THEME_COLORS.textSecondary,
     marginBottom: 8,
   },
+  textDisabled: {
+    color: THEME_COLORS.disabled,
+  },
+  comingSoonChip: {
+    backgroundColor: "#FFF3E0",
+    height: 24,
+  },
+  comingSoonText: {
+    fontSize: 10,
+    color: "#F57C00",
+  },
+  muscleChips: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  muscleChip: {
+    height: 24,
+    backgroundColor: THEME_COLORS.background,
+  },
+  muscleChipText: {
+    fontSize: 10,
+    color: THEME_COLORS.textSecondary,
+  },
+  // Info Card
+  infoCard: {
+    backgroundColor: THEME_COLORS.primaryLight,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  infoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  infoTitle: {
+    color: THEME_COLORS.primary,
+    fontWeight: "600",
+  },
   infoText: {
-    fontSize: 13,
-    color: "#333",
+    color: THEME_COLORS.text,
     lineHeight: 20,
+  },
+  // How It Works
+  howItWorksSection: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    color: THEME_COLORS.text,
+    fontWeight: "600",
+    marginBottom: 16,
+  },
+  stepList: {
+    gap: 16,
+  },
+  stepItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  stepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: THEME_COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  stepNumberText: {
+    color: THEME_COLORS.surface,
+    fontWeight: "bold",
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    color: THEME_COLORS.text,
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  stepDescription: {
+    color: THEME_COLORS.textSecondary,
   },
 });

@@ -35,7 +35,7 @@ common（バックエンド共通）
 - [x] Firebaseエミュレータ（Auth, Firestore, Functions）が起動することを確認
 - [x] firebase.jsonの設定が正しいことを確認
 - [x] .firebasercファイルに開発・本番環境の設定があることを確認
-- [ ] 環境変数（GOOGLE_CLOUD_PROJECT等）の設定方法をドキュメント化
+- [x] 環境変数（GOOGLE_CLOUD_PROJECT等）の設定方法をドキュメント化
 - [x] 開発メンバー全員がFirebaseコンソールにアクセスできることを確認
 
 ## 参照ドキュメント

@@ -15,12 +15,21 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   onAuthStateChanged,
+  deleteUser,
   type User as FirebaseUser,
   type Auth,
 } from "firebase/auth";
 
-import { auth } from "./firebaseApp";
+import { getFirebaseAuth } from "./firebase";
 import type { User } from "@/stores";
+
+/**
+ * Firebase Auth インスタンスを取得するヘルパー
+ * Firebaseが初期化されていない場合はエラーをスローします
+ */
+const getAuthInstance = (): Auth => {
+  return getFirebaseAuth();
+};
 
 // ============================================
 // バリデーション関数
@@ -179,6 +188,7 @@ export interface AuthResult {
  */
 export const signUpWithEmail = async (email: string, password: string): Promise<AuthResult> => {
   try {
+    const auth = getAuthInstance();
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = convertFirebaseUser(userCredential.user);
 
@@ -210,6 +220,7 @@ export const signUpWithEmail = async (email: string, password: string): Promise<
  */
 export const signInWithEmail = async (email: string, password: string): Promise<AuthResult> => {
   try {
+    const auth = getAuthInstance();
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = convertFirebaseUser(userCredential.user);
 
@@ -230,6 +241,7 @@ export const signInWithEmail = async (email: string, password: string): Promise<
  */
 export const signOut = async (): Promise<AuthResult> => {
   try {
+    const auth = getAuthInstance();
     await firebaseSignOut(auth);
     console.log("サインアウト成功");
     return { success: true };
@@ -249,6 +261,7 @@ export const signOut = async (): Promise<AuthResult> => {
  */
 export const resetPassword = async (email: string): Promise<AuthResult> => {
   try {
+    const auth = getAuthInstance();
     await sendPasswordResetEmail(auth, email);
     console.log("パスワードリセットメール送信成功:", email);
     return { success: true };
@@ -267,6 +280,7 @@ export const resetPassword = async (email: string): Promise<AuthResult> => {
  */
 export const resendVerificationEmail = async (): Promise<AuthResult> => {
   try {
+    const auth = getAuthInstance();
     const currentUser = auth.currentUser;
     if (!currentUser) {
       return { success: false, error: "ログインが必要です" };
@@ -290,6 +304,7 @@ export const resendVerificationEmail = async (): Promise<AuthResult> => {
  * @returns リスナーの解除関数
  */
 export const subscribeToAuthState = (callback: (user: User | null) => void): (() => void) => {
+  const auth = getAuthInstance();
   return onAuthStateChanged(auth, (firebaseUser) => {
     if (firebaseUser) {
       callback(convertFirebaseUser(firebaseUser));
@@ -305,6 +320,7 @@ export const subscribeToAuthState = (callback: (user: User | null) => void): (()
  * @returns 現在ログイン中のユーザー、またはnull
  */
 export const getCurrentUser = (): User | null => {
+  const auth = getAuthInstance();
   const firebaseUser = auth.currentUser;
   if (firebaseUser) {
     return convertFirebaseUser(firebaseUser);
@@ -317,7 +333,7 @@ export const getCurrentUser = (): User | null => {
  * (上級者向け: 直接操作が必要な場合)
  */
 export const getAuth = (): Auth => {
-  return auth;
+  return getAuthInstance();
 };
 
 // ============================================
@@ -358,4 +374,49 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
     success: false,
     error: "Google認証は現在準備中です。メールアドレスでの登録をお試しください。",
   };
+};
+
+// ============================================
+// アカウント削除
+// ============================================
+
+/**
+ * 現在のユーザーアカウントを削除
+ *
+ * 注意: この操作は取り消せません。
+ * 削除前にユーザーに確認を求めてください。
+ * Firebase Authenticationのアカウントを削除します。
+ * Firestoreのデータ削除はCloud Functionsで処理します。
+ *
+ * @returns 認証結果
+ */
+export const deleteAccount = async (): Promise<AuthResult> => {
+  try {
+    const auth = getAuthInstance();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      return { success: false, error: "ログインが必要です" };
+    }
+
+    // Delete the user account from Firebase Auth
+    await deleteUser(currentUser);
+
+    console.log("アカウント削除成功");
+    return { success: true };
+  } catch (error) {
+    const errorCode = (error as { code?: string }).code || "unknown";
+
+    // Handle requires-recent-login error
+    if (errorCode === "auth/requires-recent-login") {
+      return {
+        success: false,
+        error: "セキュリティのため、再度ログインしてからアカウント削除を行ってください。",
+      };
+    }
+
+    const errorMessage = getAuthErrorMessage(errorCode);
+    console.error("アカウント削除エラー:", errorCode);
+    return { success: false, error: errorMessage };
+  }
 };

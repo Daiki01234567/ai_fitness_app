@@ -19,6 +19,10 @@ export type { AppCardProps } from "./AppCard";
 export { LoadingSpinner } from "./LoadingSpinner";
 export type { LoadingSpinnerProps } from "./LoadingSpinner";
 
+// Loading Overlay (Modal-based)
+export { LoadingOverlay } from "./LoadingOverlay";
+export type { LoadingOverlayProps } from "./LoadingOverlay";
+
 // Error Message
 export { ErrorMessage } from "./ErrorMessage";
 export type { ErrorMessageProps } from "./ErrorMessage";

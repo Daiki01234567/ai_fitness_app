@@ -28,13 +28,13 @@ Expo（フロントエンド）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `GoogleService-Info.plist`（iOS）が正しく配置されている
-- [ ] `google-services.json`（Android）が正しく配置されている
-- [ ] `expo_app/lib/firebase.ts` にFirebase初期化コードが実装されている
-- [ ] Firebase Auth、Firestoreの接続が確認できる
-- [ ] 開発環境（エミュレータ）と本番環境を切り替えられる
-- [ ] `.env.development` に開発用の設定がある
-- [ ] エラーハンドリングが実装されている
+- [x] `GoogleService-Info.plist`（iOS）が正しく配置されている
+- [x] `google-services.json`（Android）が正しく配置されている
+- [x] `expo_app/lib/firebase.ts` にFirebase初期化コードが実装されている
+- [x] Firebase Auth、Firestoreの接続が確認できる
+- [x] 開発環境（エミュレータ）と本番環境を切り替えられる
+- [x] `.env.development` に開発用の設定がある
+- [x] エラーハンドリングが実装されている
 
 ## 参照ドキュメント
 
@@ -178,11 +178,11 @@ auth.onAuthStateChanged((user) => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] ✅ 完了
 
 ## 完了日
 
-未完了
+2025-12-10
 
 ## 備考
 
@@ -191,8 +191,52 @@ auth.onAuthStateChanged((user) => {
 - エミュレータ接続の動作確認を行うこと
 - 本番環境用の`.env.production`は後続チケットで作成
 
+## 実装内容
+
+### 実装したファイル
+
+1. **`expo_app/lib/firebase.ts`**
+   - Firebase SDK (firebase/app) を使用した初期化実装
+   - Auth と Firestore のインスタンス作成
+   - エミュレータ自動接続機能（開発環境のみ）
+   - 環境変数から設定を取得する関数群
+   - エラーハンドリング実装
+
+2. **`expo_app/lib/firebaseConnectionTest.ts`**
+   - Firestore接続テスト関数
+   - Auth接続テスト関数
+   - 全接続テスト実行関数
+   - 簡易接続チェック関数
+
+3. **`expo_app/app.json`**
+   - Firebase設定をextraセクションに追加
+   - 環境変数からの動的読み込み設定
+
+### 主な機能
+
+- ✅ Firebase SDK初期化（重複初期化の防止）
+- ✅ Auth / Firestore インスタンスの管理
+- ✅ エミュレータ自動接続（EXPO_PUBLIC_USE_EMULATOR=true時）
+- ✅ 環境変数による設定管理
+- ✅ エラーハンドリングとログ出力
+- ✅ 接続テストユーティリティ
+
+### 使用方法
+
+```typescript
+import { initializeFirebase } from './lib/firebase';
+import { testAllConnections } from './lib/firebaseConnectionTest';
+
+// アプリ起動時に初期化
+await initializeFirebase();
+
+// 接続テスト（開発時のみ）
+await testAllConnections();
+```
+
 ## 変更履歴
 
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | 実装完了・チケットクローズ |

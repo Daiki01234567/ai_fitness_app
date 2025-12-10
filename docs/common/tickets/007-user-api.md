@@ -44,7 +44,13 @@ common（バックエンド共通）
 - [x] プロフィール画像URL管理を実装
   - [x] photoURLの更新
   - [x] Storage連携（画像アップロードはクライアント側）
-- [ ] ユニットテストを作成
+- [x] アカウント削除API実装
+  - [x] requestAccountDeletion - 30日猶予のアカウント削除リクエスト
+  - [x] cancelAccountDeletion - アカウント削除のキャンセル
+- [x] ユニットテストを作成
+  - [x] getProfile.test.ts (9テスト)
+  - [x] updateProfile.test.ts (21テスト)
+  - [x] deleteAccount.test.ts (13テスト)
 - [ ] エミュレータでテストが通ることを確認
 
 ## 参照ドキュメント
@@ -290,7 +296,9 @@ export function validateProfile(profile: Partial<ProfileInput>): ValidationResul
 
 ## 進捗
 
-- [x] 完了（テスト以外）
+- [x] APIエンドポイント実装完了
+- [x] ユニットテスト作成完了（42テストすべてパス）
+- [ ] エミュレータ統合テスト
 
 ## 備考
 
@@ -304,3 +312,4 @@ export function validateProfile(profile: Partial<ProfileInput>): ValidationResul
 |------|----------|
 | 2025-12-10 | 初版作成 |
 | 2025-12-10 | ユーザーAPI実装完了（updateProfile、バリデーション含む） |
+| 2025-12-10 | getProfile API実装、deleteAccount API実装、ユニットテスト42件作成 |

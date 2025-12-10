@@ -46,8 +46,11 @@ common（バックエンド共通）
   - [x] リフレッシュトークンを無効化
 - [x] 同意状態取得API（getUserConsent）を実装
 - [x] バリデーションを実装
-- [ ] ユニットテストを作成
-- [ ] エミュレータでテストが通ることを確認
+- [x] ユニットテストを作成
+  - [x] record.test.ts - 同意記録APIのテスト（25テスト）
+  - [x] revoke.test.ts - 同意撤回APIのテスト（30テスト）
+  - [x] status.test.ts - 同意状態取得APIのテスト（36テスト）
+- [x] エミュレータでテストが通ることを確認（統合テスト: consent-flow.test.ts）
 
 ## 参照ドキュメント
 
@@ -287,7 +290,7 @@ export const user_getConsent = onCall(async (request) => {
 
 ## 進捗
 
-- [x] 完了（テスト以外）
+- [x] 完了
 
 ## 備考
 
@@ -315,3 +318,4 @@ export const user_getConsent = onCall(async (request) => {
 | 2025-12-10 | 初版作成 |
 | 2025-12-10 | 同意管理API実装完了（recordConsent, revokeConsent, status） |
 | 2025-12-10 | チケット020との関係を明記、基本機能と拡張機能を明確に区別 |
+| 2025-12-10 | ユニットテスト作成完了（91テスト）、チケット完了 |

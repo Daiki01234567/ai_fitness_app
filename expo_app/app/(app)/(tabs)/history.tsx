@@ -1,88 +1,213 @@
 /**
- * 履歴画面（スタブ）
+ * 履歴画面
  *
  * 過去のトレーニング記録を表示します。
- * 詳細な実装は後続のチケットで行います。
+ * フィルター機能や統計情報を提供。
+ * Phase 2でFirestoreからのデータ取得を実装予定。
  *
- * @see docs/expo/specs/05_画面遷移図_Expo版_v1.md
+ * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
  */
 
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState, useCallback } from "react";
+import { StyleSheet, View, ScrollView, RefreshControl } from "react-native";
+import {
+  Surface,
+  Text,
+  Button,
+  Chip,
+  SegmentedButtons,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+/**
+ * Theme colors following Material Design 3 guidelines
+ */
+const THEME_COLORS = {
+  primary: "#4CAF50",
+  primaryLight: "#E8F5E9",
+  surface: "#FFFFFF",
+  background: "#F5F5F5",
+  text: "#212121",
+  textSecondary: "#757575",
+  success: "#4CAF50",
+  warning: "#FF9800",
+};
+
+/**
+ * Filter period options
+ */
+type FilterPeriod = "all" | "week" | "month";
+
+/**
+ * History screen component
+ */
 export default function HistoryScreen() {
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>("all");
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // TODO: Fetch data from Firestore (Phase 2)
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
+
+  // Navigate to training screen
+  const handleStartTraining = () => {
+    router.push("/(app)/(tabs)/training");
+  };
+
+  // Mock statistics (will be replaced with actual data in Phase 2)
+  const stats = {
+    totalSessions: 0,
+    totalReps: 0,
+    totalMinutes: 0,
+    averageScore: "--",
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[THEME_COLORS.primary]}
+            tintColor={THEME_COLORS.primary}
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>トレーニング履歴</Text>
+          <Text variant="headlineMedium" style={styles.title}>
+            トレーニング履歴
+          </Text>
         </View>
 
         {/* Filter Buttons */}
-        <View style={styles.filterContainer}>
-          <TouchableOpacity style={[styles.filterButton, styles.filterButtonActive]}>
-            <Text style={[styles.filterButtonText, styles.filterButtonTextActive]}>
-              すべて
+        <SegmentedButtons
+          value={filterPeriod}
+          onValueChange={(value) => setFilterPeriod(value as FilterPeriod)}
+          buttons={[
+            { value: "all", label: "すべて" },
+            { value: "week", label: "今週" },
+            { value: "month", label: "今月" },
+          ]}
+          style={styles.filterButtons}
+        />
+
+        {/* Statistics Cards */}
+        <View style={styles.statsContainer}>
+          <Surface style={styles.statCard} elevation={1}>
+            <MaterialCommunityIcons
+              name="counter"
+              size={24}
+              color={THEME_COLORS.primary}
+            />
+            <Text variant="headlineSmall" style={styles.statValue}>
+              {stats.totalSessions}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Text style={styles.filterButtonText}>今週</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Text style={styles.filterButtonText}>今月</Text>
-          </TouchableOpacity>
+            <Text variant="bodySmall" style={styles.statLabel}>
+              セッション
+            </Text>
+          </Surface>
+          <Surface style={styles.statCard} elevation={1}>
+            <MaterialCommunityIcons
+              name="repeat"
+              size={24}
+              color={THEME_COLORS.primary}
+            />
+            <Text variant="headlineSmall" style={styles.statValue}>
+              {stats.totalReps}
+            </Text>
+            <Text variant="bodySmall" style={styles.statLabel}>
+              レップ
+            </Text>
+          </Surface>
+          <Surface style={styles.statCard} elevation={1}>
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={24}
+              color={THEME_COLORS.primary}
+            />
+            <Text variant="headlineSmall" style={styles.statValue}>
+              {stats.totalMinutes}分
+            </Text>
+            <Text variant="bodySmall" style={styles.statLabel}>
+              時間
+            </Text>
+          </Surface>
         </View>
 
-        {/* Stats Overview */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>総セッション</Text>
+        {/* Average Score Card */}
+        <Surface style={styles.averageScoreCard} elevation={1}>
+          <View style={styles.averageScoreContent}>
+            <View>
+              <Text variant="labelMedium" style={styles.averageScoreLabel}>
+                平均フォームスコア
+              </Text>
+              <Text variant="displaySmall" style={styles.averageScoreValue}>
+                {stats.averageScore}
+              </Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chart-line"
+              size={48}
+              color={THEME_COLORS.primaryLight}
+            />
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>総レップ</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>0分</Text>
-            <Text style={styles.statLabel}>総時間</Text>
-          </View>
-        </View>
+        </Surface>
 
         {/* Empty State */}
-        <View style={styles.emptyState}>
+        <Surface style={styles.emptyStateCard} elevation={1}>
           <View style={styles.emptyStateIcon}>
-            <Text style={styles.emptyStateIconText}>icon</Text>
+            <MaterialCommunityIcons
+              name="history"
+              size={64}
+              color={THEME_COLORS.textSecondary}
+            />
           </View>
-          <Text style={styles.emptyStateTitle}>トレーニング記録がありません</Text>
-          <Text style={styles.emptyStateDescription}>
-            トレーニングを行うと、ここに記録が表示されます。
+          <Text variant="titleMedium" style={styles.emptyStateTitle}>
+            トレーニング記録がありません
+          </Text>
+          <Text variant="bodyMedium" style={styles.emptyStateDescription}>
+            トレーニングを行うと、ここに記録が表示されます。{"\n"}
             フォーム評価スコアや改善点も確認できます。
           </Text>
-          <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>トレーニングを始める</Text>
-          </TouchableOpacity>
-        </View>
+          <Button
+            mode="contained"
+            onPress={handleStartTraining}
+            style={styles.emptyStateButton}
+            buttonColor={THEME_COLORS.primary}
+            icon="dumbbell"
+          >
+            トレーニングを始める
+          </Button>
+        </Surface>
 
-        {/* Example History Item (Hidden - for future implementation) */}
-        {false && (
-          <View style={styles.historyList}>
-            <TouchableOpacity style={styles.historyItem}>
-              <View style={styles.historyDate}>
-                <Text style={styles.historyDay}>12</Text>
-                <Text style={styles.historyMonth}>月</Text>
-              </View>
-              <View style={styles.historyContent}>
-                <Text style={styles.historyTitle}>スクワット</Text>
-                <Text style={styles.historyDetails}>20レップ | 15分 | スコア: 85</Text>
-              </View>
-              <View style={styles.historyScore}>
-                <Text style={styles.historyScoreText}>85</Text>
-              </View>
-            </TouchableOpacity>
+        {/* Info Tips */}
+        <Surface style={styles.tipsCard} elevation={1}>
+          <View style={styles.tipsHeader}>
+            <MaterialCommunityIcons
+              name="lightbulb-outline"
+              size={20}
+              color={THEME_COLORS.warning}
+            />
+            <Text variant="labelMedium" style={styles.tipsTitle}>
+              トレーニングのヒント
+            </Text>
           </View>
-        )}
+          <Text variant="bodySmall" style={styles.tipsText}>
+            定期的なトレーニングを続けると、フォームスコアの推移や改善点を確認できます。
+            週に2-3回のトレーニングがおすすめです。
+          </Text>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -91,175 +216,118 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: THEME_COLORS.background,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
+  // Header
   header: {
     marginBottom: 16,
   },
   title: {
-    fontSize: 24,
+    color: THEME_COLORS.text,
     fontWeight: "bold",
-    color: "#333",
   },
-  filterContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
+  // Filter Buttons
+  filterButtons: {
+    marginBottom: 20,
   },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  filterButtonActive: {
-    backgroundColor: "#2f95dc",
-    borderColor: "#2f95dc",
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  filterButtonTextActive: {
-    color: "#fff",
-    fontWeight: "600",
-  },
+  // Statistics
   statsContainer: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: THEME_COLORS.surface,
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   statValue: {
-    fontSize: 24,
+    color: THEME_COLORS.primary,
     fontWeight: "bold",
-    color: "#2f95dc",
-    marginBottom: 4,
+    marginTop: 8,
   },
   statLabel: {
-    fontSize: 12,
-    color: "#666",
+    color: THEME_COLORS.textSecondary,
+    marginTop: 4,
   },
-  emptyState: {
-    backgroundColor: "#fff",
+  // Average Score
+  averageScoreCard: {
+    backgroundColor: THEME_COLORS.primary,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+  },
+  averageScoreContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  averageScoreLabel: {
+    color: "rgba(255, 255, 255, 0.8)",
+    marginBottom: 4,
+  },
+  averageScoreValue: {
+    color: THEME_COLORS.surface,
+    fontWeight: "bold",
+  },
+  // Empty State
+  emptyStateCard: {
+    backgroundColor: THEME_COLORS.surface,
     borderRadius: 12,
     padding: 32,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    marginBottom: 16,
   },
   emptyStateIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#f0f0f0",
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: THEME_COLORS.background,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  emptyStateIconText: {
-    fontSize: 14,
-    color: "#999",
-  },
   emptyStateTitle: {
-    fontSize: 18,
+    color: THEME_COLORS.text,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   emptyStateDescription: {
-    fontSize: 14,
-    color: "#666",
+    color: THEME_COLORS.textSecondary,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 24,
   },
-  startButton: {
-    backgroundColor: "#2f95dc",
-    borderRadius: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+  emptyStateButton: {
+    paddingHorizontal: 16,
   },
-  startButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  historyList: {
-    gap: 12,
-  },
-  historyItem: {
-    backgroundColor: "#fff",
+  // Tips Card
+  tipsCard: {
+    backgroundColor: "#FFF8E1",
     borderRadius: 12,
     padding: 16,
+  },
+  tipsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: 8,
+    marginBottom: 8,
   },
-  historyDate: {
-    width: 48,
-    alignItems: "center",
-    marginRight: 16,
-  },
-  historyDay: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  historyMonth: {
-    fontSize: 12,
-    color: "#666",
-  },
-  historyContent: {
-    flex: 1,
-  },
-  historyTitle: {
-    fontSize: 16,
+  tipsTitle: {
+    color: THEME_COLORS.warning,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
   },
-  historyDetails: {
-    fontSize: 14,
-    color: "#666",
-  },
-  historyScore: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#28a745",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  historyScoreText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
+  tipsText: {
+    color: THEME_COLORS.text,
+    lineHeight: 20,
   },
 });

@@ -1,16 +1,16 @@
 /**
  * Firebase初期化
  *
- * 環境変数を使用してFirebaseを初期化します。
- * 開発環境ではエミュレータへの接続もサポートしています。
+ * Firebase SDK (firebase/app) を使用してFirebaseアプリを初期化します。
+ * 開発環境では自動的にエミュレータに接続します。
  *
- * @see docs/expo/specs/03_要件定義書_Expo版_v1_Part3.md
+ * @see docs/expo/tickets/001-firebase-connection.md
+ * @see docs/expo/specs/01_技術スタック_v1_0.md
  */
 
-// Note: Phase 1では@react-native-firebase/appを使用
-// 現時点ではfirebase/app（Web SDK）を使用して基本的な初期化を行う
-// MediaPipe統合時にDevelopment Buildに切り替える際、
-// @react-native-firebase/appへの移行を行う
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getAuth, connectAuthEmulator, Auth } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator, Firestore } from "firebase/firestore";
 
 /**
  * Firebase設定の型定義
@@ -26,6 +26,18 @@ export interface FirebaseConfig {
 }
 
 /**
+ * エミュレータ設定の型定義
+ */
+export interface EmulatorConfig {
+  useEmulator: boolean;
+  host: string;
+  firestorePort: number;
+  authPort: number;
+  functionsPort: number;
+  storagePort: number;
+}
+
+/**
  * 環境変数からFirebase設定を取得
  */
 export const getFirebaseConfig = (): FirebaseConfig => {
@@ -37,7 +49,7 @@ export const getFirebaseConfig = (): FirebaseConfig => {
   const appId = process.env.EXPO_PUBLIC_FIREBASE_APP_ID;
   const measurementId = process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID;
 
-  // Validate required configuration
+  // 必須設定の検証
   if (!apiKey || !authDomain || !projectId || !storageBucket || !messagingSenderId || !appId) {
     throw new Error(
       "Firebase設定が不完全です。.env.developmentまたは.env.productionファイルを確認してください。"
@@ -54,18 +66,6 @@ export const getFirebaseConfig = (): FirebaseConfig => {
     measurementId,
   };
 };
-
-/**
- * エミュレータ設定の型定義
- */
-export interface EmulatorConfig {
-  useEmulator: boolean;
-  host: string;
-  firestorePort: number;
-  authPort: number;
-  functionsPort: number;
-  storagePort: number;
-}
 
 /**
  * エミュレータ設定を取得
@@ -109,62 +109,85 @@ export const getApiEndpoint = (): string => {
   );
 };
 
-/**
- * Firebase初期化ステータス
- */
+// Firebase初期化ステータス
 let isInitialized = false;
+
+// Firebase インスタンス（初期化後にエクスポート）
+let firebaseApp: FirebaseApp | null = null;
+let firebaseAuth: Auth | null = null;
+let firebaseDb: Firestore | null = null;
 
 /**
  * Firebase初期化関数
  *
- * @react-native-firebase/appへの移行時に実装を更新します。
- * 現時点では設定の検証のみを行います。
+ * Firebase SDK (firebase/app) を使用してFirebaseアプリを初期化します。
+ * 開発環境では自動的にエミュレータに接続します。
  */
 export const initializeFirebase = async (): Promise<void> => {
   if (isInitialized) {
-    console.log("Firebase is already initialized");
+    console.log("[Firebase] 既に初期化済みです");
     return;
   }
 
   try {
-    // Validate configuration
     const config = getFirebaseConfig();
     const emulatorConfig = getEmulatorConfig();
     const environment = getEnvironment();
 
-    console.log(`Firebase初期化中... (環境: ${environment})`);
-    console.log(`Project ID: ${config.projectId}`);
+    console.log(`[Firebase] 初期化中... (環境: ${environment})`);
+    console.log(`[Firebase] Project ID: ${config.projectId}`);
 
-    if (emulatorConfig.useEmulator) {
-      console.log(`エミュレータモード: ${emulatorConfig.host}`);
-      console.log(`  - Firestore: ${emulatorConfig.firestorePort}`);
-      console.log(`  - Auth: ${emulatorConfig.authPort}`);
-      console.log(`  - Functions: ${emulatorConfig.functionsPort}`);
-      console.log(`  - Storage: ${emulatorConfig.storagePort}`);
+    // Firebase アプリ初期化（重複初期化を防ぐ）
+    if (getApps().length === 0) {
+      firebaseApp = initializeApp(config);
+      console.log("[Firebase] アプリを初期化しました");
+    } else {
+      firebaseApp = getApps()[0];
+      console.log("[Firebase] 既存のアプリインスタンスを使用します");
     }
 
-    // TODO: @react-native-firebase/appの初期化を実装
-    // Development Build移行時に以下のように実装:
-    //
-    // import { firebase } from '@react-native-firebase/app';
-    //
-    // if (!firebase.apps.length) {
-    //   await firebase.initializeApp(config);
-    // }
-    //
-    // if (emulatorConfig.useEmulator) {
-    //   // Connect to emulators
-    //   auth().useEmulator(`http://${emulatorConfig.host}:${emulatorConfig.authPort}`);
-    //   firestore().useEmulator(emulatorConfig.host, emulatorConfig.firestorePort);
-    //   functions().useEmulator(emulatorConfig.host, emulatorConfig.functionsPort);
-    //   storage().useEmulator(emulatorConfig.host, emulatorConfig.storagePort);
-    // }
+    // Auth 初期化
+    firebaseAuth = getAuth(firebaseApp);
+
+    // Firestore 初期化
+    firebaseDb = getFirestore(firebaseApp);
+
+    // エミュレータ接続（開発環境のみ）
+    if (emulatorConfig.useEmulator) {
+      const { host, authPort, firestorePort } = emulatorConfig;
+
+      console.log(`[Firebase] エミュレータモード: ${host}`);
+
+      // Auth エミュレータ接続
+      try {
+        connectAuthEmulator(firebaseAuth, `http://${host}:${authPort}`, {
+          disableWarnings: true,
+        });
+        console.log(`[Firebase] Auth エミュレータに接続: http://${host}:${authPort}`);
+      } catch (error) {
+        // 既に接続済みの場合はエラーを無視
+        console.warn("[Firebase] Auth エミュレータ接続済みまたはエラー:", error);
+      }
+
+      // Firestore エミュレータ接続
+      try {
+        connectFirestoreEmulator(firebaseDb, host, firestorePort);
+        console.log(`[Firebase] Firestore エミュレータに接続: http://${host}:${firestorePort}`);
+      } catch (error) {
+        // 既に接続済みの場合はエラーを無視
+        console.warn("[Firebase] Firestore エミュレータ接続済みまたはエラー:", error);
+      }
+    } else {
+      console.log("[Firebase] 本番環境に接続します");
+    }
 
     isInitialized = true;
-    console.log("Firebase初期化完了");
+    console.log("[Firebase] 初期化完了");
   } catch (error) {
-    console.error("Firebase初期化エラー:", error);
-    throw error;
+    console.error("[Firebase] 初期化エラー:", error);
+    throw new Error(
+      `Firebase初期化に失敗しました: ${error instanceof Error ? error.message : "不明なエラー"}`
+    );
   }
 };
 
@@ -174,3 +197,39 @@ export const initializeFirebase = async (): Promise<void> => {
 export const isFirebaseInitialized = (): boolean => {
   return isInitialized;
 };
+
+/**
+ * Firebase App インスタンスを取得
+ * @throws {Error} Firebase が未初期化の場合
+ */
+export const getFirebaseApp = (): FirebaseApp => {
+  if (!firebaseApp) {
+    throw new Error("Firebase が初期化されていません。initializeFirebase() を先に呼び出してください。");
+  }
+  return firebaseApp;
+};
+
+/**
+ * Firebase Auth インスタンスを取得
+ * @throws {Error} Firebase が未初期化の場合
+ */
+export const getFirebaseAuth = (): Auth => {
+  if (!firebaseAuth) {
+    throw new Error("Firebase が初期化されていません。initializeFirebase() を先に呼び出してください。");
+  }
+  return firebaseAuth;
+};
+
+/**
+ * Firestore インスタンスを取得
+ * @throws {Error} Firebase が未初期化の場合
+ */
+export const getFirebaseDb = (): Firestore => {
+  if (!firebaseDb) {
+    throw new Error("Firebase が初期化されていません。initializeFirebase() を先に呼び出してください。");
+  }
+  return firebaseDb;
+};
+
+// 後方互換性のため、直接エクスポートも提供（初期化後に使用可能）
+export { firebaseApp as app, firebaseAuth as auth, firebaseDb as db };

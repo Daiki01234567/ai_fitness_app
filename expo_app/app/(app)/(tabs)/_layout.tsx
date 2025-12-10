@@ -2,77 +2,157 @@
  * タブナビゲーションレイアウト
  *
  * メインアプリのタブナビゲーションを定義します。
- * - ホーム: 今日のトレーニング概要
- * - トレーニング: トレーニング開始・種目選択
- * - 履歴: 過去のトレーニング記録
- * - 設定: アプリ設定・アカウント管理
+ * Material Design 3準拠のボトムナビゲーションを実装。
  *
- * @see docs/expo/specs/05_画面遷移図_Expo版_v1.md
+ * タブ構成:
+ * - ホーム: 今日のトレーニング概要、クイックスタート
+ * - トレーニング: 種目選択、トレーニング開始
+ * - 履歴: 過去のトレーニング記録
+ * - 設定: アプリ設定、プロフィール、アカウント管理
+ *
+ * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
+ * @see docs/expo/tickets/010-bottom-navigation.md
  */
 
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
 import { useColorScheme } from "@/components/useColorScheme";
-import Colors from "@/constants/Colors";
 
 /**
- * タブバーアイコンコンポーネント
+ * Theme colors following Material Design 3 guidelines
+ */
+const THEME_COLORS = {
+  primary: "#4CAF50", // Green - Active tab color
+  inactive: "#999999", // Gray - Inactive tab color
+  backgroundLight: "#FFFFFF",
+  backgroundDark: "#121212",
+  textLight: "#212121",
+  textDark: "#FFFFFF",
+  borderLight: "#E0E0E0",
+  borderDark: "#333333",
+};
+
+/**
+ * Tab bar icon component using MaterialCommunityIcons
  */
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"];
+  name: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   color: string;
+  size?: number;
 }) {
-  return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
+  return (
+    <MaterialCommunityIcons
+      size={props.size ?? 24}
+      style={{ marginBottom: -3 }}
+      {...props}
+    />
+  );
 }
 
+/**
+ * Tab layout component
+ *
+ * Configures the bottom navigation with 4 tabs:
+ * - Home (ホーム): Dashboard and quick start
+ * - Training (トレーニング): Exercise selection
+ * - History (履歴): Training records
+ * - Settings (設定): App settings and profile
+ */
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? "light"].tabIconDefault,
+        // Tab bar styling - Material Design 3
+        tabBarActiveTintColor: THEME_COLORS.primary,
+        tabBarInactiveTintColor: THEME_COLORS.inactive,
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme ?? "light"].background,
-          borderTopColor: "#e0e0e0",
+          backgroundColor: isDark
+            ? THEME_COLORS.backgroundDark
+            : THEME_COLORS.backgroundLight,
+          borderTopColor: isDark
+            ? THEME_COLORS.borderDark
+            : THEME_COLORS.borderLight,
+          borderTopWidth: 1,
+          height: 56,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+        },
+        // Header styling
         headerStyle: {
-          backgroundColor: Colors[colorScheme ?? "light"].background,
+          backgroundColor: isDark
+            ? THEME_COLORS.backgroundDark
+            : THEME_COLORS.backgroundLight,
         },
-        headerTintColor: Colors[colorScheme ?? "light"].text,
+        headerTintColor: isDark
+          ? THEME_COLORS.textDark
+          : THEME_COLORS.textLight,
         headerTitleStyle: {
           fontWeight: "bold",
         },
+        headerShadowVisible: false,
       }}
     >
+      {/* Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
           title: "ホーム",
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "home" : "home-outline"}
+              color={color}
+            />
+          ),
         }}
       />
+
+      {/* Training Tab */}
       <Tabs.Screen
         name="training"
         options={{
           title: "トレーニング",
-          tabBarIcon: ({ color }) => <TabBarIcon name="play-circle" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "dumbbell" : "dumbbell"}
+              color={color}
+            />
+          ),
         }}
       />
+
+      {/* History Tab */}
       <Tabs.Screen
         name="history"
         options={{
           title: "履歴",
-          tabBarIcon: ({ color }) => <TabBarIcon name="history" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "history" : "history"}
+              color={color}
+            />
+          ),
         }}
       />
+
+      {/* Settings Tab */}
       <Tabs.Screen
         name="settings"
         options={{
           title: "設定",
-          tabBarIcon: ({ color }) => <TabBarIcon name="cog" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "cog" : "cog-outline"}
+              color={color}
+            />
+          ),
         }}
       />
     </Tabs>

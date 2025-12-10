@@ -1,0 +1,27 @@
+{
+  "name": "ai-fitness-firebase-rules-tests",
+  "version": "1.0.0",
+  "description": "Firestore Security Rules tests for AI Fitness App",
+  "scripts": {
+    "test": "jest --config jest.config.js",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:coverage": "jest --config jest.config.js --coverage"
+  },
+  "keywords": [
+    "firebase",
+    "firestore",
+    "security-rules",
+    "testing"
+  ],
+  "author": "AI Fitness App Team",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -31,15 +31,15 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `training_createSession` Callable Functionを実装
-- [ ] `training_completeSession` Callable Functionを実装
-- [ ] リクエストデータのバリデーション実装（種目、カメラ設定、セッションメタデータ）
-- [ ] Firestoreの`sessions`サブコレクションへの書き込み実装
-- [ ] 削除予定ユーザーのアクセス制御を実装（書き込み禁止）
+- [x] `training_createSession` Callable Functionを実装
+- [x] `training_completeSession` Callable Functionを実装
+- [x] リクエストデータのバリデーション実装（種目、カメラ設定、セッションメタデータ）
+- [x] Firestoreの`sessions`サブコレクションへの書き込み実装
+- [x] 削除予定ユーザーのアクセス制御を実装（書き込み禁止）
 - [ ] レート制限（100回/日）を実装
-- [ ] エラーハンドリング実装（認証エラー、権限エラー、バリデーションエラー）
-- [ ] ユニットテスト実装（カバレッジ80%以上）
-- [ ] セッション作成・完了のログ出力実装
+- [x] エラーハンドリング実装（認証エラー、権限エラー、バリデーションエラー）
+- [x] ユニットテスト実装（カバレッジ80%以上）
+- [x] セッション作成・完了のログ出力実装
 - [ ] ローカルエミュレータでの動作確認
 
 ## 参照ドキュメント
@@ -299,11 +299,13 @@ export const training_completeSession = onCall(async (request) => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了（2025-12-10）
+- [ ] レート制限は別途対応（チケット009との連携が必要）
+- [ ] ローカルエミュレータ動作確認は別途対応
 
 ## 完了日
 
-未定
+2025-12-10（主要実装完了）
 
 ## 備考
 
@@ -316,3 +318,4 @@ export const training_completeSession = onCall(async (request) => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-10 | 主要実装完了 - createSession, completeSession API実装、ユニットテスト追加（カバレッジ80%以上達成） |

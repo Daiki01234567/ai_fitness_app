@@ -64,5 +64,10 @@
   ],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "overrides": {
+    "jsonwebtoken": {
+      "jws": "3.2.3"
+    }
+  }
 }

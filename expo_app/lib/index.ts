@@ -13,14 +13,9 @@ export {
 } from "./firebase";
 export type { FirebaseConfig, EmulatorConfig } from "./firebase";
 
-// Firebase App
-export {
-  initializeFirebaseServices,
-  getFirebaseApp,
-  getAuthInstance,
-  app,
-  auth,
-} from "./firebaseApp";
+// Firebase App (provided by firebase.ts)
+// Note: Use getAuth() from auth.ts instead of directly importing auth instance
+export { app } from "./firebase";
 
 // Firebase Auth
 export {

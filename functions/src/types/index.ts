@@ -8,3 +8,4 @@ export * from "./api";
 export * from "./errors";
 export * from "./gdpr";
 export * from "./security";
+export * from "./training";

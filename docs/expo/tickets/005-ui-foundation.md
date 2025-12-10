@@ -28,17 +28,17 @@ Expo（フロントエンド）
 
 ## 受け入れ条件（Todo）
 
-- [ ] React Native Paperがインストールされている
-- [ ] カスタムテーマが実装されている（`theme/index.ts`）
-- [ ] 共通コンポーネントが実装されている
-  - [ ] Button（プライマリ、セカンダリ）
-  - [ ] TextInput（アウトライン、フラット）
-  - [ ] Card（トレーニングカード、統計カード）
-  - [ ] BottomSheet（メニュー表示用）
-  - [ ] LoadingOverlay（ローディング表示）
-- [ ] カラーパレットが定義されている
-- [ ] タイポグラフィが定義されている
-- [ ] スペーシング（余白）が定義されている
+- [x] React Native Paperがインストールされている
+- [x] カスタムテーマが実装されている（`lib/theme/index.ts`）
+- [x] 共通コンポーネントが実装されている
+  - [x] Button（プライマリ、セカンダリ）→ `AppButton.tsx`
+  - [x] TextInput（アウトライン、フラット）→ `AppTextInput.tsx`
+  - [x] Card（トレーニングカード、統計カード）→ `AppCard.tsx`
+  - [ ] BottomSheet（メニュー表示用）→ Phase 2で実装予定
+  - [x] LoadingOverlay（ローディング表示）→ `LoadingOverlay.tsx`
+- [x] カラーパレットが定義されている
+- [x] タイポグラフィが定義されている
+- [x] スペーシング（余白）が定義されている
 
 ## 参照ドキュメント
 
@@ -305,11 +305,11 @@ function LoginScreen() {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了（BottomSheet以外）
 
 ## 完了日
 
-未完了
+2025-12-10（部分完了: BottomSheetはPhase 2で実装予定）
 
 ## 備考
 

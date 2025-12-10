@@ -22,7 +22,7 @@ export * from "./users";
 export * from "./consent";
 
 // トレーニングセッション
-// export * from "./training";
+export * from "./training";
 
 // GDPR 準拠
 export * from "./gdpr";

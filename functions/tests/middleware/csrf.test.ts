@@ -48,20 +48,20 @@ describe("CSRF Protection Middleware", () => {
       it("should validate allowed production origin", () => {
         const request = {
           rawRequest: {
-            headers: { origin: "https://ai-fitness-c38f0.web.app" },
+            headers: { origin: "https://tokyo-list-478804-e5.web.app" },
           },
         } as any;
 
         const result = validateCsrf(request);
 
         expect(result.valid).toBe(true);
-        expect(result.origin).toBe("https://ai-fitness-c38f0.web.app");
+        expect(result.origin).toBe("https://tokyo-list-478804-e5.web.app");
       });
 
       it("should validate allowed firebaseapp origin", () => {
         const request = {
           rawRequest: {
-            headers: { origin: "https://ai-fitness-c38f0.firebaseapp.com" },
+            headers: { origin: "https://tokyo-list-478804-e5.firebaseapp.com" },
           },
         } as any;
 
@@ -212,7 +212,7 @@ describe("CSRF Protection Middleware", () => {
         const request = {
           rawRequest: {
             headers: {
-              referer: "https://ai-fitness-c38f0.web.app/page",
+              referer: "https://tokyo-list-478804-e5.web.app/page",
             },
           },
         } as any;
@@ -220,7 +220,7 @@ describe("CSRF Protection Middleware", () => {
         const result = validateCsrf(request);
 
         expect(result.valid).toBe(true);
-        expect(result.origin).toBe("https://ai-fitness-c38f0.web.app");
+        expect(result.origin).toBe("https://tokyo-list-478804-e5.web.app");
       });
 
       it("should reject invalid Referer origin", () => {
@@ -258,9 +258,9 @@ describe("CSRF Protection Middleware", () => {
     describe("with Express Request", () => {
       it("should validate Origin from Express request headers", () => {
         const request = {
-          headers: { origin: "https://ai-fitness-c38f0.web.app" },
+          headers: { origin: "https://tokyo-list-478804-e5.web.app" },
           get: jest.fn((header: string) => {
-            if (header === "Origin") return "https://ai-fitness-c38f0.web.app";
+            if (header === "Origin") return "https://tokyo-list-478804-e5.web.app";
             return undefined;
           }),
         } as any;
@@ -273,11 +273,11 @@ describe("CSRF Protection Middleware", () => {
       it("should validate Referer from Express request", () => {
         const request = {
           headers: {
-            referer: "https://ai-fitness-c38f0.web.app/path",
+            referer: "https://tokyo-list-478804-e5.web.app/path",
           },
           get: jest.fn((header: string) => {
             if (header === "Referer")
-              return "https://ai-fitness-c38f0.web.app/path";
+              return "https://tokyo-list-478804-e5.web.app/path";
             return undefined;
           }),
         } as any;
@@ -322,7 +322,7 @@ describe("CSRF Protection Middleware", () => {
       it("should handle Origin header with different casing", () => {
         const request = {
           rawRequest: {
-            headers: { Origin: "https://ai-fitness-c38f0.web.app" },
+            headers: { Origin: "https://tokyo-list-478804-e5.web.app" },
           },
         } as any;
 
@@ -334,7 +334,7 @@ describe("CSRF Protection Middleware", () => {
       it("should handle Referer header with different casing", () => {
         const request = {
           rawRequest: {
-            headers: { Referer: "https://ai-fitness-c38f0.web.app/page" },
+            headers: { Referer: "https://tokyo-list-478804-e5.web.app/page" },
           },
         } as any;
 
@@ -349,7 +349,7 @@ describe("CSRF Protection Middleware", () => {
     it("should not throw for valid request", () => {
       const request = {
         rawRequest: {
-          headers: { origin: "https://ai-fitness-c38f0.web.app" },
+          headers: { origin: "https://tokyo-list-478804-e5.web.app" },
         },
       } as any;
 
@@ -391,7 +391,7 @@ describe("CSRF Protection Middleware", () => {
     it("should not throw for valid origin", () => {
       const request = {
         rawRequest: {
-          headers: { origin: "https://ai-fitness-c38f0.web.app" },
+          headers: { origin: "https://tokyo-list-478804-e5.web.app" },
         },
       } as any;
 
@@ -426,8 +426,8 @@ describe("CSRF Protection Middleware", () => {
   describe("csrfMiddleware", () => {
     it("should call next() for valid request", () => {
       const req = {
-        headers: { origin: "https://ai-fitness-c38f0.web.app" },
-        get: jest.fn().mockReturnValue("https://ai-fitness-c38f0.web.app"),
+        headers: { origin: "https://tokyo-list-478804-e5.web.app" },
+        get: jest.fn().mockReturnValue("https://tokyo-list-478804-e5.web.app"),
         path: "/api/test",
       } as any;
 
@@ -505,8 +505,8 @@ describe("CSRF Protection Middleware", () => {
       const origins = getAllowedOrigins();
 
       expect(Array.isArray(origins)).toBe(true);
-      expect(origins).toContain("https://ai-fitness-c38f0.web.app");
-      expect(origins).toContain("https://ai-fitness-c38f0.firebaseapp.com");
+      expect(origins).toContain("https://tokyo-list-478804-e5.web.app");
+      expect(origins).toContain("https://tokyo-list-478804-e5.firebaseapp.com");
       expect(origins).toContain("http://localhost:5000");
     });
 
@@ -550,7 +550,7 @@ describe("CSRF Protection Middleware", () => {
     });
 
     it("should not add duplicate origin", () => {
-      const existingOrigin = "https://ai-fitness-c38f0.web.app";
+      const existingOrigin = "https://tokyo-list-478804-e5.web.app";
       const originalLength = getAllowedOrigins().length;
 
       addAllowedOrigin(existingOrigin);
@@ -581,8 +581,8 @@ describe("CSRF Protection Middleware", () => {
   describe("Edge cases", () => {
     it("should handle request without rawRequest property", () => {
       const request = {
-        headers: { origin: "https://ai-fitness-c38f0.web.app" },
-        get: jest.fn().mockReturnValue("https://ai-fitness-c38f0.web.app"),
+        headers: { origin: "https://tokyo-list-478804-e5.web.app" },
+        get: jest.fn().mockReturnValue("https://tokyo-list-478804-e5.web.app"),
       } as any;
 
       const result = validateCsrf(request);
@@ -606,14 +606,14 @@ describe("CSRF Protection Middleware", () => {
         rawRequest: {
           headers: {
             referer:
-              "https://ai-fitness-c38f0.web.app/path?query=value#hash",
+              "https://tokyo-list-478804-e5.web.app/path?query=value#hash",
           },
         },
       } as any;
 
       const result = validateCsrf(request);
       expect(result.valid).toBe(true);
-      expect(result.origin).toBe("https://ai-fitness-c38f0.web.app");
+      expect(result.origin).toBe("https://tokyo-list-478804-e5.web.app");
     });
   });
 

@@ -18,6 +18,7 @@ import {
   resetPassword as firebaseResetPassword,
   signInWithGoogle as firebaseSignInWithGoogle,
   resendVerificationEmail as firebaseResendVerificationEmail,
+  deleteAccount as firebaseDeleteAccount,
   subscribeToAuthState,
 } from "@/lib/auth";
 
@@ -45,6 +46,8 @@ interface UseAuthReturn {
   signInWithGoogle: () => Promise<void>;
   /** 認証メールを再送信 */
   resendVerificationEmail: () => Promise<void>;
+  /** アカウント削除 */
+  deleteAccount: () => Promise<void>;
   /** エラーをクリア */
   clearError: () => void;
 }
@@ -252,6 +255,33 @@ export const useAuth = (): UseAuthReturn => {
   }, [setLoading, setError]);
 
   /**
+   * アカウント削除
+   */
+  const deleteAccount = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await firebaseDeleteAccount();
+
+      if (!result.success) {
+        setError(result.error || "アカウント削除に失敗しました");
+        throw new Error(result.error);
+      }
+
+      // User will be cleared by onAuthStateChanged listener
+      console.log("アカウント削除完了");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "アカウント削除に失敗しました";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, setError]);
+
+  /**
    * エラーをクリア
    */
   const clearError = useCallback(() => {
@@ -269,6 +299,7 @@ export const useAuth = (): UseAuthReturn => {
     resetPassword,
     signInWithGoogle,
     resendVerificationEmail,
+    deleteAccount,
     clearError,
   };
 };

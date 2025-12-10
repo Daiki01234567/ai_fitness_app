@@ -34,6 +34,12 @@ interface SettingsState {
   language: Language;
   /** テーマ設定 */
   theme: Theme;
+  /** 音声フィードバック有効フラグ（トレーニング中） */
+  audioFeedback: boolean;
+  /** リマインダー通知有効フラグ */
+  reminderNotification: boolean;
+  /** お知らせ通知有効フラグ */
+  newsNotification: boolean;
   /** 設定が読み込み済みかどうか */
   _hasHydrated: boolean;
 
@@ -46,6 +52,12 @@ interface SettingsState {
   setLanguage: (lang: Language) => void;
   /** テーマ設定を変更 */
   setTheme: (theme: Theme) => void;
+  /** 音声フィードバック設定を変更 */
+  setAudioFeedback: (enabled: boolean) => void;
+  /** リマインダー通知設定を変更 */
+  setReminderNotification: (enabled: boolean) => void;
+  /** お知らせ通知設定を変更 */
+  setNewsNotification: (enabled: boolean) => void;
   /** 設定をリセット */
   resetSettings: () => void;
   /** hydration完了をマーク */
@@ -60,6 +72,9 @@ const DEFAULT_SETTINGS = {
   vibrationEnabled: true,
   language: "ja" as Language,
   theme: "system" as Theme,
+  audioFeedback: true,
+  reminderNotification: false,
+  newsNotification: true,
 };
 
 /**
@@ -73,10 +88,16 @@ const DEFAULT_SETTINGS = {
  *     vibrationEnabled,
  *     language,
  *     theme,
+ *     audioFeedback,
+ *     reminderNotification,
+ *     newsNotification,
  *     setSoundEnabled,
  *     setVibrationEnabled,
  *     setLanguage,
  *     setTheme,
+ *     setAudioFeedback,
+ *     setReminderNotification,
+ *     setNewsNotification,
  *   } = useSettingsStore();
  *
  *   return (
@@ -88,6 +109,10 @@ const DEFAULT_SETTINGS = {
  *       <Switch
  *         value={vibrationEnabled}
  *         onValueChange={setVibrationEnabled}
+ *       />
+ *       <Switch
+ *         value={audioFeedback}
+ *         onValueChange={setAudioFeedback}
  *       />
  *       <LanguagePicker
  *         value={language}
@@ -131,6 +156,12 @@ export const useSettingsStore = create<SettingsState>()(
 
       setTheme: (theme) => set({ theme: theme }),
 
+      setAudioFeedback: (enabled) => set({ audioFeedback: enabled }),
+
+      setReminderNotification: (enabled) => set({ reminderNotification: enabled }),
+
+      setNewsNotification: (enabled) => set({ newsNotification: enabled }),
+
       resetSettings: () => set(DEFAULT_SETTINGS),
 
       setHasHydrated: (state) => set({ _hasHydrated: state }),
@@ -144,6 +175,9 @@ export const useSettingsStore = create<SettingsState>()(
         vibrationEnabled: state.vibrationEnabled,
         language: state.language,
         theme: state.theme,
+        audioFeedback: state.audioFeedback,
+        reminderNotification: state.reminderNotification,
+        newsNotification: state.newsNotification,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

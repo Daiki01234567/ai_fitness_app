@@ -10,8 +10,13 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
-import "react-native-reanimated";
+
+// Only import reanimated on native platforms (it uses worklets which don't work on web)
+if (Platform.OS !== "web") {
+  require("react-native-reanimated");
+}
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { queryClient, initializeFirebase } from "@/lib";
