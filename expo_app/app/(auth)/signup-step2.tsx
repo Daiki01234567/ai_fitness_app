@@ -276,7 +276,6 @@ export default function SignupStep2Screen() {
                   onChange={handleDateChange}
                   maximumDate={getMaxDateOfBirth()}
                   minimumDate={new Date(1900, 0, 1)}
-                  locale="ja"
                 />
                 {Platform.OS === "ios" && (
                   <TouchableOpacity
