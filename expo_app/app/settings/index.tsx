@@ -1,20 +1,20 @@
 /**
- * 設定画面（プロフィール機能含む）
+ * 設定画面
  *
- * アプリ設定、ユーザープロフィール、アカウント管理を提供します。
+ * アプリの各種設定とアカウント管理を提供します。
  *
  * 機能:
- * - ユーザープロフィール表示・編集
- * - 同意状況の表示
- * - アプリ設定（テーマ、通知など）
+ * - トレーニング設定（音声フィードバック ON/OFF）
+ * - 通知設定（リマインダー、お知らせ）
+ * - アカウント管理（サブスクリプション、利用規約、プライバシーポリシー、お問い合わせ）
  * - ログアウト機能
  * - アカウント削除機能（確認ダイアログ付き）
+ * - アプリバージョン表示
  *
- * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
- * @see docs/expo/tickets/009-profile-screen.md
+ * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md 3.13節
+ * @see docs/expo/tickets/027-settings-screen.md
  */
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View, ScrollView, Alert } from "react-native";
@@ -23,12 +23,12 @@ import {
   Text,
   Button,
   List,
-  Avatar,
   Divider,
   Switch,
   Dialog,
   Portal,
   ActivityIndicator,
+  Appbar,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -51,10 +51,13 @@ const THEME_COLORS = {
 
 /**
  * Settings screen component
+ *
+ * Provides app settings, account management, and logout/delete functionality.
+ * Accessible from Profile screen.
  */
 export default function SettingsScreen() {
-  const { user, clearAuth } = useAuthStore();
-  const { profile, clearProfile } = useUserStore();
+  const { clearAuth } = useAuthStore();
+  const { clearProfile } = useUserStore();
   const { signOut, deleteAccount, isLoading: authLoading } = useAuth();
 
   // Dialog states
@@ -68,12 +71,10 @@ export default function SettingsScreen() {
   const [reminderNotification, setReminderNotification] = useState(settings.reminderNotification ?? false);
   const [newsNotification, setNewsNotification] = useState(settings.newsNotification ?? true);
 
-  // Get display name with fallback
-  const displayName = profile?.displayName || user?.displayName || "ユーザー";
-  const email = profile?.email || user?.email || "メールアドレス未設定";
-  const createdAt = profile?.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString("ja-JP")
-    : "不明";
+  // Handle back navigation
+  const handleBack = () => {
+    router.back();
+  };
 
   // Handle logout
   const handleLogout = async () => {
@@ -145,112 +146,20 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      {/* Header with back button */}
+      <Appbar.Header style={styles.header}>
+        <Appbar.BackAction onPress={handleBack} />
+        <Appbar.Content title="設定" />
+      </Appbar.Header>
+
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        {/* Profile Section */}
-        <Surface style={styles.profileCard} elevation={1}>
-          <View style={styles.profileHeader}>
-            <Avatar.Icon
-              size={72}
-              icon="account"
-              style={{ backgroundColor: THEME_COLORS.primary }}
-            />
-            <View style={styles.profileInfo}>
-              <Text variant="titleLarge" style={styles.profileName}>
-                {displayName}
-              </Text>
-              <Text variant="bodyMedium" style={styles.profileEmail}>
-                {email}
-              </Text>
-              <Text variant="bodySmall" style={styles.profileDate}>
-                登録日: {createdAt}
-              </Text>
-            </View>
-          </View>
-          <Button
-            mode="outlined"
-            onPress={() => {
-              // TODO: Navigate to profile edit screen (Phase 2)
-              Alert.alert("準備中", "プロフィール編集機能は現在開発中です");
-            }}
-            style={styles.editProfileButton}
-            textColor={THEME_COLORS.primary}
-            icon="pencil"
-          >
-            プロフィールを編集
-          </Button>
-        </Surface>
-
-        {/* Stats Section */}
-        <Surface style={styles.statsCard} elevation={1}>
-          <Text variant="titleMedium" style={styles.sectionHeader}>
-            統計情報
-          </Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text variant="headlineSmall" style={styles.statValue}>0</Text>
-              <Text variant="bodySmall" style={styles.statLabel}>総セッション</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text variant="headlineSmall" style={styles.statValue}>0分</Text>
-              <Text variant="bodySmall" style={styles.statLabel}>総トレーニング時間</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text variant="headlineSmall" style={styles.statValue}>--</Text>
-              <Text variant="bodySmall" style={styles.statLabel}>平均スコア</Text>
-            </View>
-          </View>
-        </Surface>
-
-        {/* Consent Status Section */}
-        <Surface style={styles.consentCard} elevation={1}>
-          <Text variant="titleMedium" style={styles.sectionHeader}>
-            同意状況
-          </Text>
-          <List.Item
-            title="利用規約"
-            description="同意済み"
-            left={(props) => (
-              <List.Icon
-                {...props}
-                icon="file-document-outline"
-                color={THEME_COLORS.success}
-              />
-            )}
-            right={() => (
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={24}
-                color={THEME_COLORS.success}
-              />
-            )}
-          />
-          <Divider />
-          <List.Item
-            title="プライバシーポリシー"
-            description="同意済み"
-            left={(props) => (
-              <List.Icon
-                {...props}
-                icon="shield-lock-outline"
-                color={THEME_COLORS.success}
-              />
-            )}
-            right={() => (
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={24}
-                color={THEME_COLORS.success}
-              />
-            )}
-          />
-        </Surface>
-
         {/* Training Settings */}
         <Surface style={styles.settingsCard} elevation={1}>
           <Text variant="titleMedium" style={styles.sectionHeader}>
-            トレーニング設定
+            トレーニング
           </Text>
+          <Divider style={styles.divider} />
           <List.Item
             title="音声フィードバック"
             description="トレーニング中の音声ガイド"
@@ -268,8 +177,9 @@ export default function SettingsScreen() {
         {/* Notification Settings */}
         <Surface style={styles.settingsCard} elevation={1}>
           <Text variant="titleMedium" style={styles.sectionHeader}>
-            通知設定
+            通知
           </Text>
+          <Divider style={styles.divider} />
           <List.Item
             title="リマインダー通知"
             description="トレーニングのリマインド"
@@ -305,46 +215,19 @@ export default function SettingsScreen() {
           />
         </Surface>
 
-        {/* Data Management */}
+        {/* Account Section */}
         <Surface style={styles.settingsCard} elevation={1}>
           <Text variant="titleMedium" style={styles.sectionHeader}>
-            データ管理
+            アカウント
           </Text>
+          <Divider style={styles.divider} />
           <List.Item
-            title="データをエクスポート"
-            description="トレーニングデータをダウンロード"
-            left={(props) => <List.Icon {...props} icon="download" />}
+            title="サブスクリプション管理"
+            left={(props) => <List.Icon {...props} icon="credit-card-outline" />}
             onPress={() => {
-              // TODO: Implement data export (Phase 2)
-              Alert.alert("準備中", "データエクスポート機能は現在開発中です");
+              // TODO: Navigate to subscription management (Phase 3)
+              Alert.alert("準備中", "サブスクリプション管理機能は現在開発中です");
             }}
-            right={() => <List.Icon icon="chevron-right" />}
-          />
-          <Divider />
-          <List.Item
-            title="データを削除"
-            description="トレーニング記録を削除"
-            left={(props) => (
-              <List.Icon {...props} icon="delete-outline" color={THEME_COLORS.error} />
-            )}
-            onPress={() => {
-              // TODO: Implement data deletion (Phase 2)
-              Alert.alert("準備中", "データ削除機能は現在開発中です");
-            }}
-            right={() => <List.Icon icon="chevron-right" />}
-            titleStyle={{ color: THEME_COLORS.error }}
-          />
-        </Surface>
-
-        {/* Support Section */}
-        <Surface style={styles.settingsCard} elevation={1}>
-          <Text variant="titleMedium" style={styles.sectionHeader}>
-            サポート
-          </Text>
-          <List.Item
-            title="ヘルプ"
-            left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
-            onPress={() => router.push("/help")}
             right={() => <List.Icon icon="chevron-right" />}
           />
           <Divider />
@@ -374,10 +257,7 @@ export default function SettingsScreen() {
             onPress={() => router.push("/help/contact")}
             right={() => <List.Icon icon="chevron-right" />}
           />
-        </Surface>
-
-        {/* Account Actions */}
-        <Surface style={styles.accountActionsCard} elevation={1}>
+          <Divider />
           <List.Item
             title="ログアウト"
             left={(props) => <List.Icon {...props} icon="logout" />}
@@ -396,12 +276,18 @@ export default function SettingsScreen() {
           />
         </Surface>
 
-        {/* App Version */}
-        <View style={styles.versionContainer}>
-          <Text variant="bodySmall" style={styles.versionText}>
-            AI Fitness v1.0.0
+        {/* App Info Section */}
+        <Surface style={styles.settingsCard} elevation={1}>
+          <Text variant="titleMedium" style={styles.sectionHeader}>
+            アプリ情報
           </Text>
-        </View>
+          <Divider style={styles.divider} />
+          <List.Item
+            title="バージョン"
+            description="1.0.0"
+            left={(props) => <List.Icon {...props} icon="information-outline" />}
+          />
+        </Surface>
       </ScrollView>
 
       {/* Logout Confirmation Dialog */}
@@ -472,6 +358,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME_COLORS.background,
   },
+  header: {
+    backgroundColor: THEME_COLORS.surface,
+    elevation: 0,
+  },
   container: {
     flex: 1,
   },
@@ -489,72 +379,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: THEME_COLORS.textSecondary,
   },
-  // Profile Card
-  profileCard: {
-    backgroundColor: THEME_COLORS.surface,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-  },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  profileInfo: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  profileName: {
-    color: THEME_COLORS.text,
-    fontWeight: "bold",
-  },
-  profileEmail: {
-    color: THEME_COLORS.textSecondary,
-    marginTop: 4,
-  },
-  profileDate: {
-    color: THEME_COLORS.textSecondary,
-    marginTop: 4,
-  },
-  editProfileButton: {
-    borderColor: THEME_COLORS.primary,
-  },
-  // Stats Card
-  statsCard: {
-    backgroundColor: THEME_COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  sectionHeader: {
-    color: THEME_COLORS.text,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-  },
-  statItem: {
-    alignItems: "center",
-  },
-  statValue: {
-    color: THEME_COLORS.primary,
-    fontWeight: "bold",
-  },
-  statLabel: {
-    color: THEME_COLORS.textSecondary,
-    marginTop: 4,
-  },
-  // Consent Card
-  consentCard: {
-    backgroundColor: THEME_COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    paddingBottom: 8,
-    marginBottom: 16,
-  },
   // Settings Card
   settingsCard: {
     backgroundColor: THEME_COLORS.surface,
@@ -563,18 +387,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     marginBottom: 16,
   },
-  // Account Actions Card
-  accountActionsCard: {
-    backgroundColor: THEME_COLORS.surface,
-    borderRadius: 12,
-    marginBottom: 16,
+  sectionHeader: {
+    color: THEME_COLORS.text,
+    fontWeight: "600",
   },
-  // Version
-  versionContainer: {
-    alignItems: "center",
-    paddingVertical: 16,
-  },
-  versionText: {
-    color: THEME_COLORS.textSecondary,
+  divider: {
+    marginVertical: 12,
   },
 });

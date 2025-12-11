@@ -8,9 +8,11 @@
  * - ホーム: 今日のトレーニング概要、クイックスタート
  * - トレーニング: 種目選択、トレーニング開始
  * - 履歴: 過去のトレーニング記録
- * - 設定: アプリ設定、プロフィール、アカウント管理
+ * - プロフィール: ユーザー情報、同意管理、設定への遷移
  *
- * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
+ * 注: 設定画面は /settings に移動し、プロフィール画面から遷移します。
+ *
+ * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md 1.2節
  * @see docs/expo/tickets/010-bottom-navigation.md
  */
 
@@ -57,7 +59,7 @@ function TabBarIcon(props: {
  * - Home (ホーム): Dashboard and quick start
  * - Training (トレーニング): Exercise selection
  * - History (履歴): Training records
- * - Settings (設定): App settings and profile
+ * - Profile (プロフィール): User profile, consent management, settings navigation
  */
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -142,14 +144,14 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Settings Tab */}
+      {/* Profile Tab */}
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: "設定",
+          title: "プロフィール",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "cog" : "cog-outline"}
+              name={focused ? "account" : "account-outline"}
               color={color}
             />
           ),
