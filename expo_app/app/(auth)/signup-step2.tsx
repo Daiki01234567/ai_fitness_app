@@ -9,15 +9,20 @@
  * - Exercise experience (optional)
  * - Goal (optional)
  *
+ * Note: DateTimePicker is only available on native platforms (iOS/Android).
+ * Web environment uses HTML5 date input instead.
+ *
  * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
  */
 
 import { Ionicons } from "@expo/vector-icons";
+// DateTimePicker is only available on native platforms (iOS/Android)
+// Web uses HTML5 date input instead
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -91,12 +96,20 @@ const getMaxDateOfBirth = (): Date => {
   return today;
 };
 
-// Format date for display
+// Format date for display (YYYY/MM/DD)
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}/${month}/${day}`;
+};
+
+// Format date for HTML5 date input (YYYY-MM-DD)
+const formatDateForInput = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 export default function SignupStep2Screen() {
@@ -140,6 +153,42 @@ export default function SignupStep2Screen() {
   // Confirm date selection (iOS)
   const confirmDateSelection = () => {
     setShowDatePicker(false);
+  };
+
+  // Handle web date input change
+  const handleWebDateChange = (dateString: string) => {
+    if (!dateString) {
+      setDateOfBirth(null);
+      return;
+    }
+
+    try {
+      const date = new Date(dateString);
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        setLocalError("正しい生年月日を入力してください");
+        return;
+      }
+
+      // Validate date is not in the future and user is old enough
+      const maxDate = getMaxDateOfBirth();
+      if (date > maxDate) {
+        setLocalError(`${MINIMUM_AGE}歳以上の方がご利用いただけます`);
+        return;
+      }
+
+      const minDate = new Date(1900, 0, 1);
+      if (date < minDate) {
+        setLocalError("正しい生年月日を入力してください");
+        return;
+      }
+
+      setDateOfBirth(date);
+      setLocalError(null);
+    } catch {
+      setLocalError("正しい生年月日を入力してください");
+    }
   };
 
   // Validate age requirement
@@ -246,47 +295,81 @@ export default function SignupStep2Screen() {
               <Text style={styles.label}>
                 生年月日 <Text style={styles.required}>*必須</Text>
               </Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowDatePicker(true)}
-                disabled={isLoading}
-              >
-                <Text
-                  style={[
-                    styles.dateButtonText,
-                    !dateOfBirth && styles.placeholder,
-                  ]}
-                >
-                  {dateOfBirth ? formatDate(dateOfBirth) : "選択してください"}
-                </Text>
-                <Ionicons name="calendar-outline" size={20} color="#666" />
-              </TouchableOpacity>
+
+              {/* Web environment: HTML5 date input */}
+              {Platform.OS === "web" ? (
+                <View style={styles.webDateInputContainer}>
+                  <input
+                    type="date"
+                    value={dateOfBirth ? formatDateForInput(dateOfBirth) : ""}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      handleWebDateChange(e.target.value)
+                    }
+                    disabled={isLoading}
+                    max={formatDateForInput(getMaxDateOfBirth())}
+                    min="1900-01-01"
+                    style={{
+                      height: 48,
+                      width: "100%",
+                      borderRadius: 8,
+                      paddingLeft: 16,
+                      paddingRight: 16,
+                      fontSize: 16,
+                      backgroundColor: "#f9f9f9",
+                      boxSizing: "border-box" as const,
+                      border: "1px solid #ddd",
+                    }}
+                  />
+                </View>
+              ) : (
+                // Native environment: TouchableOpacity + DateTimePicker
+                <>
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={() => setShowDatePicker(true)}
+                    disabled={isLoading}
+                  >
+                    <Text
+                      style={[
+                        styles.dateButtonText,
+                        !dateOfBirth && styles.placeholder,
+                      ]}
+                    >
+                      {dateOfBirth
+                        ? formatDate(dateOfBirth)
+                        : "選択してください"}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={20} color="#666" />
+                  </TouchableOpacity>
+
+                  {/* Date Picker for Native */}
+                  {showDatePicker && (
+                    <View style={styles.datePickerContainer}>
+                      <DateTimePicker
+                        value={dateOfBirth || getMaxDateOfBirth()}
+                        mode="date"
+                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        onChange={handleDateChange}
+                        maximumDate={getMaxDateOfBirth()}
+                        minimumDate={new Date(1900, 0, 1)}
+                      />
+                      {Platform.OS === "ios" && (
+                        <TouchableOpacity
+                          style={styles.dateConfirmButton}
+                          onPress={confirmDateSelection}
+                        >
+                          <Text style={styles.dateConfirmText}>決定</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+
               <Text style={styles.hint}>
                 {MINIMUM_AGE}歳以上の方がご利用いただけます
               </Text>
             </View>
-
-            {/* Date Picker */}
-            {showDatePicker && (
-              <View style={styles.datePickerContainer}>
-                <DateTimePicker
-                  value={dateOfBirth || getMaxDateOfBirth()}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={handleDateChange}
-                  maximumDate={getMaxDateOfBirth()}
-                  minimumDate={new Date(1900, 0, 1)}
-                />
-                {Platform.OS === "ios" && (
-                  <TouchableOpacity
-                    style={styles.dateConfirmButton}
-                    onPress={confirmDateSelection}
-                  >
-                    <Text style={styles.dateConfirmText}>決定</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
 
             {/* Gender (Optional) */}
             <View style={styles.inputContainer}>
@@ -509,6 +592,9 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     marginBottom: 16,
+  },
+  webDateInputContainer: {
+    width: "100%",
   },
   dateConfirmButton: {
     alignItems: "center",
