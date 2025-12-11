@@ -17,5 +17,8 @@ export * from "./bigqueryDlq";
 // BigQuery 日次・週次集計
 export * from "./aggregation";
 
+// トライアル終了前リマインダー（チケット036）
+export * from "./trialReminder";
+
 // 日次使用量リセット（無料プラン制限用）
 // export * from "./usageReset";

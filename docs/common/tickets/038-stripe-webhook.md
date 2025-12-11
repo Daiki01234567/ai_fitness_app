@@ -30,17 +30,17 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `stripe_webhook` HTTP Functionを実装
-- [ ] Webhookシグネチャ検証を実装
-- [ ] 主要イベントハンドラを実装（下記5つ）
-  - [ ] `customer.subscription.created`
-  - [ ] `customer.subscription.updated`
-  - [ ] `customer.subscription.deleted`
-  - [ ] `invoice.payment_succeeded`
-  - [ ] `invoice.payment_failed`
-- [ ] べき等性を担保する処理を実装（重複イベント防止）
-- [ ] エラーハンドリングとリトライ対応を実装
-- [ ] ユニットテストを作成（カバレッジ 80%以上）
+- [x] `stripe_webhook` HTTP Functionを実装
+- [x] Webhookシグネチャ検証を実装
+- [x] 主要イベントハンドラを実装（下記5つ）
+  - [x] `customer.subscription.created`
+  - [x] `customer.subscription.updated`
+  - [x] `customer.subscription.deleted`
+  - [x] `invoice.payment_succeeded`
+  - [x] `invoice.payment_failed`
+- [x] べき等性を担保する処理を実装（重複イベント防止）
+- [x] エラーハンドリングとリトライ対応を実装
+- [x] ユニットテストを作成（カバレッジ 80%以上）
 - [ ] 統合テストでStripe CLIを使った動作確認
 
 ## 参照ドキュメント
@@ -361,11 +361,11 @@ describe('Stripe Webhook', () => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了
 
 ## 完了日
 
-（未完了）
+2025-12-11
 
 ## 備考
 
@@ -380,3 +380,4 @@ describe('Stripe Webhook', () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | 実装完了（統合テスト以外） |

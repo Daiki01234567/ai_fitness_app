@@ -2,7 +2,7 @@
  * Stripe API Functions インデックス
  *
  * Phase 3: 課金機能実装
- * チケット032-035: サブスクリプション管理API
+ * チケット032-039: サブスクリプション管理・課金履歴API
  *
  * docs/common/specs/04_API設計書_Firebase_Functions_v1_0.md 8章
  */
@@ -18,3 +18,12 @@ export { stripe_updateSubscription } from "./updateSubscription";
 
 // サブスクリプション解約（チケット035）
 export { stripe_cancelSubscription } from "./cancelSubscription";
+
+// トライアル状態取得（チケット036）
+export { stripe_getTrialStatus } from "./getTrialStatus";
+
+// Setup Intent作成（チケット037）
+export { stripe_createSetupIntent } from "./createSetupIntent";
+
+// 課金履歴取得（チケット039）
+export { stripe_getBillingHistory } from "./getBillingHistory";

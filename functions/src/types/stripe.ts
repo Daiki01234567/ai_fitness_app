@@ -192,3 +192,67 @@ export const ValidProrationBehaviors = [
 ] as const;
 
 export type ProrationBehavior = typeof ValidProrationBehaviors[number];
+
+/**
+ * トライアル状態取得リクエスト
+ * パラメータなし（認証情報から自動取得）
+ */
+export type GetTrialStatusRequest = Record<string, never>;
+
+/**
+ * トライアル状態取得レスポンス
+ * docs/common/tickets/036-free-trial-api.md に基づく
+ */
+export interface GetTrialStatusResponse {
+  isTrialing: boolean;
+  trialEnd?: string;
+  daysRemaining?: number;
+  willBeChargedAt?: string;
+  hasSubscription: boolean;
+}
+
+/**
+ * 課金履歴取得リクエスト
+ * docs/common/tickets/039-billing-history-api.md に基づく
+ */
+export interface GetBillingHistoryRequest {
+  limit?: number;           // 取得件数（デフォルト: 10、最大: 100）
+  startingAfter?: string;   // ページネーション用（Invoice ID）
+}
+
+/**
+ * 課金履歴の支払い情報
+ */
+export interface BillingHistoryPayment {
+  id: string;               // Invoice ID
+  amount: number;           // 支払い金額（円）
+  currency: string;         // 通貨（'jpy'）
+  status: string;           // 'paid', 'open', 'void', 'uncollectible', 'unknown'
+  paidAt: string | null;    // 支払い日時（ISO 8601形式）
+  invoicePdfUrl: string | null;  // 領収書PDF URL
+  description: string;      // 支払い内容
+}
+
+/**
+ * 課金履歴取得レスポンス
+ */
+export interface GetBillingHistoryResponse {
+  payments: BillingHistoryPayment[];
+  hasMore: boolean;         // 次のページがあるか
+  nextCursor?: string;      // 次のページ用のカーソル
+}
+
+/**
+ * Setup Intent作成リクエスト
+ * docs/common/tickets/037-payment-retry.md に基づく
+ * パラメータなし（認証情報から自動取得）
+ */
+export type CreateSetupIntentRequest = Record<string, never>;
+
+/**
+ * Setup Intent作成レスポンス
+ * docs/common/tickets/037-payment-retry.md に基づく
+ */
+export interface CreateSetupIntentResponse {
+  clientSecret: string;  // Setup Intent Client Secret
+}

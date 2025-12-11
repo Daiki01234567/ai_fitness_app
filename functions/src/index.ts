@@ -89,6 +89,9 @@ export * from "./scheduled";
 // ========================================
 // Webhook ハンドラー
 // ========================================
-// 実装時にコメントを解除:
-// - webhook_revenueCat: サブスクリプションイベントを処理
-// export * from "./webhooks";
+// - stripe_webhook: Stripeイベントを受信・処理
+//   - customer.subscription.created/updated/deleted
+//   - invoice.payment_succeeded/failed
+// TODO: 必要に応じて追加:
+// - webhook_revenueCat: RevenueCatイベントを処理（緊急時の代替手段）
+export * from "./webhooks";
