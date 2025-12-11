@@ -267,7 +267,7 @@ describe("Users Collection", () => {
       );
     });
 
-    it("同意フィールド（tosAccepted）は変更できない", async () => {
+    it("同意フィールド（tosAccepted）の撤回（true → false）はできない", async () => {
       const db = getUserContext(USER_ID);
       await assertFails(
         updateDoc(doc(db, "users", USER_ID), {
@@ -277,7 +277,7 @@ describe("Users Collection", () => {
       );
     });
 
-    it("同意フィールド（ppAccepted）は変更できない", async () => {
+    it("同意フィールド（ppAccepted）の撤回（true → false）はできない", async () => {
       const db = getUserContext(USER_ID);
       await assertFails(
         updateDoc(doc(db, "users", USER_ID), {
@@ -333,6 +333,146 @@ describe("Users Collection", () => {
       await assertFails(
         updateDoc(doc(db, "users", USER_ID), {
           profile: { weight: 10 },
+          updatedAt: Timestamp.now(),
+        }),
+      );
+    });
+  });
+
+  describe("Initial Consent Update", () => {
+    it("初回同意（tosAccepted: false → true）は許可される", async () => {
+      // Create user with initial consent = false
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(doc(db, "users", USER_ID), {
+          email: `${USER_ID}@example.com`,
+          tosAccepted: false,
+          ppAccepted: false,
+          deletionScheduled: false,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      const db = getUserContext(USER_ID);
+      await assertSucceeds(
+        updateDoc(doc(db, "users", USER_ID), {
+          tosAccepted: true,
+          tosAcceptedAt: Timestamp.now(),
+          tosVersion: "1.0",
+          updatedAt: Timestamp.now(),
+        }),
+      );
+    });
+
+    it("初回同意（ppAccepted: false → true）は許可される", async () => {
+      // Create user with initial consent = false
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(doc(db, "users", USER_ID), {
+          email: `${USER_ID}@example.com`,
+          tosAccepted: false,
+          ppAccepted: false,
+          deletionScheduled: false,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      const db = getUserContext(USER_ID);
+      await assertSucceeds(
+        updateDoc(doc(db, "users", USER_ID), {
+          ppAccepted: true,
+          ppAcceptedAt: Timestamp.now(),
+          ppVersion: "1.0",
+          updatedAt: Timestamp.now(),
+        }),
+      );
+    });
+
+    it("両方の初回同意（tosAccepted & ppAccepted: false → true）を同時更新できる", async () => {
+      // Create user with initial consent = false
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(doc(db, "users", USER_ID), {
+          email: `${USER_ID}@example.com`,
+          tosAccepted: false,
+          ppAccepted: false,
+          deletionScheduled: false,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      const db = getUserContext(USER_ID);
+      await assertSucceeds(
+        updateDoc(doc(db, "users", USER_ID), {
+          tosAccepted: true,
+          tosAcceptedAt: Timestamp.now(),
+          tosVersion: "1.0",
+          ppAccepted: true,
+          ppAcceptedAt: Timestamp.now(),
+          ppVersion: "1.0",
+          updatedAt: Timestamp.now(),
+        }),
+      );
+    });
+
+    it("初回同意時にタイムスタンプ未設定は拒否される", async () => {
+      // Create user with initial consent = false
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(doc(db, "users", USER_ID), {
+          email: `${USER_ID}@example.com`,
+          tosAccepted: false,
+          ppAccepted: false,
+          deletionScheduled: false,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      const db = getUserContext(USER_ID);
+      await assertFails(
+        updateDoc(doc(db, "users", USER_ID), {
+          tosAccepted: true,
+          // Missing tosAcceptedAt
+          tosVersion: "1.0",
+          updatedAt: Timestamp.now(),
+        }),
+      );
+    });
+
+    it("初回同意時にバージョン未設定は拒否される", async () => {
+      // Create user with initial consent = false
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(doc(db, "users", USER_ID), {
+          email: `${USER_ID}@example.com`,
+          tosAccepted: false,
+          ppAccepted: false,
+          deletionScheduled: false,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      const db = getUserContext(USER_ID);
+      await assertFails(
+        updateDoc(doc(db, "users", USER_ID), {
+          tosAccepted: true,
+          tosAcceptedAt: Timestamp.now(),
+          // Missing tosVersion
+          updatedAt: Timestamp.now(),
+        }),
+      );
+    });
+
+    it("同意済み（true → true）の場合、タイムスタンプ・バージョンは変更不可", async () => {
+      const db = getUserContext(USER_ID);
+      await assertFails(
+        updateDoc(doc(db, "users", USER_ID), {
+          tosAcceptedAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         }),
       );

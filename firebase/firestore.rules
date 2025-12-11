@@ -461,13 +461,8 @@ service cloud.firestore {
       // Immutable fields check
       return newData.email == oldData.email
              && newData.createdAt == oldData.createdAt
-             // Consent fields are read-only (Cloud Functions only can change)
-             && newData.tosAccepted == oldData.tosAccepted
-             && newData.ppAccepted == oldData.ppAccepted
-             && newData.get('tosAcceptedAt', null) == oldData.get('tosAcceptedAt', null)
-             && newData.get('ppAcceptedAt', null) == oldData.get('ppAcceptedAt', null)
-             && newData.get('tosVersion', null) == oldData.get('tosVersion', null)
-             && newData.get('ppVersion', null) == oldData.get('ppVersion', null)
+             // Consent fields: only false → true transition allowed (initial consent)
+             && validateConsentUpdate(newData, oldData)
              // Deletion scheduled flags are read-only (Cloud Functions only)
              && newData.get('deletionScheduled', false) == oldData.get('deletionScheduled', false)
              && newData.get('deletionScheduledAt', null) == oldData.get('deletionScheduledAt', null)
@@ -477,6 +472,44 @@ service cloud.firestore {
              && newData.get('forceLogoutAt', null) == oldData.get('forceLogoutAt', null)
              // Profile validation
              && validateProfileUpdate(newData);
+    }
+
+    /**
+     * Consent update validation
+     * Allows only initial consent (false → true) by users
+     * Consent revocation (true → false) is handled by Cloud Functions only
+     */
+    function validateConsentUpdate(newData, oldData) {
+      // Case 1: No change (both remain same)
+      let tosUnchanged = newData.tosAccepted == oldData.tosAccepted;
+      let ppUnchanged = newData.ppAccepted == oldData.ppAccepted;
+
+      // Case 2: Initial consent (false → true only)
+      let tosInitialConsent = oldData.tosAccepted == false && newData.tosAccepted == true;
+      let ppInitialConsent = oldData.ppAccepted == false && newData.ppAccepted == true;
+
+      // tosAccepted: must be unchanged OR initial consent
+      let tosValid = tosUnchanged || tosInitialConsent;
+      // ppAccepted: must be unchanged OR initial consent
+      let ppValid = ppUnchanged || ppInitialConsent;
+
+      // Timestamp fields: can only be set during initial consent
+      let tosTimestampValid = tosUnchanged
+        ? (newData.get('tosAcceptedAt', null) == oldData.get('tosAcceptedAt', null))
+        : (tosInitialConsent && newData.get('tosAcceptedAt', null) != null);
+      let ppTimestampValid = ppUnchanged
+        ? (newData.get('ppAcceptedAt', null) == oldData.get('ppAcceptedAt', null))
+        : (ppInitialConsent && newData.get('ppAcceptedAt', null) != null);
+
+      // Version fields: can only be set during initial consent
+      let tosVersionValid = tosUnchanged
+        ? (newData.get('tosVersion', null) == oldData.get('tosVersion', null))
+        : (tosInitialConsent && newData.get('tosVersion', null) != null);
+      let ppVersionValid = ppUnchanged
+        ? (newData.get('ppVersion', null) == oldData.get('ppVersion', null))
+        : (ppInitialConsent && newData.get('ppVersion', null) != null);
+
+      return tosValid && ppValid && tosTimestampValid && ppTimestampValid && tosVersionValid && ppVersionValid;
     }
 
     /**

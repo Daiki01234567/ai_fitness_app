@@ -540,6 +540,10 @@ export default function AgreementScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [activeDocument, setActiveDocument] = useState<DocumentType>(null);
 
+  // Track whether user has viewed full documents (required before consent)
+  const [hasViewedTos, setHasViewedTos] = useState(false);
+  const [hasViewedPp, setHasViewedPp] = useState(false);
+
   // Both checkboxes must be checked
   const canProceed = tosAccepted && ppAccepted;
 
@@ -705,8 +709,14 @@ export default function AgreementScreen() {
     setModalVisible(true);
   };
 
-  // Close document modal
+  // Close document modal and mark as viewed
   const closeDocument = () => {
+    // Mark the document as viewed when closing
+    if (activeDocument === "tos") {
+      setHasViewedTos(true);
+    } else if (activeDocument === "pp") {
+      setHasViewedPp(true);
+    }
     setModalVisible(false);
     setActiveDocument(null);
   };
@@ -731,29 +741,53 @@ export default function AgreementScreen() {
     return "";
   };
 
-  // Render checkbox item
+  // Render checkbox item with view requirement
   const renderCheckbox = (
     label: string,
     checked: boolean,
     onToggle: () => void,
-    onViewFull: () => void
-  ) => (
-    <View style={styles.checkboxContainer}>
-      <TouchableOpacity
-        style={styles.checkboxRow}
-        onPress={onToggle}
-        disabled={isLoading}
-      >
-        <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-          {checked && <Ionicons name="checkmark" size={16} color="#fff" />}
-        </View>
-        <Text style={styles.checkboxLabel}>{label}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onViewFull}>
-        <Text style={styles.viewFullText}>全文を見る</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    onViewFull: () => void,
+    hasViewed: boolean
+  ) => {
+    const isDisabled = isLoading || !hasViewed;
+
+    return (
+      <View style={styles.checkboxContainer}>
+        <TouchableOpacity
+          style={styles.checkboxRow}
+          onPress={onToggle}
+          disabled={isDisabled}
+        >
+          <View style={[
+            styles.checkbox,
+            checked && styles.checkboxChecked,
+            isDisabled && styles.checkboxDisabled,
+          ]}>
+            {checked && <Ionicons name="checkmark" size={16} color="#fff" />}
+          </View>
+          <Text style={[
+            styles.checkboxLabel,
+            isDisabled && styles.checkboxLabelDisabled,
+          ]}>
+            {label}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onViewFull}>
+          <Text style={[
+            styles.viewFullText,
+            hasViewed && styles.viewFullTextViewed,
+          ]}>
+            {hasViewed ? "✓ 確認済み" : "全文を見る（必須）"}
+          </Text>
+        </TouchableOpacity>
+        {!hasViewed && (
+          <Text style={styles.viewRequiredHint}>
+            ※ チェックするには全文を確認してください
+          </Text>
+        )}
+      </View>
+    );
+  };
 
   // Render key points list
   const renderKeyPoints = (title: string, points: string[]) => (
@@ -832,14 +866,16 @@ export default function AgreementScreen() {
             "利用規約に同意します",
             tosAccepted,
             () => setTosAccepted(!tosAccepted),
-            () => openDocument("tos")
+            () => openDocument("tos"),
+            hasViewedTos
           )}
 
           {renderCheckbox(
             "プライバシーポリシーに同意します",
             ppAccepted,
             () => setPpAccepted(!ppAccepted),
-            () => openDocument("pp")
+            () => openDocument("pp"),
+            hasViewedPp
           )}
 
           <Text style={styles.consentNote}>
@@ -967,16 +1003,33 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
     borderColor: "#4CAF50",
   },
+  checkboxDisabled: {
+    backgroundColor: "#f5f5f5",
+    borderColor: "#ccc",
+  },
   checkboxLabel: {
     fontSize: 16,
     color: "#333",
     flex: 1,
+  },
+  checkboxLabelDisabled: {
+    color: "#999",
   },
   viewFullText: {
     fontSize: 14,
     color: "#2196F3",
     marginLeft: 36,
     marginTop: 4,
+    fontWeight: "500",
+  },
+  viewFullTextViewed: {
+    color: "#4CAF50",
+  },
+  viewRequiredHint: {
+    fontSize: 12,
+    color: "#ff9800",
+    marginLeft: 36,
+    marginTop: 2,
   },
   consentNote: {
     fontSize: 12,
