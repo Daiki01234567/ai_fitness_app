@@ -1228,3 +1228,808 @@ export type StatsActionType =
   | "view_user_stats"
   | "view_retention_stats"
   | "view_dashboard_stats";
+
+// =============================================================================
+// マスタデータ管理API型定義（チケット049）
+// =============================================================================
+
+/**
+ * 種目マスタ
+ */
+export interface ExerciseMaster {
+  /** 種目ID */
+  id: string;
+  /** 種目名（日本語） */
+  name: string;
+  /** 種目名（英語） */
+  nameEn: string;
+  /** 説明 */
+  description: string;
+  /** カテゴリ */
+  category: string;
+  /** 対象筋肉 */
+  targetMuscles: string[];
+  /** 難易度 */
+  difficulty: "beginner" | "intermediate" | "advanced";
+  /** 有効フラグ */
+  enabled: boolean;
+  /** 表示順 */
+  displayOrder: number;
+  /** 作成日時 */
+  createdAt: Timestamp;
+  /** 更新日時 */
+  updatedAt: Timestamp;
+}
+
+/**
+ * プランマスタ
+ */
+export interface PlanMaster {
+  /** プランID */
+  id: string;
+  /** プラン名 */
+  name: string;
+  /** 説明 */
+  description: string;
+  /** 月額料金 */
+  priceMonthly: number;
+  /** 年額料金 */
+  priceYearly: number;
+  /** 通貨 */
+  currency: string;
+  /** 機能一覧 */
+  features: string[];
+  /** 無料トライアル日数 */
+  trialDays: number;
+  /** 有効フラグ */
+  enabled: boolean;
+  /** 作成日時 */
+  createdAt: Timestamp;
+  /** 更新日時 */
+  updatedAt: Timestamp;
+}
+
+/**
+ * お知らせタイプ
+ */
+export type AnnouncementType = "info" | "warning" | "maintenance" | "update";
+
+/**
+ * お知らせ対象ユーザー
+ */
+export type AnnouncementTargetAudience = "all" | "free" | "premium";
+
+/**
+ * お知らせマスタ
+ */
+export interface Announcement {
+  /** お知らせID */
+  id: string;
+  /** タイトル */
+  title: string;
+  /** 内容 */
+  content: string;
+  /** タイプ */
+  type: AnnouncementType;
+  /** 優先度 */
+  priority: number;
+  /** 対象ユーザー */
+  targetAudience: AnnouncementTargetAudience;
+  /** 公開開始日時 */
+  startDate: Timestamp;
+  /** 公開終了日時（オプション） */
+  endDate?: Timestamp;
+  /** 有効フラグ */
+  enabled: boolean;
+  /** 作成日時 */
+  createdAt: Timestamp;
+  /** 作成者ID */
+  createdBy: string;
+  /** 更新日時 */
+  updatedAt: Timestamp;
+}
+
+/**
+ * アプリ設定
+ */
+export interface AppSettings {
+  /** メンテナンスモード */
+  maintenanceMode: boolean;
+  /** メンテナンスメッセージ */
+  maintenanceMessage?: string;
+  /** 最小アプリバージョン */
+  minAppVersion: {
+    ios: string;
+    android: string;
+  };
+  /** 機能フラグ */
+  featureFlags: Record<string, boolean>;
+  /** 更新日時 */
+  updatedAt: Timestamp;
+  /** 更新者ID */
+  updatedBy: string;
+}
+
+// -----------------------------------------------------------------------------
+// 種目マスタAPI リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * 種目一覧取得リクエスト
+ */
+export interface ListExercisesRequest {
+  /** 有効なもののみ取得 */
+  enabledOnly?: boolean;
+  /** カテゴリフィルタ */
+  category?: string;
+}
+
+/**
+ * 種目一覧取得レスポンス
+ */
+export interface ListExercisesResponse {
+  /** 種目一覧 */
+  exercises: ExerciseMaster[];
+  /** 総件数 */
+  totalCount: number;
+}
+
+/**
+ * 種目作成リクエスト
+ */
+export interface CreateExerciseRequest {
+  /** 種目名（日本語） */
+  name: string;
+  /** 種目名（英語） */
+  nameEn: string;
+  /** 説明 */
+  description: string;
+  /** カテゴリ */
+  category: string;
+  /** 対象筋肉 */
+  targetMuscles: string[];
+  /** 難易度 */
+  difficulty: "beginner" | "intermediate" | "advanced";
+  /** 表示順 */
+  displayOrder?: number;
+}
+
+/**
+ * 種目更新リクエスト
+ */
+export interface UpdateExerciseRequest {
+  /** 種目ID */
+  exerciseId: string;
+  /** 種目名（日本語） */
+  name?: string;
+  /** 種目名（英語） */
+  nameEn?: string;
+  /** 説明 */
+  description?: string;
+  /** カテゴリ */
+  category?: string;
+  /** 対象筋肉 */
+  targetMuscles?: string[];
+  /** 難易度 */
+  difficulty?: "beginner" | "intermediate" | "advanced";
+  /** 有効フラグ */
+  enabled?: boolean;
+  /** 表示順 */
+  displayOrder?: number;
+}
+
+/**
+ * 種目レスポンス
+ */
+export interface ExerciseResponse {
+  /** 種目 */
+  exercise: ExerciseMaster;
+}
+
+// -----------------------------------------------------------------------------
+// プランマスタAPI リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * プラン一覧取得リクエスト
+ */
+export interface ListPlansRequest {
+  /** 有効なもののみ取得 */
+  enabledOnly?: boolean;
+}
+
+/**
+ * プラン一覧取得レスポンス
+ */
+export interface ListPlansResponse {
+  /** プラン一覧 */
+  plans: PlanMaster[];
+  /** 総件数 */
+  totalCount: number;
+}
+
+/**
+ * プラン更新リクエスト
+ */
+export interface UpdatePlanRequest {
+  /** プランID */
+  planId: string;
+  /** プラン名 */
+  name?: string;
+  /** 説明 */
+  description?: string;
+  /** 月額料金 */
+  priceMonthly?: number;
+  /** 年額料金 */
+  priceYearly?: number;
+  /** 機能一覧 */
+  features?: string[];
+  /** 無料トライアル日数 */
+  trialDays?: number;
+  /** 有効フラグ */
+  enabled?: boolean;
+}
+
+/**
+ * プランレスポンス
+ */
+export interface PlanResponse {
+  /** プラン */
+  plan: PlanMaster;
+}
+
+// -----------------------------------------------------------------------------
+// お知らせマスタAPI リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * お知らせ一覧取得リクエスト
+ */
+export interface ListAnnouncementsRequest {
+  /** 有効なもののみ取得 */
+  enabledOnly?: boolean;
+  /** タイプフィルタ */
+  type?: AnnouncementType;
+  /** 取得件数 */
+  limit?: number;
+  /** ページネーションカーソル */
+  cursor?: string;
+}
+
+/**
+ * お知らせ一覧取得レスポンス
+ */
+export interface ListAnnouncementsResponse {
+  /** お知らせ一覧 */
+  announcements: Announcement[];
+  /** 次ページカーソル */
+  nextCursor?: string;
+  /** 総件数 */
+  totalCount: number;
+}
+
+/**
+ * お知らせ作成リクエスト
+ */
+export interface CreateAnnouncementRequest {
+  /** タイトル */
+  title: string;
+  /** 内容 */
+  content: string;
+  /** タイプ */
+  type: AnnouncementType;
+  /** 優先度 */
+  priority?: number;
+  /** 対象ユーザー */
+  targetAudience?: AnnouncementTargetAudience;
+  /** 公開開始日時（ISO8601） */
+  startDate: string;
+  /** 公開終了日時（ISO8601、オプション） */
+  endDate?: string;
+}
+
+/**
+ * お知らせ更新リクエスト
+ */
+export interface UpdateAnnouncementRequest {
+  /** お知らせID */
+  announcementId: string;
+  /** タイトル */
+  title?: string;
+  /** 内容 */
+  content?: string;
+  /** タイプ */
+  type?: AnnouncementType;
+  /** 優先度 */
+  priority?: number;
+  /** 対象ユーザー */
+  targetAudience?: AnnouncementTargetAudience;
+  /** 公開開始日時（ISO8601） */
+  startDate?: string;
+  /** 公開終了日時（ISO8601） */
+  endDate?: string;
+  /** 有効フラグ */
+  enabled?: boolean;
+}
+
+/**
+ * お知らせ削除リクエスト
+ */
+export interface DeleteAnnouncementRequest {
+  /** お知らせID */
+  announcementId: string;
+}
+
+/**
+ * お知らせレスポンス
+ */
+export interface AnnouncementResponse {
+  /** お知らせ */
+  announcement: Announcement;
+}
+
+// -----------------------------------------------------------------------------
+// アプリ設定API リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * アプリ設定取得レスポンス
+ */
+export interface GetAppSettingsResponse {
+  /** アプリ設定 */
+  settings: AppSettings;
+}
+
+/**
+ * アプリ設定更新リクエスト
+ */
+export interface UpdateAppSettingsRequest {
+  /** メンテナンスモード */
+  maintenanceMode?: boolean;
+  /** メンテナンスメッセージ */
+  maintenanceMessage?: string;
+  /** 最小アプリバージョン */
+  minAppVersion?: {
+    ios?: string;
+    android?: string;
+  };
+  /** 機能フラグ */
+  featureFlags?: Record<string, boolean>;
+}
+
+/**
+ * アプリ設定レスポンス
+ */
+export interface AppSettingsResponse {
+  /** アプリ設定 */
+  settings: AppSettings;
+  /** メッセージ */
+  message: string;
+}
+
+// =============================================================================
+// セキュリティ設定API型定義（チケット050）
+// =============================================================================
+
+/**
+ * IP許可リストエントリー
+ */
+export interface IpAllowlistEntry {
+  /** IPアドレス */
+  ip: string;
+  /** 説明 */
+  description: string;
+  /** 追加者ID */
+  addedBy: string;
+  /** 追加日時 */
+  addedAt: Timestamp;
+  /** 有効期限（オプション） */
+  expiresAt?: Timestamp;
+}
+
+/**
+ * IPブロックリストエントリー
+ */
+export interface IpBlocklistEntry {
+  /** IPアドレス */
+  ip: string;
+  /** 理由 */
+  reason: string;
+  /** ブロック者ID */
+  blockedBy: string;
+  /** ブロック日時 */
+  blockedAt: Timestamp;
+  /** 有効期限（オプション） */
+  expiresAt?: Timestamp;
+  /** 自動ブロックフラグ */
+  autoBlocked: boolean;
+}
+
+/**
+ * レート制限設定
+ */
+export interface RateLimitConfig {
+  /** エンドポイント */
+  endpoint: string;
+  /** 最大リクエスト数 */
+  maxRequests: number;
+  /** 時間ウィンドウ（秒） */
+  windowSeconds: number;
+  /** 有効フラグ */
+  enabled: boolean;
+  /** バイパスロール */
+  bypassRoles?: string[];
+}
+
+/**
+ * 認証ポリシー
+ */
+export interface AuthPolicy {
+  /** パスワード最小文字数 */
+  passwordMinLength: number;
+  /** 大文字必須 */
+  passwordRequireUppercase: boolean;
+  /** 小文字必須 */
+  passwordRequireLowercase: boolean;
+  /** 数字必須 */
+  passwordRequireNumber: boolean;
+  /** 特殊文字必須 */
+  passwordRequireSpecial: boolean;
+  /** MFA必須 */
+  mfaRequired: boolean;
+  /** 管理者MFA必須 */
+  mfaRequiredForAdmin: boolean;
+  /** セッションタイムアウト（分） */
+  sessionTimeoutMinutes: number;
+  /** 管理者セッションタイムアウト（分） */
+  adminSessionTimeoutMinutes: number;
+  /** 最大ログイン試行回数 */
+  maxLoginAttempts: number;
+  /** ロックアウト期間（分） */
+  lockoutDurationMinutes: number;
+  /** 更新日時 */
+  updatedAt: Timestamp;
+  /** 更新者ID */
+  updatedBy: string;
+}
+
+/**
+ * セキュリティ変更ログタイプ
+ */
+export type SecurityChangeType =
+  | "ip_allowlist"
+  | "ip_blocklist"
+  | "rate_limit"
+  | "auth_policy";
+
+/**
+ * セキュリティ変更ログアクション
+ */
+export type SecurityChangeAction = "create" | "update" | "delete";
+
+/**
+ * セキュリティ変更ログ
+ */
+export interface SecurityChangeLog {
+  /** ログID */
+  id: string;
+  /** 変更タイプ */
+  changeType: SecurityChangeType;
+  /** アクション */
+  action: SecurityChangeAction;
+  /** 変更前の値 */
+  previousValue?: unknown;
+  /** 変更後の値 */
+  newValue?: unknown;
+  /** 変更者ID */
+  changedBy: string;
+  /** 変更日時 */
+  changedAt: Timestamp;
+  /** 理由 */
+  reason?: string;
+}
+
+// -----------------------------------------------------------------------------
+// IP許可リストAPI リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * IP許可リスト取得レスポンス
+ */
+export interface GetIpAllowlistResponse {
+  /** IP許可リスト */
+  entries: IpAllowlistEntry[];
+  /** 許可リストが有効か */
+  enabled: boolean;
+}
+
+/**
+ * IP許可リスト追加リクエスト
+ */
+export interface AddIpAllowlistRequest {
+  /** IPアドレス */
+  ip: string;
+  /** 説明 */
+  description: string;
+  /** 有効期限（ISO8601、オプション） */
+  expiresAt?: string;
+}
+
+/**
+ * IP許可リスト削除リクエスト
+ */
+export interface RemoveIpAllowlistRequest {
+  /** IPアドレス */
+  ip: string;
+  /** 理由 */
+  reason?: string;
+}
+
+/**
+ * IP許可リストレスポンス
+ */
+export interface IpAllowlistResponse {
+  /** 成功フラグ */
+  success: boolean;
+  /** メッセージ */
+  message: string;
+  /** IP許可リスト */
+  entries?: IpAllowlistEntry[];
+}
+
+// -----------------------------------------------------------------------------
+// IPブロックリストAPI リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * IPブロックリスト取得レスポンス
+ */
+export interface GetIpBlocklistResponse {
+  /** IPブロックリスト */
+  entries: IpBlocklistEntry[];
+}
+
+/**
+ * IPブロックリスト追加リクエスト
+ */
+export interface AddIpBlocklistRequest {
+  /** IPアドレス */
+  ip: string;
+  /** 理由 */
+  reason: string;
+  /** 有効期限（ISO8601、オプション） */
+  expiresAt?: string;
+}
+
+/**
+ * IPブロックリスト削除リクエスト
+ */
+export interface RemoveIpBlocklistRequest {
+  /** IPアドレス */
+  ip: string;
+  /** 理由 */
+  reason?: string;
+}
+
+/**
+ * IPブロックリストレスポンス
+ */
+export interface IpBlocklistResponse {
+  /** 成功フラグ */
+  success: boolean;
+  /** メッセージ */
+  message: string;
+  /** IPブロックリスト */
+  entries?: IpBlocklistEntry[];
+}
+
+// -----------------------------------------------------------------------------
+// レート制限設定API リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * レート制限設定取得レスポンス
+ */
+export interface GetRateLimitsResponse {
+  /** レート制限設定一覧 */
+  configs: RateLimitConfig[];
+}
+
+/**
+ * レート制限設定更新リクエスト
+ */
+export interface UpdateRateLimitsRequest {
+  /** レート制限設定一覧 */
+  configs: RateLimitConfig[];
+}
+
+/**
+ * レート制限設定レスポンス
+ */
+export interface RateLimitsResponse {
+  /** 成功フラグ */
+  success: boolean;
+  /** メッセージ */
+  message: string;
+  /** レート制限設定一覧 */
+  configs: RateLimitConfig[];
+}
+
+// -----------------------------------------------------------------------------
+// 認証ポリシーAPI リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * 認証ポリシー取得レスポンス
+ */
+export interface GetAuthPolicyResponse {
+  /** 認証ポリシー */
+  policy: AuthPolicy;
+}
+
+/**
+ * 認証ポリシー更新リクエスト
+ */
+export interface UpdateAuthPolicyRequest {
+  /** パスワード最小文字数 */
+  passwordMinLength?: number;
+  /** 大文字必須 */
+  passwordRequireUppercase?: boolean;
+  /** 小文字必須 */
+  passwordRequireLowercase?: boolean;
+  /** 数字必須 */
+  passwordRequireNumber?: boolean;
+  /** 特殊文字必須 */
+  passwordRequireSpecial?: boolean;
+  /** MFA必須 */
+  mfaRequired?: boolean;
+  /** 管理者MFA必須 */
+  mfaRequiredForAdmin?: boolean;
+  /** セッションタイムアウト（分） */
+  sessionTimeoutMinutes?: number;
+  /** 管理者セッションタイムアウト（分） */
+  adminSessionTimeoutMinutes?: number;
+  /** 最大ログイン試行回数 */
+  maxLoginAttempts?: number;
+  /** ロックアウト期間（分） */
+  lockoutDurationMinutes?: number;
+}
+
+/**
+ * 認証ポリシーレスポンス
+ */
+export interface AuthPolicyResponse {
+  /** 成功フラグ */
+  success: boolean;
+  /** メッセージ */
+  message: string;
+  /** 認証ポリシー */
+  policy: AuthPolicy;
+}
+
+// -----------------------------------------------------------------------------
+// セキュリティ変更履歴API リクエスト/レスポンス
+// -----------------------------------------------------------------------------
+
+/**
+ * セキュリティ変更履歴取得リクエスト
+ */
+export interface GetSecurityChangeHistoryRequest {
+  /** 変更タイプフィルタ */
+  changeType?: SecurityChangeType;
+  /** 取得件数 */
+  limit?: number;
+  /** ページネーションカーソル */
+  cursor?: string;
+  /** 開始日時（ISO8601） */
+  startDate?: string;
+  /** 終了日時（ISO8601） */
+  endDate?: string;
+}
+
+/**
+ * セキュリティ変更履歴取得レスポンス
+ */
+export interface GetSecurityChangeHistoryResponse {
+  /** 変更履歴一覧 */
+  logs: SecurityChangeLog[];
+  /** 次ページカーソル */
+  nextCursor?: string;
+  /** 総件数 */
+  totalCount: number;
+}
+
+/**
+ * セキュリティスナップショットレスポンス
+ */
+export interface SecuritySnapshotResponse {
+  /** IP許可リスト */
+  ipAllowlist: {
+    entries: IpAllowlistEntry[];
+    enabled: boolean;
+  };
+  /** IPブロックリスト */
+  ipBlocklist: IpBlocklistEntry[];
+  /** レート制限設定 */
+  rateLimits: RateLimitConfig[];
+  /** 認証ポリシー */
+  authPolicy: AuthPolicy;
+  /** スナップショット生成日時 */
+  generatedAt: string;
+}
+
+// =============================================================================
+// マスタデータ・セキュリティAPI定数
+// =============================================================================
+
+/**
+ * マスタデータAPI関連定数
+ */
+export const MASTER_DATA_CONSTANTS = {
+  /** 種目マスタコレクション */
+  EXERCISES_COLLECTION: "masterExercises",
+  /** プランマスタコレクション */
+  PLANS_COLLECTION: "masterPlans",
+  /** お知らせマスタコレクション */
+  ANNOUNCEMENTS_COLLECTION: "masterAnnouncements",
+  /** アプリ設定ドキュメントパス */
+  APP_SETTINGS_DOC_PATH: "appSettings/config",
+  /** デフォルト取得件数 */
+  DEFAULT_LIMIT: 50,
+  /** 最大取得件数 */
+  MAX_LIMIT: 100,
+} as const;
+
+/**
+ * セキュリティ設定API関連定数
+ */
+export const SECURITY_SETTINGS_CONSTANTS = {
+  /** IP許可リストドキュメントパス */
+  IP_ALLOWLIST_DOC_PATH: "securitySettings/ipAllowlist",
+  /** IPブロックリストコレクション */
+  IP_BLOCKLIST_COLLECTION: "ipBlocklist",
+  /** レート制限設定ドキュメントパス */
+  RATE_LIMITS_DOC_PATH: "securitySettings/rateLimits",
+  /** 認証ポリシードキュメントパス */
+  AUTH_POLICY_DOC_PATH: "securitySettings/authPolicy",
+  /** セキュリティ変更ログコレクション */
+  SECURITY_CHANGE_LOG_COLLECTION: "securityChangeLogs",
+  /** デフォルト取得件数 */
+  DEFAULT_LIMIT: 50,
+  /** 最大取得件数 */
+  MAX_LIMIT: 200,
+} as const;
+
+/**
+ * マスタデータAPIアクションタイプ
+ */
+export type MasterDataActionType =
+  | "view_exercises"
+  | "create_exercise"
+  | "update_exercise"
+  | "delete_exercise"
+  | "view_plans"
+  | "update_plan"
+  | "view_announcements"
+  | "create_announcement"
+  | "update_announcement"
+  | "delete_announcement"
+  | "view_app_settings"
+  | "update_app_settings";
+
+/**
+ * セキュリティ設定APIアクションタイプ
+ */
+export type SecuritySettingsActionType =
+  | "view_ip_allowlist"
+  | "add_ip_allowlist"
+  | "remove_ip_allowlist"
+  | "view_ip_blocklist"
+  | "add_ip_blocklist"
+  | "remove_ip_blocklist"
+  | "view_rate_limits"
+  | "update_rate_limits"
+  | "view_auth_policy"
+  | "update_auth_policy"
+  | "view_security_history"
+  | "view_security_snapshot";
