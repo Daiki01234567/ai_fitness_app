@@ -211,6 +211,69 @@ export class ExternalServiceError extends AppError {
     (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.REVENUECAT_ERROR;
     return error;
   }
+
+  /**
+   * Stripe API エラー
+   */
+  static stripe(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_API_ERROR;
+    return error;
+  }
+
+  /**
+   * Stripe Customer作成エラー
+   */
+  static stripeCustomerCreate(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_CUSTOMER_CREATE_FAILED;
+    return error;
+  }
+
+  /**
+   * Stripe Checkout Session作成エラー
+   */
+  static stripeCheckoutSession(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_CHECKOUT_SESSION_FAILED;
+    return error;
+  }
+
+  /**
+   * Stripe Webhook検証エラー
+   */
+  static stripeWebhookVerification(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_WEBHOOK_VERIFICATION_FAILED;
+    return error;
+  }
+
+  /**
+   * Stripe 決済エラー
+   */
+  static stripePayment(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_PAYMENT_FAILED;
+    return error;
+  }
+
+  /**
+   * Stripe レート制限エラー
+   */
+  static stripeRateLimit(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_RATE_LIMIT_ERROR;
+    return error;
+  }
+
+  /**
+   * Stripe 接続エラー
+   */
+  static stripeConnection(message: string, cause?: Error): ExternalServiceError {
+    const error = new ExternalServiceError("Stripe", message, cause);
+    (error as { appCode: AppErrorCode }).appCode = AppErrorCodes.STRIPE_CONNECTION_ERROR;
+    return error;
+  }
 }
 
 /**

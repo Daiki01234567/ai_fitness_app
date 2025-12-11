@@ -28,13 +28,13 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `stripe_getSubscription` Callable Functionを実装
-- [ ] Firestoreから`stripeSubscriptionId`を取得する処理を実装
-- [ ] Stripe APIでサブスクリプション詳細を取得する処理を実装
-- [ ] サブスクリプションがない場合の処理を実装
-- [ ] エラーハンドリングを実装
-- [ ] ユニットテストを作成（カバレッジ 80%以上）
-- [ ] 統合テストで動作確認
+- [x] `stripe_getSubscription` Callable Functionを実装
+- [x] Firestoreから`stripeSubscriptionId`を取得する処理を実装
+- [x] Stripe APIでサブスクリプション詳細を取得する処理を実装
+- [x] サブスクリプションがない場合の処理を実装
+- [x] エラーハンドリングを実装
+- [x] ユニットテストを作成（カバレッジ 80%以上）
+- [x] 統合テストで動作確認
 
 ## 参照ドキュメント
 
@@ -217,11 +217,11 @@ describe('stripe_getSubscription', () => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了
 
 ## 完了日
 
-（未完了）
+2025-12-11
 
 ## 備考
 
@@ -234,3 +234,4 @@ describe('stripe_getSubscription', () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | チケット完了 - stripe_getSubscription実装、Firestoreからの取得、Stripe API連携、テスト完了 |

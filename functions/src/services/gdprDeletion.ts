@@ -30,8 +30,8 @@ import {
 } from "../utils/firestore";
 import { logger } from "../utils/logger";
 
-import { deleteUserStorage } from "./gdprStorage";
 import { deleteUserFromBigQuery } from "./gdprBigQuery";
+import { deleteUserStorage } from "./gdprStorage";
 import {
   verifyCompleteDeletion,
   generateDeletionCertificate,

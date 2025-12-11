@@ -30,8 +30,8 @@ export * from "./gdpr";
 // ユーザー設定
 export * from "./settings";
 
-// サブスクリプション管理
-// export * from "./subscription";
+// サブスクリプション管理（Stripe API）
+export * from "./stripe";
 
 // 分析API（BigQuery）
 export * from "./analytics";

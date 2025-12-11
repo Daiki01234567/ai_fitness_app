@@ -1,0 +1,194 @@
+/**
+ * Stripe関連の型定義
+ * docs/common/specs/04_API設計書_Firebase_Functions_v1_0.md に基づく
+ */
+
+import Stripe from "stripe";
+
+/**
+ * Stripe Customer作成/取得リクエスト
+ */
+export interface GetOrCreateStripeCustomerRequest {
+  userId: string;
+  email: string;
+}
+
+/**
+ * Stripe Customer作成/取得レスポンス
+ */
+export interface GetOrCreateStripeCustomerResponse {
+  customerId: string;
+  isNew: boolean;
+}
+
+/**
+ * Stripe Checkout Session作成リクエスト
+ */
+export interface CreateCheckoutSessionRequest {
+  priceId: string;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+/**
+ * Stripe Checkout Session作成レスポンス
+ */
+export interface CreateCheckoutSessionResponse {
+  sessionId: string;
+  url: string | null;
+}
+
+/**
+ * サブスクリプション更新データ
+ */
+export interface SubscriptionUpdateData {
+  subscriptionStatus: "free" | "premium" | "premium_annual";
+  stripeSubscriptionId: string | null;
+  subscriptionStartDate?: FirebaseFirestore.Timestamp;
+  subscriptionEndDate?: FirebaseFirestore.Timestamp;
+  subscriptionPlan?: string;
+}
+
+/**
+ * Stripe Webhookイベントタイプ
+ */
+export type StripeWebhookEventType =
+  | "customer.subscription.created"
+  | "customer.subscription.updated"
+  | "customer.subscription.deleted"
+  | "invoice.payment_succeeded"
+  | "invoice.payment_failed"
+  | "checkout.session.completed";
+
+/**
+ * Stripe APIエラー情報
+ */
+export interface StripeErrorInfo {
+  type: string;
+  code?: string;
+  message: string;
+  param?: string;
+  statusCode?: number;
+}
+
+/**
+ * Stripe APIエラーかどうかを判定するtype guard
+ */
+export function isStripeError(error: unknown): error is Stripe.errors.StripeError {
+  return error instanceof Stripe.errors.StripeError;
+}
+
+/**
+ * Stripeエラーから情報を抽出
+ */
+export function extractStripeErrorInfo(error: Stripe.errors.StripeError): StripeErrorInfo {
+  return {
+    type: error.type,
+    code: error.code,
+    message: error.message,
+    param: error.param,
+    statusCode: error.statusCode,
+  };
+}
+
+/**
+ * Stripe Customerメタデータ
+ */
+export interface StripeCustomerMetadata {
+  firebaseUID: string;
+  createdAt?: string;
+}
+
+/**
+ * Firestoreユーザードキュメントに保存するStripe関連フィールド
+ */
+export interface UserStripeFields {
+  stripeCustomerId: string | null;
+  stripeSubscriptionId?: string | null;
+  subscriptionStatus: "free" | "premium" | "premium_annual" | "expired" | "cancelled";
+  subscriptionPlan?: string | null;
+  subscriptionStartDate?: FirebaseFirestore.Timestamp;
+  subscriptionEndDate?: FirebaseFirestore.Timestamp;
+}
+
+/**
+ * Stripe価格プランID（環境によって異なる）
+ */
+export interface StripePriceIds {
+  monthlyPremium: string;
+  annualPremium: string;
+}
+
+/**
+ * サブスクリプション取得リクエスト
+ * パラメータなし（認証情報から自動取得）
+ */
+export type StripeGetSubscriptionRequest = Record<string, never>;
+
+/**
+ * サブスクリプション詳細情報
+ */
+export interface StripeSubscriptionDetail {
+  id: string;
+  status: string;
+  planName: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  trialEnd?: string;
+}
+
+/**
+ * Stripe サブスクリプション取得レスポンス
+ */
+export interface StripeGetSubscriptionResponse {
+  hasSubscription: boolean;
+  subscription?: StripeSubscriptionDetail;
+}
+
+/**
+ * サブスクリプション更新リクエスト
+ */
+export interface UpdateSubscriptionRequest {
+  newPriceId: string;
+  prorationBehavior?: "create_prorations" | "none" | "always_invoice";
+}
+
+/**
+ * サブスクリプション更新レスポンス
+ */
+export interface UpdateSubscriptionResponse {
+  subscriptionId: string;
+  newPriceId: string;
+  status: string;
+  currentPeriodEnd: string;
+  message: string;
+}
+
+/**
+ * サブスクリプション解約リクエスト
+ */
+export interface CancelSubscriptionRequest {
+  cancelImmediately?: boolean;
+}
+
+/**
+ * サブスクリプション解約レスポンス
+ */
+export interface CancelSubscriptionResponse {
+  subscriptionId: string;
+  status: string;
+  cancelAt?: string;
+  message: string;
+}
+
+/**
+ * Proration Behavior バリデーション用の値
+ */
+export const ValidProrationBehaviors = [
+  "create_prorations",
+  "none",
+  "always_invoice",
+] as const;
+
+export type ProrationBehavior = typeof ValidProrationBehaviors[number];

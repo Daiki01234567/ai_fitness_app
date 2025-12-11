@@ -103,7 +103,7 @@ export const listSessions = onCall(
 
       // 種目フィルタのバリデーション
       if (data.exerciseType !== undefined && data.exerciseType !== null) {
-        if (!VALID_EXERCISE_TYPES.includes(data.exerciseType as TrainingExerciseType)) {
+        if (!VALID_EXERCISE_TYPES.includes(data.exerciseType)) {
           throw new HttpsError(
             "invalid-argument",
             `無効な種目です。有効な種目: ${VALID_EXERCISE_TYPES.join(", ")}`,

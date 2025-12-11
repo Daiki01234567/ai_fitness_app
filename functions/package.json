@@ -38,7 +38,8 @@
     "archiver": "^7.0.1",
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^7.0.0",
-    "google-auth-library": "^9.15.1"
+    "google-auth-library": "^9.15.1",
+    "stripe": "^20.0.0"
   },
   "devDependencies": {
     "@types/archiver": "^7.0.0",

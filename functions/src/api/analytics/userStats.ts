@@ -9,8 +9,8 @@
 
 import * as crypto from "crypto";
 
-import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { BigQuery } from "@google-cloud/bigquery";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 
 import { logger } from "../../utils/logger";
 

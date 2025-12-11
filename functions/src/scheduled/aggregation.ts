@@ -7,8 +7,8 @@
  * - docs/specs/04_BigQuery設計書_v3_3.md - セクション5.3.1, 5.3.2
  */
 
-import { onSchedule } from "firebase-functions/v2/scheduler";
 import { BigQuery } from "@google-cloud/bigquery";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 import { logger } from "../utils/logger";
 
@@ -225,7 +225,7 @@ export const scheduled_weeklyAggregation = onSchedule(
       });
 
       const duration = Date.now() - startTime;
-      logger.info(`Weekly aggregation completed`, {
+      logger.info("Weekly aggregation completed", {
         startDate,
         endDate,
         rowCount: rows.length,

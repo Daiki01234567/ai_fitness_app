@@ -30,14 +30,14 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] Stripe Node.js SDKをインストール（`npm install stripe`）
-- [ ] Stripe APIキーを環境変数で管理（Secret Manager使用）
-- [ ] Stripe Customerを作成するヘルパー関数を実装
-- [ ] 既存のCustomerを取得する機能を実装
-- [ ] Firestoreに`stripeCustomerId`を保存する機能を実装
-- [ ] エラーハンドリングを実装（Stripe APIエラー対応）
-- [ ] ユニットテストを作成（カバレッジ 80%以上）
-- [ ] Stripe Test Modeでの動作確認
+- [x] Stripe Node.js SDKをインストール（`npm install stripe`）
+- [x] Stripe APIキーを環境変数で管理（Secret Manager使用）
+- [x] Stripe Customerを作成するヘルパー関数を実装
+- [x] 既存のCustomerを取得する機能を実装
+- [x] Firestoreに`stripeCustomerId`を保存する機能を実装
+- [x] エラーハンドリングを実装（Stripe APIエラー対応）
+- [x] ユニットテストを作成（カバレッジ 80%以上）
+- [x] Stripe Test Modeでの動作確認
 
 ## 参照ドキュメント
 
@@ -196,11 +196,11 @@ describe('Stripe Customer管理', () => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了
 
 ## 完了日
 
-（未完了）
+2025-12-11
 
 ## 備考
 
@@ -214,3 +214,5 @@ describe('Stripe Customer管理', () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | 実装完了 - Stripe SDK初期化、Customerサービス、型定義、テスト（カバレッジ94.3%） |
+| 2025-12-11 | チケット完了 - Stripe Test Modeでの動作確認完了 |

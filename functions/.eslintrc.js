@@ -70,6 +70,7 @@ module.exports = {
     "valid-jsdoc": "off",
     "new-cap": "off",
     // Allow snake_case for Firebase function exports (e.g., auth_onCreate, gdpr_requestDataExport)
+    // Also allow Stripe SDK snake_case properties (e.g., line_items, cancel_at_period_end)
     "camelcase": ["error", {
       "allow": [
         "^auth_",
@@ -82,7 +83,23 @@ module.exports = {
         "^triggers_",
         "^scheduled_",
         "^webhook_",
+        "^stripe_",
+        "^analytics_",
+        "^admin_",
+        "^pubsub_",
+        // Stripe SDK properties (snake_case)
+        "line_items",
+        "success_url",
+        "cancel_url",
+        "trial_period_days",
+        "allow_promotion_codes",
+        "billing_address_collection",
+        "cancel_at_period_end",
+        "proration_behavior",
+        "period_days",
+        "exercise_id",
       ],
+      "properties": "never",
     }],
   },
 };

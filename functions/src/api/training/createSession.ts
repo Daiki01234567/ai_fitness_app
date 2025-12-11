@@ -106,7 +106,7 @@ function validateCameraSettings(cameraSettings: unknown): {
   }
 
   return {
-    position: settings.position as "front" | "side",
+    position: settings.position,
     resolution: settings.resolution,
     fps: settings.fps,
   };

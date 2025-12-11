@@ -29,14 +29,14 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `stripe_createCheckoutSession` Callable Functionを実装
-- [ ] リクエストバリデーションを実装（priceId、URL検証）
-- [ ] Stripe Checkoutセッションを作成する処理を実装
-- [ ] 成功URLとキャンセルURLを設定できるようにする
-- [ ] 7日間の無料トライアルを自動適用する
-- [ ] エラーハンドリングを実装
-- [ ] ユニットテストを作成（カバレッジ 80%以上）
-- [ ] 統合テスト（Stripe Test Mode）で動作確認
+- [x] `stripe_createCheckoutSession` Callable Functionを実装
+- [x] リクエストバリデーションを実装（priceId、URL検証）
+- [x] Stripe Checkoutセッションを作成する処理を実装
+- [x] 成功URLとキャンセルURLを設定できるようにする
+- [x] 7日間の無料トライアルを自動適用する
+- [x] エラーハンドリングを実装
+- [x] ユニットテストを作成（カバレッジ 80%以上）
+- [x] 統合テスト（Stripe Test Mode）で動作確認
 
 ## 参照ドキュメント
 
@@ -219,11 +219,11 @@ describe('stripe_createCheckoutSession', () => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了
 
 ## 完了日
 
-（未完了）
+2025-12-11
 
 ## 備考
 
@@ -237,3 +237,4 @@ describe('stripe_createCheckoutSession', () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | チケット完了 - stripe_createCheckoutSession実装、バリデーション、7日間無料トライアル対応、テスト完了 |

@@ -181,7 +181,7 @@ export const consent_getStatistics = onCall(
       snapshot.docs.forEach((doc) => {
         const logData = doc.data();
         const timestamp = logData.createdAt?.toDate();
-        if (!timestamp) return;
+        if (!timestamp) {return;}
 
         const periodKey = getPeriodKey(timestamp, data.period);
 

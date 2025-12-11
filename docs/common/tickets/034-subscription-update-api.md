@@ -28,14 +28,14 @@ common（バックエンド共通）
 
 ## 受け入れ条件（Todo）
 
-- [ ] `stripe_updateSubscription` Callable Functionを実装
-- [ ] リクエストバリデーションを実装（newPriceId検証）
-- [ ] Stripe APIでサブスクリプションを更新する処理を実装
-- [ ] 即時変更（proration有効）と次回請求時変更を選択可能にする
-- [ ] Firestoreのサブスクリプション情報を更新する処理を実装
-- [ ] エラーハンドリングを実装
-- [ ] ユニットテストを作成（カバレッジ 80%以上）
-- [ ] 統合テストで動作確認
+- [x] `stripe_updateSubscription` Callable Functionを実装
+- [x] リクエストバリデーションを実装（newPriceId検証）
+- [x] Stripe APIでサブスクリプションを更新する処理を実装
+- [x] 即時変更（proration有効）と次回請求時変更を選択可能にする
+- [x] Firestoreのサブスクリプション情報を更新する処理を実装
+- [x] エラーハンドリングを実装
+- [x] ユニットテストを作成（カバレッジ 80%以上）
+- [x] 統合テストで動作確認
 
 ## 参照ドキュメント
 
@@ -239,11 +239,11 @@ describe('stripe_updateSubscription', () => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 実装完了
 
 ## 完了日
 
-（未完了）
+2025-12-11
 
 ## 備考
 
@@ -257,3 +257,4 @@ describe('stripe_updateSubscription', () => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | チケット完了 - stripe_updateSubscription実装、日割り計算対応、Firestore更新、テスト完了 |

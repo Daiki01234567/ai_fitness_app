@@ -27,12 +27,12 @@ import {
 } from "../utils/firestore";
 import { logger } from "../utils/logger";
 
-import { verifyStorageDeletion } from "./gdprStorage";
-import { verifyBigQueryDeletion } from "./gdprBigQuery";
 import {
   generateSignature,
   hashUserId,
 } from "./gdpr/helpers";
+import { verifyBigQueryDeletion } from "./gdprBigQuery";
+import { verifyStorageDeletion } from "./gdprStorage";
 
 // Admin SDK initialization
 if (!admin.apps.length) {

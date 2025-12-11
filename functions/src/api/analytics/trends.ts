@@ -7,8 +7,8 @@
  * - docs/specs/04_BigQuery設計書_v3_3.md - セクション7.1.3, 7.2
  */
 
-import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { BigQuery } from "@google-cloud/bigquery";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 
 import { logger } from "../../utils/logger";
 
@@ -109,8 +109,8 @@ export const analytics_getDailyTrends = onCall(
       const sessionGrowthRate =
         previousSessions > 0
           ? Math.round(
-              ((recentSessions - previousSessions) / previousSessions) * 100,
-            )
+            ((recentSessions - previousSessions) / previousSessions) * 100,
+          )
           : 0;
 
       return {
@@ -343,8 +343,8 @@ export const analytics_getRetention = onCall(
           day30Retention:
             cohortSize > 0
               ? Math.round(
-                  (Number(row.day30_retained) / cohortSize) * 100 * 10,
-                ) / 10
+                (Number(row.day30_retained) / cohortSize) * 100 * 10,
+              ) / 10
               : 0,
         };
       });
@@ -352,19 +352,19 @@ export const analytics_getRetention = onCall(
       const averageDay7Retention =
         cohorts.length > 0
           ? Math.round(
-              (cohorts.reduce((sum, c) => sum + c.day7Retention, 0) /
+            (cohorts.reduce((sum, c) => sum + c.day7Retention, 0) /
                 cohorts.length) *
                 10,
-            ) / 10
+          ) / 10
           : 0;
 
       const averageDay30Retention =
         cohorts.length > 0
           ? Math.round(
-              (cohorts.reduce((sum, c) => sum + c.day30Retention, 0) /
+            (cohorts.reduce((sum, c) => sum + c.day30Retention, 0) /
                 cohorts.length) *
                 10,
-            ) / 10
+          ) / 10
           : 0;
 
       return {

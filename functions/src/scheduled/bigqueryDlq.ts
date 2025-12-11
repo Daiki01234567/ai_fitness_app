@@ -7,12 +7,12 @@
  * - docs/specs/04_BigQuery設計書_v3_3.md - セクション5.2.3
  */
 
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { PubSub, Message } from "@google-cloud/pubsub";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
-import { logger } from "../utils/logger";
 import { requireAdminFromRequest } from "../middleware/adminAuth";
+import { logger } from "../utils/logger";
 
 const pubsub = new PubSub();
 

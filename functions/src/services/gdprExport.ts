@@ -26,8 +26,6 @@ import {
 } from "../types/gdpr";
 import { logger } from "../utils/logger";
 
-import { collectStorageData, getProfileImageBuffer } from "./gdprStorage";
-import { collectBigQueryData } from "./gdprBigQuery";
 import {
   collectProfileData,
   collectSessionsData,
@@ -46,6 +44,8 @@ import {
   convertAnalyticsToCSV,
 } from "./gdpr/formatters";
 import { getExportBucketName } from "./gdpr/helpers";
+import { collectBigQueryData } from "./gdprBigQuery";
+import { collectStorageData, getProfileImageBuffer } from "./gdprStorage";
 
 // Cloud Storage client
 const storage = new Storage();
@@ -97,7 +97,7 @@ export async function collectUserData(
     scope = { type: "all" };
   } else if ("type" in scopeOrOptions) {
     // It's an ExportScope (has 'type' property)
-    scope = scopeOrOptions as ExportScope;
+    scope = scopeOrOptions;
   } else {
     // It's an options object
     const options = scopeOrOptions as {
@@ -449,13 +449,13 @@ export function generateReadmeContent(
 export function generateReadmeFromData(data: ExportData, format: ExportFormat): string {
   const scopes: string[] = [];
 
-  if (data.profile) scopes.push("profile");
-  if (data.sessions && data.sessions.length > 0) scopes.push("sessions");
-  if (data.consents && data.consents.length > 0) scopes.push("consents");
-  if (data.settings) scopes.push("settings");
-  if (data.subscriptions && data.subscriptions.length > 0) scopes.push("subscriptions");
-  if (data.analytics) scopes.push("analytics");
-  if (data.storage?.profileImage) scopes.push("media");
+  if (data.profile) {scopes.push("profile");}
+  if (data.sessions && data.sessions.length > 0) {scopes.push("sessions");}
+  if (data.consents && data.consents.length > 0) {scopes.push("consents");}
+  if (data.settings) {scopes.push("settings");}
+  if (data.subscriptions && data.subscriptions.length > 0) {scopes.push("subscriptions");}
+  if (data.analytics) {scopes.push("analytics");}
+  if (data.storage?.profileImage) {scopes.push("media");}
 
   return generateReadmeContent(data.userId, data.exportedAt, format, scopes);
 }

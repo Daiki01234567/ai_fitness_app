@@ -7,8 +7,8 @@
  * - docs/specs/04_BigQuery設計書_v3_3.md - セクション7.1.2
  */
 
-import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { BigQuery } from "@google-cloud/bigquery";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 
 import { logger } from "../../utils/logger";
 
@@ -212,8 +212,8 @@ export const analytics_getScoreDistribution = onCall(
           percentage:
             totalSessions > 0
               ? Math.round(
-                  (Number(row.session_count) / totalSessions) * 100 * 10,
-                ) / 10
+                (Number(row.session_count) / totalSessions) * 100 * 10,
+              ) / 10
               : 0,
         })),
         totalSessions,
