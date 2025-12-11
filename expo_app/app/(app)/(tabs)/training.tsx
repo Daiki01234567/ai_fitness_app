@@ -53,10 +53,10 @@ export default function TrainingScreen() {
       return;
     }
 
-    // Navigate to training session screen with exercise type
+    // Navigate to exercise detail screen with exercise type
+    // Flow: Menu -> Exercise Detail -> Camera Setup -> Training Session
     router.push({
-      pathname: "/training/session",
-      params: { exerciseType: exercise.id },
+      pathname: `/training/${exercise.id}`,
     });
   }, []);
 

@@ -86,12 +86,12 @@ export default function SessionResultScreen() {
     return () => backHandler.remove();
   }, []);
 
-  // Handle another set
+  // Handle another set - go back to exercise detail screen
   const handleAnotherSet = () => {
     resetSession();
+    // Navigate back to exercise detail screen to set new target reps
     router.replace({
-      pathname: "/training/session",
-      params: { exerciseType: sessionData.exerciseType },
+      pathname: `/training/${sessionData.exerciseType}`,
     });
   };
 

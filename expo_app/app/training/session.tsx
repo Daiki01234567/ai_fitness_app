@@ -25,6 +25,7 @@ import { useTrainingStore } from "@/stores";
 import { useSettingsStore } from "@/stores";
 import { voiceFeedbackService } from "@/services/training/voiceFeedbackService";
 import type { Landmark } from "@/types/mediapipe";
+import { getAnimatedMockPose, STANDING_POSE } from "@/services/mediapipe";
 
 /**
  * Theme colors
@@ -42,11 +43,28 @@ const THEME_COLORS = {
 const UNRECOGNIZED_TIMEOUT = 30;
 
 /**
+ * Whether to use mock pose data in development mode
+ * Set to true to show skeleton overlay without MediaPipe
+ */
+const USE_MOCK_POSE = __DEV__;
+
+/**
+ * Mock animation frame rate (ms)
+ */
+const MOCK_ANIMATION_INTERVAL = 33; // ~30fps
+
+/**
  * Training Session Screen
  */
 export default function TrainingSessionScreen() {
-  // Get exercise type from params
-  const { exerciseType } = useLocalSearchParams<{ exerciseType: string }>();
+  // Get exercise type and target reps from params
+  const { exerciseType, targetReps: targetRepsParam } = useLocalSearchParams<{
+    exerciseType: string;
+    targetReps: string;
+  }>();
+
+  // Parse target reps with fallback to 10
+  const targetReps = parseInt(targetRepsParam || "10", 10) || 10;
 
   // Training store
   const {
@@ -75,6 +93,8 @@ export default function TrainingSessionScreen() {
   // Refs
   const unrecognizedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mockAnimationRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mockStartTimeRef = useRef<number>(Date.now());
 
   // Get exercise info
   const exercise = exerciseType ? getExerciseById(exerciseType) : null;
@@ -103,9 +123,52 @@ export default function TrainingSessionScreen() {
       if (elapsedTimerRef.current) {
         clearInterval(elapsedTimerRef.current);
       }
+      if (mockAnimationRef.current) {
+        clearInterval(mockAnimationRef.current);
+      }
       voiceFeedbackService.stop();
     };
   }, [exerciseType]);
+
+  // Mock pose animation for development
+  useEffect(() => {
+    // Only run in development mode with USE_MOCK_POSE enabled
+    if (!USE_MOCK_POSE) return;
+
+    if (isActive && !isPaused) {
+      // Reset start time when animation begins
+      mockStartTimeRef.current = Date.now();
+
+      // Determine exercise type for animation
+      const mockExerciseType = (exerciseType === "squat" || exerciseType === "arm_curl")
+        ? exerciseType as "squat" | "arm_curl"
+        : "squat"; // Default to squat animation
+
+      // Start mock animation loop
+      mockAnimationRef.current = setInterval(() => {
+        const currentTime = Date.now() - mockStartTimeRef.current;
+        const animatedPose = getAnimatedMockPose(mockExerciseType, 2000, currentTime);
+        setLandmarks(animatedPose);
+      }, MOCK_ANIMATION_INTERVAL);
+    } else {
+      // Clear animation when paused
+      if (mockAnimationRef.current) {
+        clearInterval(mockAnimationRef.current);
+        mockAnimationRef.current = null;
+      }
+      // Keep showing static pose when paused (don't clear landmarks)
+      if (!isActive && USE_MOCK_POSE) {
+        setLandmarks(STANDING_POSE);
+      }
+    }
+
+    return () => {
+      if (mockAnimationRef.current) {
+        clearInterval(mockAnimationRef.current);
+        mockAnimationRef.current = null;
+      }
+    };
+  }, [isActive, isPaused, exerciseType]);
 
   // Elapsed time timer
   useEffect(() => {
@@ -287,7 +350,7 @@ export default function TrainingSessionScreen() {
             <View style={styles.progressOverlay}>
               <CompactProgressInfo
                 reps={currentReps}
-                targetReps={10}
+                targetReps={targetReps}
                 duration={elapsedTime}
               />
             </View>
@@ -300,7 +363,7 @@ export default function TrainingSessionScreen() {
         {/* Progress Info */}
         <ProgressInfo
           reps={currentReps}
-          targetReps={10}
+          targetReps={targetReps}
           duration={elapsedTime}
           isActive={isActive}
           isPaused={isPaused}

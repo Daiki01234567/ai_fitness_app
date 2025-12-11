@@ -1,8 +1,12 @@
 /**
  * Training Stack Layout
  *
- * Contains training session, result, and test screens.
+ * Contains exercise detail, camera setup, training session, result, and test screens.
  *
+ * Training Flow:
+ * Menu -> Exercise Detail -> Camera Setup -> Training Session -> Result
+ *
+ * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
  * @see docs/expo/tickets/021-training-screen.md
  * @see docs/expo/tickets/022-session-result-screen.md
  */
@@ -15,8 +19,31 @@ export default function TrainingLayout() {
       screenOptions={{
         headerShown: true,
         headerBackTitle: "戻る",
+        headerStyle: {
+          backgroundColor: "#FFFFFF",
+        },
+        headerTintColor: "#212121",
       }}
     >
+      {/* Exercise Detail Screen (Dynamic Route) */}
+      <Stack.Screen
+        name="[exerciseType]"
+        options={{
+          title: "種目詳細",
+          headerBackTitle: "戻る",
+        }}
+      />
+
+      {/* Camera Setup Screen */}
+      <Stack.Screen
+        name="setup"
+        options={{
+          title: "カメラ設定",
+          headerShown: false, // Full screen camera view
+          gestureEnabled: true, // Allow going back to exercise detail
+        }}
+      />
+
       {/* Training Session Screen */}
       <Stack.Screen
         name="session"

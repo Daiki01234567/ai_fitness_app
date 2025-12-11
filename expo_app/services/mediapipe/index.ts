@@ -30,3 +30,19 @@ export {
   SKELETON_CONNECTIONS,
   getVisibilityLevel,
 } from "./types";
+
+// Mock Landmarks for Development/Testing
+export {
+  STANDING_POSE,
+  SQUAT_BOTTOM_POSE,
+  ARM_CURL_TOP_POSE,
+  getMockPoseKeyframes,
+  interpolatePoses,
+  addNoiseToLandmarks,
+  getAnimatedMockPose,
+  getLandmarkByIndex,
+  getLandmarksByIndices,
+} from "./mockLandmarks";
+
+// Export MockExerciseType with a different name to avoid conflict with evaluation/types ExerciseType
+export type { ExerciseType as MockExerciseType } from "./mockLandmarks";
