@@ -48,6 +48,22 @@ export default function AuthLayout() {
           headerBackTitle: "戻る",
         }}
       />
+      <Stack.Screen
+        name="signup-step2"
+        options={{
+          title: "新規登録",
+          headerBackTitle: "戻る",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="agreement"
+        options={{
+          title: "同意確認",
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
     </Stack>
   );
 }

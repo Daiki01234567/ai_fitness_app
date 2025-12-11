@@ -44,14 +44,15 @@ export default function SignupScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      setLocalError("パスワードは6文字以上で入力してください");
+    if (password.length < 8) {
+      setLocalError("パスワードは8文字以上で入力してください");
       return;
     }
 
     try {
       await signUp(email, password);
-      router.replace("/(app)/(tabs)");
+      // Navigate to step 2 (body info input) after successful signup
+      router.replace("/(auth)/signup-step2");
     } catch {
       // Error is handled by useAuth hook
     }
@@ -99,7 +100,7 @@ export default function SignupScreen() {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="6文字以上"
+                placeholder="8文字以上"
                 secureTextEntry
                 autoComplete="new-password"
                 editable={!isLoading}
