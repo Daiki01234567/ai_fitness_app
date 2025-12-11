@@ -44,3 +44,6 @@ export * from "./notification";
 
 // バックアップ管理（Ticket 030）
 export * from "./backup";
+
+// 管理者API（Ticket 041, 042, 043, 044, 045）
+export * from "./admin";

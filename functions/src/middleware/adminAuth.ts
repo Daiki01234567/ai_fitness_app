@@ -5,9 +5,13 @@
  * - カスタムクレーム `admin: true` の確認
  * - 権限レベルチェック
  * - 代理実行時の追加監査ログ
+ * - IPアドレス検証（チケット041）
+ * - MFA検証（チケット041）
+ * - 新ロールベース制御（チケット041）
  *
  * 参照: docs/specs/07_セキュリティポリシー_v1_0.md
  * 参照: docs/tickets/015_data_export_deletion.md
+ * 参照: docs/common/tickets/041-admin-auth.md
  */
 
 import * as admin from "firebase-admin";
@@ -16,11 +20,28 @@ import { CallableRequest } from "firebase-functions/v2/https";
 
 import { logAdminAction } from "../services/auditLog";
 import {
+  AdminRole,
+  AdminUser,
+  AdminClaims,
+  AdminPermissionType,
+} from "../types/admin";
+import {
   AdminActionType,
   AdminLevel,
   AdminPermissions,
   ADMIN_PERMISSIONS,
 } from "../types/security";
+import {
+  isAllowedIp,
+  verifyMfaStatus,
+  isClaimsExpired,
+  logAdminAuthAction,
+  getPermissionsForRole,
+  hasRequiredRole as hasRequiredAdminRole,
+  isValidAdminRole,
+  sendSecurityAlert,
+  extractIpFromRequest,
+} from "../utils/adminUtils";
 import { AuthorizationError } from "../utils/errors";
 import { getFirestore } from "../utils/firestore";
 import { logger } from "../utils/logger";
@@ -422,4 +443,317 @@ export async function setAdminLevel(
     userId,
     newLevel: level || "none",
   });
+}
+
+// =============================================================================
+// チケット041: 新しい管理者認証基盤
+// =============================================================================
+
+/**
+ * 管理者認証コンテキスト
+ * ミドルウェアで検証された管理者情報
+ */
+export interface AdminAuthContext {
+  /** 管理者ユーザー情報 */
+  adminUser: AdminUser;
+  /** カスタムクレーム */
+  claims: AdminClaims;
+  /** リクエスト元IP */
+  clientIp?: string;
+  /** MFA検証済みフラグ */
+  mfaVerified: boolean;
+}
+
+/**
+ * 新しい管理者ロール（チケット041）を使用した認証検証
+ *
+ * 1. IDトークン検証
+ * 2. 管理者カスタムクレーム（role）検証
+ * 3. ロールレベル検証
+ * 4. IPアドレス検証
+ * 5. MFA検証
+ * 6. クレーム有効期限検証
+ *
+ * @param request - Callable リクエスト
+ * @param requiredRole - 必要なロール（オプション）
+ * @param options - 追加オプション
+ * @returns 管理者認証コンテキスト
+ */
+export async function verifyAdminAuth(
+  request: CallableRequest,
+  requiredRole?: AdminRole,
+  options?: {
+    skipIpCheck?: boolean;
+    skipMfaCheck?: boolean;
+  },
+): Promise<AdminAuthContext> {
+  // 1. 認証チェック
+  if (!request.auth) {
+    logger.warn("Admin auth failed: No auth token");
+    throw new AuthorizationError("認証が必要です");
+  }
+
+  const decodedToken = request.auth.token;
+  const uid = request.auth.uid;
+
+  // 2. 管理者クレーム検証
+  const role = decodedToken.role as AdminRole | undefined;
+
+  if (!role || !isValidAdminRole(role)) {
+    logger.warn("Admin auth failed: Not an admin", { userId: uid });
+    await sendSecurityAlert({
+      type: "INVALID_ROLE",
+      userId: uid,
+      details: { attemptedRole: role },
+    });
+    throw new AuthorizationError("管理者権限がありません");
+  }
+
+  // 3. ロールレベル検証
+  if (requiredRole && !hasRequiredAdminRole(role, requiredRole)) {
+    logger.warn("Admin auth failed: Insufficient role", {
+      userId: uid,
+      currentRole: role,
+      requiredRole,
+    });
+    throw new AuthorizationError(`この操作には${requiredRole}権限が必要です`);
+  }
+
+  // 4. クレーム有効期限検証
+  const expiresAt = decodedToken.expiresAt as number | undefined;
+  if (isClaimsExpired(expiresAt)) {
+    logger.warn("Admin auth failed: Claims expired", { userId: uid });
+    await sendSecurityAlert({
+      type: "CLAIMS_EXPIRED",
+      userId: uid,
+    });
+    throw new AuthorizationError("管理者権限の有効期限が切れています。再認証が必要です");
+  }
+
+  // 5. IPアドレス検証
+  const clientIp = extractIpFromRequest(request.rawRequest as {
+    ip?: string;
+    headers?: Record<string, string | string[] | undefined>;
+  });
+
+  if (!options?.skipIpCheck) {
+    const ipResult = await isAllowedIp(clientIp);
+    if (!ipResult.allowed) {
+      logger.security({
+        eventType: "UNAUTHORIZED_IP_ACCESS",
+        severity: "high",
+        description: "Admin access from unauthorized IP",
+        sourceIp: clientIp,
+        indicators: { userId: uid, role },
+      });
+      await sendSecurityAlert({
+        type: "UNAUTHORIZED_IP_ACCESS",
+        userId: uid,
+        ip: clientIp,
+      });
+      throw new AuthorizationError(
+        ipResult.errorMessage || "このIPアドレスからのアクセスは許可されていません",
+      );
+    }
+  }
+
+  // 6. MFA検証
+  let mfaVerified = decodedToken.mfaVerified as boolean || false;
+
+  if (!options?.skipMfaCheck) {
+    const mfaResult = await verifyMfaStatus(uid);
+    if (!mfaResult.enrolled) {
+      logger.warn("Admin auth failed: MFA not enrolled", { userId: uid });
+      await sendSecurityAlert({
+        type: "MFA_NOT_ENROLLED",
+        userId: uid,
+      });
+      throw new AuthorizationError("多要素認証（MFA）の設定が必要です");
+    }
+    mfaVerified = mfaResult.verified;
+  }
+
+  // 認証成功
+  const permissions = getPermissionsForRole(role);
+  const adminUser: AdminUser = {
+    uid,
+    role,
+    permissions,
+    email: decodedToken.email,
+    displayName: decodedToken.name,
+  };
+
+  const claims: AdminClaims = {
+    role,
+    permissions,
+    mfaVerified,
+    lastLoginAt: decodedToken.auth_time ? decodedToken.auth_time * 1000 : Date.now(),
+    expiresAt,
+  };
+
+  logger.info("Admin auth verified", {
+    userId: uid,
+    role,
+    clientIp,
+    mfaVerified,
+  });
+
+  return {
+    adminUser,
+    claims,
+    clientIp,
+    mfaVerified,
+  };
+}
+
+/**
+ * 管理者認証を要求するラッパー関数
+ *
+ * 簡易的に管理者認証を要求する場合に使用
+ *
+ * @param request - Callable リクエスト
+ * @param requiredRole - 必要なロール（オプション）
+ * @returns 管理者ユーザー情報
+ */
+export async function requireAdminRole(
+  request: CallableRequest,
+  requiredRole?: AdminRole,
+): Promise<AdminUser> {
+  const context = await verifyAdminAuth(request, requiredRole);
+  return context.adminUser;
+}
+
+/**
+ * superAdmin権限を要求
+ *
+ * @param request - Callable リクエスト
+ * @returns 管理者認証コンテキスト
+ */
+export async function requireSuperAdmin(request: CallableRequest): Promise<AdminAuthContext> {
+  return verifyAdminAuth(request, "superAdmin");
+}
+
+/**
+ * admin以上の権限を要求
+ *
+ * @param request - Callable リクエスト
+ * @returns 管理者認証コンテキスト
+ */
+export async function requireAdminOrAbove(request: CallableRequest): Promise<AdminAuthContext> {
+  return verifyAdminAuth(request, "admin");
+}
+
+/**
+ * readOnlyAdmin以上の権限を要求（読み取り専用操作用）
+ *
+ * @param request - Callable リクエスト
+ * @returns 管理者認証コンテキスト
+ */
+export async function requireReadOnlyAdminOrAbove(
+  request: CallableRequest,
+): Promise<AdminAuthContext> {
+  return verifyAdminAuth(request, "readOnlyAdmin");
+}
+
+/**
+ * 特定の権限を要求
+ *
+ * @param request - Callable リクエスト
+ * @param permission - 必要な権限
+ * @returns 管理者認証コンテキスト
+ */
+export async function requireAdminPermission(
+  request: CallableRequest,
+  permission: AdminPermissionType,
+): Promise<AdminAuthContext> {
+  const context = await verifyAdminAuth(request);
+
+  if (!context.adminUser.permissions.includes(permission)) {
+    logger.warn("Admin permission denied", {
+      userId: context.adminUser.uid,
+      role: context.adminUser.role,
+      requiredPermission: permission,
+    });
+    throw new AuthorizationError(
+      `この操作には「${permission}」権限が必要です`,
+    );
+  }
+
+  return context;
+}
+
+/**
+ * 管理者操作を実行し、監査ログを記録（新ロール対応）
+ *
+ * @param context - 管理者認証コンテキスト
+ * @param action - 操作タイプ
+ * @param params - 操作パラメータ
+ * @param operation - 実行する操作関数
+ * @returns 操作結果
+ */
+export async function executeAdminAuthAction<T>(
+  context: AdminAuthContext,
+  action: import("../types/admin").AdminAuditAction,
+  params: {
+    targetUserId?: string;
+    details: Record<string, unknown>;
+  },
+  operation: () => Promise<T>,
+): Promise<T> {
+  const startTime = Date.now();
+
+  logger.info("Admin action started (new auth)", {
+    adminId: context.adminUser.uid,
+    role: context.adminUser.role,
+    action,
+    targetUserId: params.targetUserId,
+  });
+
+  try {
+    const result = await operation();
+
+    // 成功の監査ログを記録
+    await logAdminAuthAction({
+      performedBy: context.adminUser.uid,
+      performerRole: context.adminUser.role,
+      performerIp: context.clientIp,
+      action,
+      targetUserId: params.targetUserId,
+      details: {
+        ...params.details,
+        durationMs: Date.now() - startTime,
+      },
+      success: true,
+    });
+
+    logger.info("Admin action completed (new auth)", {
+      adminId: context.adminUser.uid,
+      action,
+      durationMs: Date.now() - startTime,
+    });
+
+    return result;
+  } catch (error) {
+    // 失敗の監査ログを記録
+    await logAdminAuthAction({
+      performedBy: context.adminUser.uid,
+      performerRole: context.adminUser.role,
+      performerIp: context.clientIp,
+      action,
+      targetUserId: params.targetUserId,
+      details: {
+        ...params.details,
+        durationMs: Date.now() - startTime,
+      },
+      success: false,
+      errorMessage: error instanceof Error ? error.message : "Unknown error",
+    });
+
+    logger.error("Admin action failed (new auth)", error as Error, {
+      adminId: context.adminUser.uid,
+      action,
+    });
+
+    throw error;
+  }
 }

@@ -449,11 +449,11 @@ export const searchUsers = onCall(async (request) => {
 
 ## 進捗
 
-- [ ] 未着手
+- [x] 完了
 
 ## 完了日
 
-（未完了）
+2025-12-11
 
 ## 備考
 
@@ -467,3 +467,4 @@ export const searchUsers = onCall(async (request) => {
 | 日付 | 変更内容 |
 |------|----------|
 | 2025-12-10 | 初版作成 |
+| 2025-12-11 | 実装完了（メール/UID/名前/複合検索API） |
