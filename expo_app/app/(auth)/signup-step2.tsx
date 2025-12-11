@@ -6,6 +6,8 @@
  * - Gender (optional)
  * - Height (optional)
  * - Weight (optional)
+ * - Exercise experience (optional)
+ * - Goal (optional)
  *
  * @see docs/common/specs/11_画面遷移図_ワイヤーフレーム_v1_0.md
  */
@@ -14,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -43,6 +45,42 @@ const GENDER_OPTIONS: GenderOption[] = [
   { value: "prefer_not_to_say", label: "回答しない" },
 ];
 
+// Exercise experience options (per spec)
+type ExerciseExperience = "beginner" | "intermediate" | "advanced" | null;
+
+interface ExerciseExperienceOption {
+  value: ExerciseExperience;
+  label: string;
+}
+
+const EXERCISE_EXPERIENCE_OPTIONS: ExerciseExperienceOption[] = [
+  { value: "beginner", label: "初心者" },
+  { value: "intermediate", label: "中級者" },
+  { value: "advanced", label: "上級者" },
+];
+
+// Goal options (per spec)
+type Goal =
+  | "weight_loss"
+  | "muscle_gain"
+  | "health_maintenance"
+  | "fitness_improvement"
+  | "other"
+  | null;
+
+interface GoalOption {
+  value: Goal;
+  label: string;
+}
+
+const GOAL_OPTIONS: GoalOption[] = [
+  { value: "weight_loss", label: "ダイエット" },
+  { value: "muscle_gain", label: "筋力アップ" },
+  { value: "health_maintenance", label: "健康維持" },
+  { value: "fitness_improvement", label: "体力向上" },
+  { value: "other", label: "その他" },
+];
+
 // Minimum age requirement (FR-001: 13 years for Japan)
 const MINIMUM_AGE = 13;
 
@@ -62,12 +100,18 @@ const formatDate = (date: Date): string => {
 };
 
 export default function SignupStep2Screen() {
+  // Get nickname from previous screen
+  const { nickname } = useLocalSearchParams<{ nickname?: string }>();
+
   // Form state
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<Gender>(null);
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
+  const [exerciseExperience, setExerciseExperience] =
+    useState<ExerciseExperience>(null);
+  const [goal, setGoal] = useState<Goal>(null);
 
   // Validation state
   const [localError, setLocalError] = useState<string | null>(null);
@@ -78,16 +122,18 @@ export default function SignupStep2Screen() {
     event: DateTimePickerEvent,
     selectedDate?: Date
   ) => {
-    // Hide picker on iOS after selection
-    if (Platform.OS === "ios") {
-      // Keep the picker visible on iOS until user dismisses
-    } else {
-      setShowDatePicker(false);
-    }
-
+    // Process the selection first before hiding picker
+    // This ensures the value is captured on Android
     if (event.type === "set" && selectedDate) {
       setDateOfBirth(selectedDate);
       setLocalError(null);
+    }
+
+    // Then hide the picker (important: do this after processing)
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    } else if (Platform.OS === "ios" && event.type === "dismissed") {
+      setShowDatePicker(false);
     }
   };
 
@@ -150,10 +196,13 @@ export default function SignupStep2Screen() {
       // Store body info in memory for agreement screen to save to Firestore
       // This data will be combined with tosAccepted/ppAccepted when saving
       const bodyInfo = {
+        nickname: nickname || null,
         dateOfBirth: dateOfBirth.toISOString(),
         gender,
         height: height ? parseFloat(height) : null,
         weight: weight ? parseFloat(weight) : null,
+        exerciseExperience,
+        goal,
       };
 
       // Pass data via params to agreement screen
@@ -298,6 +347,62 @@ export default function SignupStep2Screen() {
                   maxLength={3}
                 />
                 <Text style={styles.unitText}>kg</Text>
+              </View>
+            </View>
+
+            {/* Exercise Experience (Optional) */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>運動経験（任意）</Text>
+              <View style={styles.experienceContainer}>
+                {EXERCISE_EXPERIENCE_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value || "null"}
+                    style={[
+                      styles.experienceButton,
+                      exerciseExperience === option.value &&
+                        styles.experienceButtonActive,
+                    ]}
+                    onPress={() => setExerciseExperience(option.value)}
+                    disabled={isLoading}
+                  >
+                    <Text
+                      style={[
+                        styles.experienceButtonText,
+                        exerciseExperience === option.value &&
+                          styles.experienceButtonTextActive,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Goal (Optional) */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>目標（任意）</Text>
+              <View style={styles.goalContainer}>
+                {GOAL_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value || "null"}
+                    style={[
+                      styles.goalOption,
+                      goal === option.value && styles.goalOptionSelected,
+                    ]}
+                    onPress={() => setGoal(option.value)}
+                    disabled={isLoading}
+                  >
+                    <Text
+                      style={[
+                        styles.goalText,
+                        goal === option.value && styles.goalTextSelected,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
@@ -458,6 +563,55 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 12,
     width: 30,
+  },
+  experienceContainer: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  experienceButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#f9f9f9",
+  },
+  experienceButtonActive: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
+  },
+  experienceButtonText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  experienceButtonTextActive: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  goalContainer: {
+    gap: 8,
+  },
+  goalOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  goalOptionSelected: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
+  },
+  goalText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  goalTextSelected: {
+    color: "#fff",
+    fontWeight: "600",
   },
   button: {
     height: 48,

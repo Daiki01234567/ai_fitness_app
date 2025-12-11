@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks";
 
 export default function SignupScreen() {
   const { signUp, isLoading, error } = useAuth();
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,8 +35,14 @@ export default function SignupScreen() {
     setLocalError(null);
 
     // Validation
-    if (!email || !password || !confirmPassword) {
+    if (!nickname || !email || !password || !confirmPassword) {
       setLocalError("すべての項目を入力してください");
+      return;
+    }
+
+    // Validate nickname length (1-20 characters per spec)
+    if (nickname.length < 1 || nickname.length > 20) {
+      setLocalError("ニックネームは1文字以上20文字以内で入力してください");
       return;
     }
 
@@ -52,7 +59,11 @@ export default function SignupScreen() {
     try {
       await signUp(email, password);
       // Navigate to step 2 (body info input) after successful signup
-      router.replace("/(auth)/signup-step2");
+      // Pass nickname via params to save to Firestore later
+      router.replace({
+        pathname: "/(auth)/signup-step2",
+        params: { nickname },
+      });
     } catch {
       // Error is handled by useAuth hook
     }
@@ -71,6 +82,7 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
+            <Text style={styles.stepIndicator}>新規登録 (1/2)</Text>
             <Text style={styles.title}>アカウント作成</Text>
             <Text style={styles.subtitle}>
               AI Fitnessでトレーニングを始めましょう
@@ -79,6 +91,22 @@ export default function SignupScreen() {
 
           <View style={styles.form}>
             {displayError && <Text style={styles.errorText}>{displayError}</Text>}
+
+            {/* Nickname Input (Required) */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>
+                ニックネーム <Text style={styles.required}>*必須</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={nickname}
+                onChangeText={setNickname}
+                placeholder="1文字以上20文字以内"
+                maxLength={20}
+                autoComplete="name"
+                editable={!isLoading}
+              />
+            </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>メールアドレス</Text>
@@ -155,6 +183,12 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 32,
   },
+  stepIndicator: {
+    fontSize: 14,
+    color: "#4CAF50",
+    fontWeight: "600",
+    marginBottom: 8,
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
@@ -183,6 +217,10 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 8,
   },
+  required: {
+    color: "#dc3545",
+    fontWeight: "normal",
+  },
   input: {
     height: 48,
     borderWidth: 1,
@@ -194,14 +232,14 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 48,
-    backgroundColor: "#2f95dc",
+    backgroundColor: "#4CAF50",
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
   },
   buttonDisabled: {
-    backgroundColor: "#a0c4e8",
+    backgroundColor: "#a5d6a7",
   },
   buttonText: {
     color: "#fff",

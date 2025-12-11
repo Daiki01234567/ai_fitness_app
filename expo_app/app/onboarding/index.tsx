@@ -110,8 +110,11 @@ export default function OnboardingScreen() {
   // Next page handler
   const handleNext = () => {
     if (currentPage < ONBOARDING_PAGES.length - 1) {
+      const nextPage = currentPage + 1;
+      // Update state immediately for indicator (onMomentumScrollEnd won't fire for programmatic scroll)
+      setCurrentPage(nextPage);
       flatListRef.current?.scrollToIndex({
-        index: currentPage + 1,
+        index: nextPage,
         animated: true,
       });
     } else {
