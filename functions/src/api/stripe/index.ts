@@ -2,7 +2,7 @@
  * Stripe API Functions インデックス
  *
  * Phase 3: 課金機能実装
- * チケット032-039: サブスクリプション管理・課金履歴API
+ * チケット032-040: サブスクリプション管理・課金履歴・領収書API
  *
  * docs/common/specs/04_API設計書_Firebase_Functions_v1_0.md 8章
  */
@@ -27,3 +27,6 @@ export { stripe_createSetupIntent } from "./createSetupIntent";
 
 // 課金履歴取得（チケット039）
 export { stripe_getBillingHistory } from "./getBillingHistory";
+
+// 領収書再送信（チケット040）
+export { stripe_resendReceipt } from "./resendReceipt";

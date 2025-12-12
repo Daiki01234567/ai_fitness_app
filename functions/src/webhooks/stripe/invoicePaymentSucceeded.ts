@@ -3,11 +3,13 @@
  * docs/common/specs/04_API設計書_Firebase_Functions_v1_0.md - 8.2章
  *
  * 支払い成功時のFirestore更新と履歴記録を処理
+ * チケット040: 領収書メール自動送信機能を追加
  */
 
 import * as admin from "firebase-admin";
 import Stripe from "stripe";
 
+import { sendReceiptEmail } from "../../services/email/receiptEmail";
 import { logger } from "../../utils/logger";
 import { getStripeClient } from "../../utils/stripe";
 
@@ -153,4 +155,54 @@ export async function handleInvoicePaymentSucceeded(
       ? new Date(invoice.status_transitions.paid_at * 1000).toISOString()
       : null,
   });
+
+  // チケット040: 領収書メールを自動送信
+  // メール送信の失敗は支払い処理を失敗させない（警告ログのみ）
+  if (invoice.invoice_pdf) {
+    // Get user's email address
+    const userData = userDoc.data();
+    const userEmail = userData?.email as string | undefined;
+
+    if (userEmail) {
+      try {
+        const emailSent = await sendReceiptEmail({
+          userId: firebaseUID,
+          email: userEmail,
+          invoiceId: invoice.id,
+          invoicePdfUrl: invoice.invoice_pdf,
+          amount: invoice.amount_paid,
+          currency: invoice.currency,
+          type: "auto",
+        });
+
+        if (emailSent) {
+          childLogger.info("領収書メール送信成功", {
+            firebaseUID,
+            invoiceId: invoice.id,
+          });
+        } else {
+          childLogger.warn("領収書メール送信失敗（サービスエラー）", {
+            firebaseUID,
+            invoiceId: invoice.id,
+          });
+        }
+      } catch (emailError) {
+        // Email sending failure should not fail the payment processing
+        childLogger.warn(
+          "領収書メール送信でエラー発生",
+          { firebaseUID, invoiceId: invoice.id },
+          emailError as Error,
+        );
+      }
+    } else {
+      childLogger.warn("ユーザーのメールアドレスが見つからないため、領収書メール送信をスキップ", {
+        firebaseUID,
+        invoiceId: invoice.id,
+      });
+    }
+  } else {
+    childLogger.debug("領収書PDFがないため、メール送信をスキップ", {
+      invoiceId: invoice.id,
+    });
+  }
 }

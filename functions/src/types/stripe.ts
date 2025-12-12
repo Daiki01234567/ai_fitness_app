@@ -256,3 +256,55 @@ export type CreateSetupIntentRequest = Record<string, never>;
 export interface CreateSetupIntentResponse {
   clientSecret: string;  // Setup Intent Client Secret
 }
+
+/**
+ * 領収書メール送信パラメータ
+ * docs/common/tickets/040-receipt-generation.md に基づく
+ */
+export interface SendReceiptEmailParams {
+  userId: string;
+  email: string;
+  invoiceId: string;
+  invoicePdfUrl: string;
+  amount: number;
+  currency: string;
+  type: "auto" | "resend";
+}
+
+/**
+ * 領収書再送信リクエスト
+ * docs/common/tickets/040-receipt-generation.md に基づく
+ */
+export interface ResendReceiptRequest {
+  invoiceId: string;  // 再送信するInvoice ID
+}
+
+/**
+ * 領収書再送信レスポンス
+ * docs/common/tickets/040-receipt-generation.md に基づく
+ */
+export interface ResendReceiptResponse {
+  sent: boolean;            // 送信成功フラグ
+  invoiceId: string;        // Invoice ID
+  email: string;            // 送信先メールアドレス（マスク済み）
+  sentAt: string;           // 送信日時（ISO 8601形式）
+}
+
+/**
+ * 領収書メール履歴（Firestoreスキーマ）
+ * docs/common/tickets/040-receipt-generation.md に基づく
+ */
+export interface ReceiptEmail {
+  id: string;                      // ドキュメントID
+  userId: string;                  // ユーザーID
+  invoiceId: string;               // Stripe Invoice ID
+  email: string;                   // 送信先メールアドレス
+  status: "sent" | "failed";       // 送信ステータス
+  type: "auto" | "resend";         // 自動送信 or 再送信
+  invoicePdfUrl: string;           // 領収書PDF URL
+  amount: number;                  // 金額
+  currency: string;                // 通貨
+  sentAt: FirebaseFirestore.Timestamp;          // 送信日時
+  errorMessage?: string;           // エラー時のメッセージ
+  createdAt: FirebaseFirestore.Timestamp;       // 作成日時
+}
